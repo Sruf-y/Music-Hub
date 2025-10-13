@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (c) 2019 Hemanth Savarala.
+  ~
+  ~ Licensed under the GNU General Public License v3
+  ~
+  ~ This is free software: you can redistribute it and/or modify it under
+  ~ the terms of the GNU General Public License as published by
+  ~  the Free Software Foundation either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU General Public License for more details.
+  -->
+
+
+
+<!-- I will be using this for a non-proffit app/-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:name="path"
+        android:fillColor="@color/white"
+        android:pathData="M 8 5 C 6.9 5 6 5.9 6 7 L 6 17 C 6 18.1 6.9 19 8 19 C 8 19 8 19 8 19 C 9.1 19 10 18.1 10 17 C 10 15.889 10 14.778 10 13.667 L 10 10.333 C 10 9.222 10 8.111 10 7 C 10 5.9 9.1 5 8 5 M 14 7 C 14 5.9 14.9 5 16 5 C 17.1 5 18 5.9 18 7 L 18 17 C 18 18.1 17.1 19 16 19 C 14.9 19 14 18.1 14 17 L 14 7 L 14 7" />
+</vector>
