@@ -178,7 +178,6 @@ class SongsViewModel(context: Context): ViewModel() {
         val sortTypeFlow: StateFlow<String> = _sortTypeFlow.asStateFlow()
         fun setSortType(type:String){
             _sortTypeFlow.value = type
-            Log.i("WTF","typpe given = $type but type is actually ${_sortTypeFlow.value} and stateFlow value is now ${sortTypeFlow.value}")
 
         }
 
