@@ -3,6 +3,7 @@ package ui.components.Pages
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
+import MyViewModels.SongsViewModel
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.MyModalBottomSheet
 import android.content.Context
@@ -61,6 +62,7 @@ fun SongsRefreshPage(
     prefs: SharedPreferences,
     listPadding: PaddingValues = PaddingValues(0.dp),
     songs: List<Song>,
+    songsVM: SongsViewModel,
     exoPlayerVM: ExoPlayerViewModel,
     onOptionsClick: @Composable ((MutableState<Boolean>,Song) -> Unit)? = null,
     listState: LazyListState,
@@ -95,7 +97,8 @@ fun SongsRefreshPage(
             songs = songs,
             exoPlayerVM = exoPlayerVM,
             onOptionsClick = onOptionsClick,
-            state = listState
+            state = listState,
+            songsVM = songsVM
         )
     }
 
@@ -109,6 +112,7 @@ fun SongsRefreshPage(
 @Composable
 fun SongsPage(
     modifier: Modifier = Modifier.fillMaxSize(),
+    songsVM: SongsViewModel,
     settingsBottomSheetVM: MyModalBottomSheet.ModalVM? = null,
     prefs: SharedPreferences,
     songs:List<Song>,
@@ -117,43 +121,22 @@ fun SongsPage(
     state: LazyListState
 ){
 
-    val sortTypeOptions = listOf<String>("DateAdded","Title","Artist","Length")
-    val sortDirectionOptions = listOf<String>("Descending","Ascending")
+    val curentSortType by SongsViewModel.sortTypeFlow.collectAsState()
+    val curentSortDirection by SongsViewModel.sortDirectionFlow.collectAsState()
 
 
-    var filterType by remember { mutableStateOf(prefs.getCursorValue(MyPrefs._prefs_globalSongsSortType,sortTypeOptions.first())) }
-    var filterDirection by remember { mutableStateOf(prefs.getCursorValue(MyPrefs._prefs_globalSongsSortDirection,sortDirectionOptions.first())) }
 
     val contextRef = LocalContext.current
 
     val currentlyPlayingSong by exoPlayerVM.currentSong.collectAsState()
 
-    val filteredSongs by remember(songs, filterType, filterDirection) {
-        derivedStateOf {
-            val sortedList = when(filterType) {
-                sortTypeOptions[0] -> songs.sortedBy { it.id }
-                sortTypeOptions[1] -> songs.sortedBy { it.title }
-                sortTypeOptions[2] -> songs.sortedBy { it.artistName } // Handle potential null author
-                sortTypeOptions[3] -> songs.sortedBy { it.duration }
-                else -> songs.sortedBy { it.id } // Default case
-            }
 
-            // And sort direction
-            if (filterDirection == sortDirectionOptions[0]) {
-                sortedList.reversed()
-            } else {
-                sortedList
-            }
-        }
-    }
-
-
-    if(filteredSongs.isEmpty()){
+    if(songs.isEmpty()){
 
         LazyColumn(modifier = modifier, state = state) {
 
             item("header") {
-                SongsSortHeader(filteredSongs)
+                SongsSortHeader(songs)
             }
         }
     }
@@ -161,17 +144,17 @@ fun SongsPage(
         LazyColumn(modifier = modifier, state = state) {
 
             item("header") {
-                SongsSortHeader(filteredSongs){
+                SongsSortHeader(songs){
 
                     settingsBottomSheetVM?.show(){
                         SongsSort_Content(
-                            currentType = filterType,
-                            currentDirection = filterDirection,
-                            sortTypeOptions = sortTypeOptions,
-                            sortDirectionOptions = sortDirectionOptions,
+                            currentType = curentSortType,
+                            currentDirection = curentSortDirection,
+                            sortTypeOptions = SongsViewModel.sortTypeOptions,
+                            sortDirectionOptions = SongsViewModel.sortDirectionOptions,
                             onConfirm = { type, direction->
-                                filterType = type
-                                filterDirection = direction
+                                SongsViewModel.setSortType(type)
+                                SongsViewModel.setSortDirection(direction)
 
                                 prefs.edit {
                                     putCursorValue(MyPrefs._prefs_globalSongsSortType,type)
@@ -188,7 +171,7 @@ fun SongsPage(
             }
 
             SongsLazyListItems(
-                songs = filteredSongs,
+                songs = songs,
                 currentlyPlayingSong = currentlyPlayingSong,
                 exoPlayerVM = exoPlayerVM,
                 contextRef = contextRef,

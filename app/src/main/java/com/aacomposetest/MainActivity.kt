@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                 // Trigger a database update here
 
                 songViewModel.viewModelScope.launch {
-                    songViewModel.resyncWithMediastore(contextRef,true)
+                    songViewModel.resyncWithMediastore(context = contextRef, alsoPictures = true,forceUpdate = false)
                 }
 
             }
@@ -101,7 +101,7 @@ fun MainScreen(viewModel: SongsViewModel?=null) {
         if (granted) {
             // Permission granted, safe to query MediaStore
             viewModel?.viewModelScope?.launch {
-                viewModel.resyncWithMediastore(context, true)
+                viewModel.resyncWithMediastore(context = context, alsoPictures = true, forceUpdate = true)
             }
         } else {
             // Handle denied case

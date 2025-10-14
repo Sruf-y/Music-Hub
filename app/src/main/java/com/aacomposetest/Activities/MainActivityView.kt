@@ -73,11 +73,9 @@ import ui.components.Pages.PlaylistViewing
 import kotlin.getValue
 import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.createGraph
 import com.aacomposetest.Classes.MyPermissionLauncher
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
@@ -86,7 +84,6 @@ import com.aacomposetest.Classes.NavigationRelated.MyDestination
 import com.aacomposetest.Logs
 import com.aacomposetest.Services.MusicService
 import com.aacomposetest.ui.theme.Theme
-import io.ktor.http.invoke
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.map
@@ -129,7 +126,7 @@ class MainActivityView : ComponentActivity() {
                 super.onChange(selfChange)
                 // Trigger a database update here
                 songViewModel.viewModelScope.launch {
-                    songViewModel.resyncWithMediastore(contextRef,true)
+                    songViewModel.resyncWithMediastore(contextRef, alsoPictures = true, forceUpdate = false)
                 }
 
             }
@@ -220,16 +217,56 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
         .buildChange(
             onGrant = {
                 songViewModel.viewModelScope.launch {
-                    songViewModel.resyncWithMediastore(contextRef, true, onFinish = {
-                        if(isRefreshing.value == true){
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(contextRef,"Update successful!",Toast.LENGTH_SHORT).show()
-                                isRefreshing.value = false
+                    songViewModel.resyncWithMediastore(
+                        context = contextRef,
+                        alsoPictures = true,
+                        forceUpdate = false,
+                        onFinish = {
+                            if (isRefreshing.value == true) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(
+                                        contextRef,
+                                        "Update successful!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    isRefreshing.value = false
+                                }
+
                             }
 
-                        }
+                        })
 
-                    })
+                }
+            },
+            onDeny = {
+                Toast.makeText(contextRef, "Media permission denied", Toast.LENGTH_SHORT)
+                    .show()
+
+                isRefreshing.value = false
+            }
+        )
+    val manualMediaPermissionLauncher = MyPermissionLauncher()
+        .buildChange(
+            onGrant = {
+                songViewModel.viewModelScope.launch {
+                    songViewModel.resyncWithMediastore(
+                        context = contextRef,
+                        alsoPictures = true,
+                        forceUpdate = true,
+                        onFinish = {
+                            if (isRefreshing.value == true) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(
+                                        contextRef,
+                                        "Update successful!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    isRefreshing.value = false
+                                }
+
+                            }
+
+                        })
 
                 }
             },
@@ -295,7 +332,11 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
     // Try running the query for the first time
     LaunchedEffect(Unit) {
         try {
-            songViewModel.resyncWithMediastore(contextRef, true)
+            songViewModel.resyncWithMediastore(
+                context = contextRef,
+                alsoPictures = true,
+                forceUpdate = false
+            )
         }catch (ex: Exception){
             ex.printStackTrace()
         }
@@ -324,7 +365,8 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
         firstVisibleItemScrollOffset = prefs.getInt(MyPrefs._prefs_playlistsListState_Offset.name,0)) }
 
 
-    val allsongs by songViewModel.getAllSongsFlow().map { list -> list.map { it.copy() } }.collectAsState(initial = emptyList())
+    val allsongs by songViewModel.getAllSongsFlow.map { list -> list.map { it.copy() } }.collectAsState(initial = emptyList())
+    val sortedAllSongs by songViewModel.getSortedSongsStateFlow.map { list -> list.map { it.copy() } }.collectAsState(initial = emptyList())
     val allPlaylists by playlistViewmodel.allPlaylists.collectAsState(initial = ArrayList())
 
 
@@ -430,14 +472,15 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .padding(bottom = peekHeight),
-                                        songs = allsongs,
+                                        songs = sortedAllSongs,
                                         exoPlayerVM = exoPlayerVM,
                                         listState = songsListState,
                                         isRefreshing = isRefreshing,
                                         settingsBottomSheetVM = globalBottomSheetVM,
+                                        songsVM = songViewModel,
                                         onRefresh = {
                                             isRefreshing.value = true
-                                            mediaPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
+                                            manualMediaPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
                                         }
                                     )
                                 }

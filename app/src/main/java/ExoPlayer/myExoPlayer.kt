@@ -40,7 +40,7 @@ object myExoPlayer {
     private val _isInitialized = MutableStateFlow<Boolean>(value = false)
     val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
 
-    private val thisViewModel = DataObserverViewModel<Long>(
+    private val progressVM = DataObserverViewModel<Long>(
         delayMillis = 250,
         initialValue = 0,
         observingFunction = {
@@ -61,13 +61,13 @@ object myExoPlayer {
     private var ioScope = CoroutineScope(Dispatchers.IO)
     private var progressJob: Job? = null
 
-    val prefs: SharedPreferences? by lazy {
+    private val prefs: SharedPreferences? by lazy {
         MyApplication.instance.getSharedPreferences(MyPrefs.PrefDirs.GenericData,MODE_PRIVATE)
     }
 
     var isLoopAllowed:Boolean = false
 
-    var databaseViewmodel : SongsViewModel? = null
+    private var songsVM : SongsViewModel? = null
 
     private var exoPlayer: External_ExoPlayer? = null
     var isPrepared = false
@@ -89,8 +89,8 @@ object myExoPlayer {
 
     @OptIn(UnstableApi::class)
     fun initializePlayer(context: Context, onInilialized:(()-> Unit)? = null) {
-        if(databaseViewmodel == null){
-            databaseViewmodel = SongsViewModel(context)
+        if(songsVM == null){
+            songsVM = SongsViewModel(context)
         }
 
         val songViewModel = SongsViewModel(context)
@@ -123,7 +123,7 @@ object myExoPlayer {
                             _isPlaying.value = isPlaying
 
                             if(isPlaying){
-                                thisViewModel.startUpdates()
+                                progressVM.startUpdates()
                             }
                         }
                     })
@@ -143,14 +143,14 @@ object myExoPlayer {
 
                     val playlist = Playlist.getPlaylist(context,playlistTitle?:"")
 
-                    thisViewModel.forceValue(songPosition)
+                    progressVM.forceValue(songPosition)
 
                     // Start updating the shared prefferences
 
                     progressJob?.cancel()
                     progressJob = ioScope.launch {
 
-                        thisViewModel.progress
+                        progressVM.progress
                             .collect{position->
 
                                 Log.i(Logs.EXOPLAYER.name,"Logged songPos ${position}")
@@ -290,7 +290,7 @@ object myExoPlayer {
 
         // Update song in database if its not null
         song?.let {
-            databaseViewmodel?.updateSong(it)
+            songsVM?.updateSong(it)
         }
 
 
@@ -318,7 +318,7 @@ object myExoPlayer {
                     currentlyPlayingSong.value?.let { currentSong ->
                         val currentId = currentSong.id
 
-                        databaseViewmodel?.viewModelScope?.launch {
+                        songsVM?.viewModelScope?.launch {
 
                             val previousSongUnchecked = playlist.getPreviousId(currentId)
 
@@ -334,7 +334,7 @@ object myExoPlayer {
 
                             previousSongId?.let {
                                 privSetSong(
-                                    song = databaseViewmodel!!.getSongById(it), startOnPrepared = true
+                                    song = songsVM!!.getSongById(it), startOnPrepared = true
                                 )
                             }
                         }
@@ -344,14 +344,14 @@ object myExoPlayer {
                 currentlyPlayingSong.value?.let {currentSong->
                     val currentId = currentSong.id
 
-                    databaseViewmodel?.viewModelScope?.launch {
+                    songsVM?.viewModelScope?.launch {
 
-                        val previousSongUnchecked = databaseViewmodel!!.getPreviousSongById(currentId)
+                        val previousSongUnchecked = songsVM!!.getPreviousSongById(currentId)
 
                         // if allowLoop, then make the next song first if its null. Otheriwse let it be null if its last
                         // song and as such, nothing will play
                         val previousSong =try {
-                            if (allowWrapAround) previousSongUnchecked ?: databaseViewmodel!!.getAllSongsFlow().firstOrNull()?.last()
+                            if (allowWrapAround) previousSongUnchecked ?: songsVM!!.getAllSongsFlow.firstOrNull()?.last()
                             else previousSongUnchecked
                         }catch (ex: NoSuchElementException){
                             null
@@ -390,7 +390,7 @@ object myExoPlayer {
                     currentlyPlayingSong.value?.let {currentSong->
                         val currentId = currentSong.id
 
-                        databaseViewmodel?.viewModelScope?.launch {
+                        songsVM?.viewModelScope?.launch {
 
                             val nextSongIdUnchecked = playlist.getNextId(currentId)
 
@@ -406,7 +406,7 @@ object myExoPlayer {
                             // only play next if next song id is not null
                             nextSongId?.let {
                                 privSetSong(
-                                    song = databaseViewmodel!!.getSongById(it), startOnPrepared = true
+                                    song = songsVM!!.getSongById(it), startOnPrepared = true
                                 )
                             }
 
@@ -418,14 +418,14 @@ object myExoPlayer {
                 currentlyPlayingSong.value?.let {currentSong->
                     val currentId = currentSong.id
 
-                    databaseViewmodel?.viewModelScope?.launch {
+                    songsVM?.viewModelScope?.launch {
 
-                        val nextSongIdUnchecked = databaseViewmodel!!.getNextSongById(currentId)
+                        val nextSongIdUnchecked = songsVM!!.getNextSongById(currentId)
 
                         // if allowLoop, then make the next song first if its null. Otheriwse let it be null if its last
                         // song and as such, nothing will play
                         val nextSong = try {
-                            if (allowLoop) nextSongIdUnchecked ?: databaseViewmodel!!.getAllSongsFlow()
+                            if (allowLoop) nextSongIdUnchecked ?: songsVM!!.getAllSongsFlow
                                 .first().first()
                             else nextSongIdUnchecked
                         }catch (ex: NoSuchElementException){
@@ -487,7 +487,7 @@ object myExoPlayer {
 
 
     fun getCurrentPosition() = exoPlayer?.currentPosition?:0
-    fun getCurrentPositionAsFlow() = thisViewModel
+    fun getCurrentPositionAsFlow() = progressVM
 
 
     /**
@@ -497,7 +497,7 @@ object myExoPlayer {
      * It will need to be reinitialized after calling this function.
      * */
     fun destroy(){
-        thisViewModel.stopUpdates()
+        progressVM.stopUpdates()
         prefs?.edit {
             putCursorValue(MyPrefs._prefs_LastSongPosition,getCurrentPosition())
             putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.value?.id?:-1)

@@ -37,7 +37,7 @@ object AndroidDatabase {
      *
      * On user manually requesting a refresh: With pictures. The user's requests are law
      * */
-    suspend fun doSongsQuery(viewmodel: SongsViewModel?, context:Context, alsoPictures: Boolean = true,  onFinish: (suspend ()->Unit)? = null):Int =
+    suspend fun doSongsQuery(viewmodel: SongsViewModel?, context:Context, alsoPictures: Boolean = true,forceUpdate:Boolean = false,  onFinish: (suspend ()->Unit)? = null):Int =
         withContext(Dispatchers.IO) {
             val contentResolver = context.contentResolver
 
@@ -102,7 +102,7 @@ object AndroidDatabase {
                     val sameSongIfExists = viewmodel?.getSongById(id)
                     newExistings.add(id)
 
-                    if(sameSongIfExists?.lastModified != lastModified || !thumbFILE.exists()) {
+                    if(sameSongIfExists?.lastModified != lastModified || !thumbFILE.exists() || forceUpdate) {
                     if (alsoPictures) {
 
                             val thumbnailBitmap = try {
@@ -153,7 +153,7 @@ object AndroidDatabase {
                 }
 
                 // Delete inexistent items from database
-                viewmodel?.getAllSongsFlow()?.first()?.let {databaseList->
+                viewmodel?.getAllSongsFlow?.first()?.let {databaseList->
 
                     databaseList.forEach {
                         // if the newly written database doesn't contain an old item,
