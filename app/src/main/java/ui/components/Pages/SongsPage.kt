@@ -3,6 +3,7 @@ package ui.components.Pages
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
+import MyViewModels.ListFeedingVM
 import MyViewModels.SongsViewModel
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.MyModalBottomSheet
@@ -121,8 +122,8 @@ fun SongsPage(
     state: LazyListState
 ){
 
-    val curentSortType by SongsViewModel.sortTypeFlow.collectAsState()
-    val curentSortDirection by SongsViewModel.sortDirectionFlow.collectAsState()
+    val curentSortType by ListFeedingVM.SortedSongs.sortTypeFlow.collectAsState()
+    val curentSortDirection by ListFeedingVM.SortedSongs.sortDirectionFlow.collectAsState()
 
 
 
@@ -133,7 +134,7 @@ fun SongsPage(
 
     if(songs.isEmpty()){
 
-        LazyColumn(modifier = modifier, state = state) {
+        LazyColumn(modifier = modifier) {
 
             item("header") {
                 SongsSortHeader(songs)
@@ -150,11 +151,11 @@ fun SongsPage(
                         SongsSort_Content(
                             currentType = curentSortType,
                             currentDirection = curentSortDirection,
-                            sortTypeOptions = SongsViewModel.sortTypeOptions,
-                            sortDirectionOptions = SongsViewModel.sortDirectionOptions,
+                            sortTypeOptions = ListFeedingVM.SortedSongs.sortTypeOptions,
+                            sortDirectionOptions = ListFeedingVM.SortedSongs.sortDirectionOptions,
                             onConfirm = { type, direction->
-                                SongsViewModel.setSortType(type)
-                                SongsViewModel.setSortDirection(direction)
+                                ListFeedingVM.SortedSongs.setSortType(type)
+                                ListFeedingVM.SortedSongs.setSortDirection(direction)
 
                                 prefs.edit {
                                     putCursorValue(MyPrefs._prefs_globalSongsSortType,type)

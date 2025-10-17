@@ -78,15 +78,7 @@ fun PlaylistsPage(
 
 
 
-    // Try to get the playlists if there isn't any loaded in memory
-    LaunchedEffect(Unit) {
-        if(playlists.isEmpty()){
 
-            playlistViewModel.updateList(contextRef)
-            playlistViewModel.startWatchingFolder()
-
-        }
-    }
 
 
 

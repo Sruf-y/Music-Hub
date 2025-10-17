@@ -6,18 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class SongRepository(private val dao: SongDao,coroutineScope: CoroutineScope) {
-
-//    private val _allSongsStateFlow = MutableStateFlow<List<Song>>(emptyList<Song>())
-//    val allSongsStateFlow: StateFlow<List<Song>> = _allSongsStateFlow
-
-    init {
-//        coroutineScope.launch {
-//            dao.getAllSongs().collect {songs->
-//                _allSongsStateFlow.value = songs
-//            }
-//        }
-    }
+class SongRepository(private val dao: SongDao) {
 
     val allsongsFlow: Flow<List<Song>> = dao.getAllSongs()
 

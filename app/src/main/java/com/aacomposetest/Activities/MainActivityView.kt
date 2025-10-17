@@ -3,6 +3,7 @@ package com.aacomposetest.Activities
 import AppDatabase.PlaylistRelated.Playlist
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
+import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistViewModel
 import MyViewModels.SongsViewModel
 import SrufComposeComponents.MyModalBottomSheet
@@ -41,6 +42,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -194,6 +197,9 @@ class MainActivityView : ComponentActivity() {
 
 
 
+        /**
+         * Global settings BottomSheet
+         * */
         MyModalBottomSheet(
             viewModel = bottomSheetViewmodel,
             sheetState = modalSettingsSheetState,
@@ -365,9 +371,9 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
         firstVisibleItemScrollOffset = prefs.getInt(MyPrefs._prefs_playlistsListState_Offset.name,0)) }
 
 
-    val allsongs by songViewModel.getAllSongsFlow.map { list -> list.map { it.copy() } }.collectAsState(initial = emptyList())
-    val sortedAllSongs by songViewModel.getSortedSongsStateFlow.map { list -> list.map { it.copy() } }.collectAsState(initial = emptyList())
-    val allPlaylists by playlistViewmodel.allPlaylists.collectAsState(initial = ArrayList())
+    val allsongs by ListFeedingVM.allSongs.map { list -> list.map { it.copy() } }.collectAsState(initial = emptyList())
+    val sortedAllSongs by ListFeedingVM.SortedSongs.sortedAndFilteredSongsFlow.map { list -> list.map { it.copy() } }.collectAsState(initial = emptyList())
+    val allPlaylists by ListFeedingVM.SortedPlaylists.filteredPlaylists.collectAsState(initial = emptyList())
 
 
 
@@ -377,403 +383,411 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
      *
      * THIS EXCLUDES: Other Activities, Notifications, Widgets etc that are not inside the Main Activity View
      * */
-    Surface(
+    Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .navigationBarsPadding()
             .displayCutoutPadding()
-            .systemBarsPadding()
+            .systemBarsPadding(),
+        topBar = {
 
-    ) {
-        val scope = rememberCoroutineScope()
-
-        // Save scroll position for the [All Songs] page
-        LaunchedEffect(songsListState) {
-            snapshotFlow {
-                songsListState.firstVisibleItemIndex to songsListState.firstVisibleItemScrollOffset
-            }
-                .debounce(500L)
-                .collectLatest { (firstItem, offset) ->
-                    prefs.edit {
-                        putCursorValue(MyPrefs._prefs_songListstate_FirstItem, firstItem)
-                        putCursorValue(MyPrefs._prefs_songListState_Offset, offset)
-                    }
-                }
         }
-        // Save scroll position for the [All Playlists] page
-        LaunchedEffect(playlistsListState) {
-            snapshotFlow {
-                playlistsListState.firstVisibleItemIndex to playlistsListState.firstVisibleItemScrollOffset
-            }
-                .debounce(500L)
-                .collectLatest { (firstItem, offset) ->
-                    prefs.edit {
-                        putInt(MyPrefs._prefs_playlistsListState_FirstItem.name, firstItem)
-                        putInt(MyPrefs._prefs_playlistsListState_Offset.name, offset)
-                    }
-                }
-        }
-
-
-
-
-        val songPlayerBottomSheetAlpha = remember { Animatable(1f) }
-        val SongBottomSheetPeek = SheetDetent("Peek") { containerHeight, sheetHeight ->
-            //containerHeight*0.2f
-
-            peekHeight
-        }
-        val songPlayerBottomSheetState = rememberBottomSheetState(
-            initialDetent = SongBottomSheetPeek,
-            detents = listOf(SongBottomSheetPeek, SheetDetent.FullyExpanded)
-        )
-
-
-
-
-
-        val dest_PrimaryPager = "SongsPager"
-        val dest_PlaylistViewing = "playlistViewing"
-        val dest_AddSongsToPlaylist = "playlistAddSongs"
-
-
-
-        fun NavGraphBuilder.appGraph(navController: NavHostController){
-            MyDestination(dest_PrimaryPager) {
-
-                val pageNumberArg = "pageNumber"
-
-
-
-                composable(
-                    route = "${dest_PrimaryPager}?{${pageNumberArg}}",
-                    arguments = listOf(navArgument(pageNumberArg) {
-                        type = NavType.IntType
-                        defaultValue = -1
-                    })
-                ) { backStack ->
-
-
-                    val pageNumber =
-                        backStack.arguments?.getInt(pageNumberArg).takeIf{
-                            (it?:-1)>=0
-                        }?:(prefs.getCursorValue(MyPrefs._prefs_PagerPosition,0))
-
-                    var pagerTitles by remember { mutableStateOf(listOf("Songs","Playlists")) }
-                    var pagerState = rememberPagerState(initialPage = pageNumber ,pageCount = { pagerTitles.size })
-                    val pagerTabs by remember { mutableStateOf(
-                        listOf(
-                            MyPagerTab(
-                                title = pagerTitles[0],
-                                content = {
-
-                                    SongsRefreshPage(
-                                        prefs = prefs,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(bottom = peekHeight),
-                                        songs = sortedAllSongs,
-                                        exoPlayerVM = exoPlayerVM,
-                                        listState = songsListState,
-                                        isRefreshing = isRefreshing,
-                                        settingsBottomSheetVM = globalBottomSheetVM,
-                                        songsVM = songViewModel,
-                                        onRefresh = {
-                                            isRefreshing.value = true
-                                            manualMediaPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
-                                        }
-                                    )
-                                }
-                            ),
-                            MyPagerTab(
-                                title = pagerTitles[1],
-                                content = {
-                                    val playlistsPageMoreMenuState by remember { mutableStateOf(false) }
-
-                                    PlaylistsPage(
-                                        playlists = allPlaylists,
-                                        state = playlistsListState,
-                                        playlistViewModel = playlistViewmodel,
-                                        onPlaylistClick = {
-                                            navController.navigate("$dest_PlaylistViewing/${it.title}") {
-                                                launchSingleTop = true
-                                                restoreState = true
-                                            }
-                                        },
-                                        onPlusClick = {
-                                            globalBottomSheetVM
-                                                .show { isFocusHeld ->
-                                                    PlaylistAddOrEdit_Content(
-                                                        allPlaylists,
-                                                        bottomSheetVM = globalBottomSheetVM,
-                                                        isFocusHeld = isFocusHeld
-                                                    )
-                                                }
-                                        },
-                                        onPlaylistOptionsClick = { playlist, menuIsOpen ->
-                                            DropdownMenu(
-                                                expanded = menuIsOpen.value,
-                                                onDismissRequest = { menuIsOpen.value = false }
-                                            ) {
-
-
-                                                DropdownMenuItem(
-                                                    text = { Text("Delete") },
-                                                    onClick = {
-
-                                                        globalBottomSheetVM
-                                                            .show {
-                                                                PlaylistDelete_Content(
-                                                                    playlist = playlist,
-                                                                    bottomSheetVM = globalBottomSheetVM,
-                                                                    playlistViewModel = playlistViewmodel
-                                                                )
-                                                            }
-
-                                                        menuIsOpen.value = false
-                                                    }
-                                                )
-
-                                            }
-
-                                        }
-                                    )
-                                }
-                            )
-                        )
-                    ) }
-
-
-                    // Save current page
-                    LaunchedEffect(pagerState.currentPage) {
-
-                        prefs.edit() {
-                            putInt(
-                                MyPrefs._prefs_PagerPosition.name,
-                                pagerState.currentPage
-                            )
-
-                        }
-                    }
-
-
-
-                    PagerView(
-                        pagerState = pagerState,
-                        tabs = pagerTabs
-                    )
-
-
-                }
-            }.composable.invoke(this)
-
-            MyDestination(dest_PlaylistViewing) {
-
-
-                val playlistTitleArg = "playlistTitle"
-                composable(
-                    route = "${dest_PlaylistViewing}/{${playlistTitleArg}}",
-                    arguments = listOf(navArgument(playlistTitleArg) {
-                        type = NavType.StringType
-                    })
-                ) { backStack ->
-
-                    val playlistTitle =
-                        backStack.arguments?.getString(
-                            playlistTitleArg
-                        )
-                            ?: ""
-
-                    val playlistViewingLazyListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
-
-
-                    PlaylistViewing(
-                        playlistTitle = playlistTitle,
-                        lazyListState = playlistViewingLazyListState,
-                        playlistVM = playlistViewmodel,
-                        exoPlayerVM = exoPlayerVM,
-                        onBack = {
-                            navController.popBackStack()
-                        },
-                        songs = allsongs,
-                        bottomPadding = peekHeight,
-                        plusButtonClick = {
-                            navController.navigate("$dest_AddSongsToPlaylist/$playlistTitle") {
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
-
-                }
-            }.composable.invoke(this)
-
-            MyDestination(dest_AddSongsToPlaylist) {
-                // Destination PlaylistAddSongs
-
-                val playlistTitleArg = "playlistTitle"
-                composable(
-                    route = "${dest_AddSongsToPlaylist}/{${playlistTitleArg}}",
-                    arguments = listOf(navArgument(playlistTitleArg) {
-                        type = NavType.StringType
-                    }),
-                    enterTransition = {
-
-                        slideIntoContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Up,
-                            animationSpec = tween(500, easing = EaseInOutElastic)
-                        )
-                    },// page is navigated TO normally
-                    popExitTransition = {
-
-                        slideOutOfContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Down,
-                            animationSpec = tween(500)
-                        )
-                    },
-                ) { backStack ->
-
-                    val playlistTitle =
-                        backStack.arguments?.getString(
-                            playlistTitleArg
-                        )
-                            ?: ""
-
-                    LaunchedEffect(Unit) {
-                        scope.launch {
-                            songPlayerBottomSheetAlpha.animateTo(
-                                0f,
-                                animationSpec = tween(500)
-                            )
-                        }
-                    }
-
-                    val addsongstoplaylistState =
-                        rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
-
-                    val onBack = {
-                        scope.launch(Dispatchers.Main) {
-                            songPlayerBottomSheetAlpha.animateTo(
-                                1f,
-                                animationSpec = tween(500)
-                            )
-                        }
-                        navController.popBackStack()
-                    }
-
-                    AddSongsToPlaylistPage(
-                        lazyListState = addsongstoplaylistState,
-                        playlistTitle = playlistTitle,
-                        allSongs = allsongs,
-                        navController = navController,
-                        onConfirm = { finalList ->
-
-                            scope.launch(Dispatchers.IO) {
-                                val playlist =
-                                    Playlist.getPlaylist(contextRef, playlistTitle)
-
-                                playlist?.songsIdList?.apply {
-
-
-                                    removeAll(finalList.filter { it -> !it.isChecked.value }
-                                        .map { it -> it.item.id })
-
-                                    finalList.filter { it -> it.isChecked.value }
-                                        .map { it -> it.item.id }.let { mappedList ->
-
-
-                                            addAll(mappedList.filter { it ->
-                                                !this.contains(
-                                                    it
-                                                )
-                                            })
-                                        }
-
-                                }
-
-
-
-                                playlist?.save(contextRef) {
-                                    onBack.invoke()
-                                }
-
-
-                            }
-
-                        },
-                        onBack = {
-                            onBack.invoke()
-                        }
-                    )
-                }
-            }.composable.invoke(this)
-        }
-
-
-
-
-
-
-
-
-
-
-
-        /**
-         * Manages navigation inside the [Main Pager] container.
-         * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
-         * */
-        NavHost(
-            navController = navController,
-            startDestination =  dest_PrimaryPager,
-            enterTransition = {
-
-                slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(300)
-                )
-            },// page is navigated TO normally
-            popExitTransition = {
-
-                slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(300)
-                )
-            },// page is navigated FROM by popBackStack() (returning FROM the page to the previous one)
-            popEnterTransition = {
-
-                EnterTransition.None
-            },// page is being returned to by the above page animating away
-            exitTransition = {
-
-                ExitTransition.None
-            },// page stays back while another page is animated above
-
+    ) { innerPadding ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues = innerPadding)
         ) {
+            val scope = rememberCoroutineScope()
 
-            this.appGraph(navController)
+            // Save scroll position for the [All Songs] page
+            LaunchedEffect(songsListState) {
+                snapshotFlow {
+                    songsListState.firstVisibleItemIndex to songsListState.firstVisibleItemScrollOffset
+                }
+                    .debounce(500L)
+                    .collectLatest { (firstItem, offset) ->
+                        prefs.edit {
+                            putCursorValue(MyPrefs._prefs_songListstate_FirstItem, firstItem)
+                            putCursorValue(MyPrefs._prefs_songListState_Offset, offset)
+                        }
+                    }
+            }
+            // Save scroll position for the [All Playlists] page
+            LaunchedEffect(playlistsListState) {
+                snapshotFlow {
+                    playlistsListState.firstVisibleItemIndex to playlistsListState.firstVisibleItemScrollOffset
+                }
+                    .debounce(500L)
+                    .collectLatest { (firstItem, offset) ->
+                        prefs.edit {
+                            putInt(MyPrefs._prefs_playlistsListState_FirstItem.name, firstItem)
+                            putInt(MyPrefs._prefs_playlistsListState_Offset.name, offset)
+                        }
+                    }
+            }
 
+
+            val songPlayerBottomSheetAlpha = remember { Animatable(1f) }
+            val SongBottomSheetPeek = SheetDetent("Peek") { containerHeight, sheetHeight ->
+                //containerHeight*0.2f
+
+                peekHeight
+            }
+            val songPlayerBottomSheetState = rememberBottomSheetState(
+                initialDetent = SongBottomSheetPeek,
+                detents = listOf(SongBottomSheetPeek, SheetDetent.FullyExpanded)
+            )
+
+
+            val dest_PrimaryPager = "SongsPager"
+            val dest_PlaylistViewing = "playlistViewing"
+            val dest_AddSongsToPlaylist = "playlistAddSongs"
+
+
+            fun NavGraphBuilder.appGraph(navController: NavHostController) {
+
+
+                MyDestination(dest_PrimaryPager) {
+
+                    val pageNumberArg = "pageNumber"
+
+
+
+                    composable(
+                        route = "${dest_PrimaryPager}?{${pageNumberArg}}",
+                        arguments = listOf(navArgument(pageNumberArg) {
+                            type = NavType.IntType
+                            defaultValue = -1
+                        })
+                    ) { backStack ->
+
+
+                        val pageNumber =
+                            backStack.arguments?.getInt(pageNumberArg).takeIf {
+                                (it ?: -1) >= 0
+                            } ?: (prefs.getCursorValue(MyPrefs._prefs_PagerPosition, 0))
+
+                        var pagerTitles by remember { mutableStateOf(listOf("Songs", "Playlists")) }
+                        var pagerState = rememberPagerState(
+                            initialPage = pageNumber,
+                            pageCount = { pagerTitles.size })
+                        val pagerTabs by remember {
+                            mutableStateOf(
+                                listOf(
+                                    MyPagerTab(
+                                        title = pagerTitles[0],
+                                        content = {
+
+                                            SongsRefreshPage(
+                                                prefs = prefs,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .padding(bottom = peekHeight),
+                                                songs = sortedAllSongs,
+                                                exoPlayerVM = exoPlayerVM,
+                                                listState = songsListState,
+                                                isRefreshing = isRefreshing,
+                                                settingsBottomSheetVM = globalBottomSheetVM,
+                                                songsVM = songViewModel,
+                                                onRefresh = {
+                                                    isRefreshing.value = true
+                                                    manualMediaPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
+                                                }
+                                            )
+                                        }
+                                    ),
+                                    MyPagerTab(
+                                        title = pagerTitles[1],
+                                        content = {
+                                            val playlistsPageMoreMenuState by remember {
+                                                mutableStateOf(
+                                                    false
+                                                )
+                                            }
+
+                                            PlaylistsPage(
+                                                playlists = allPlaylists,
+                                                state = playlistsListState,
+                                                playlistViewModel = playlistViewmodel,
+                                                onPlaylistClick = {
+                                                    navController.navigate("$dest_PlaylistViewing/${it.title}") {
+                                                        launchSingleTop = true
+                                                        restoreState = true
+                                                    }
+                                                },
+                                                onPlusClick = {
+                                                    globalBottomSheetVM
+                                                        .show { isFocusHeld ->
+                                                            PlaylistAddOrEdit_Content(
+                                                                allPlaylists,
+                                                                bottomSheetVM = globalBottomSheetVM,
+                                                                isFocusHeld = isFocusHeld
+                                                            )
+                                                        }
+                                                },
+                                                onPlaylistOptionsClick = { playlist, menuIsOpen ->
+                                                    DropdownMenu(
+                                                        expanded = menuIsOpen.value,
+                                                        onDismissRequest = {
+                                                            menuIsOpen.value = false
+                                                        }
+                                                    ) {
+
+
+                                                        DropdownMenuItem(
+                                                            text = { Text("Delete") },
+                                                            onClick = {
+
+                                                                globalBottomSheetVM
+                                                                    .show {
+                                                                        PlaylistDelete_Content(
+                                                                            playlist = playlist,
+                                                                            bottomSheetVM = globalBottomSheetVM,
+                                                                            playlistViewModel = playlistViewmodel
+                                                                        )
+                                                                    }
+
+                                                                menuIsOpen.value = false
+                                                            }
+                                                        )
+
+                                                    }
+
+                                                }
+                                            )
+                                        }
+                                    )
+                                )
+                            )
+                        }
+
+
+                        // Save current page
+                        LaunchedEffect(pagerState.currentPage) {
+
+                            prefs.edit() {
+                                putInt(
+                                    MyPrefs._prefs_PagerPosition.name,
+                                    pagerState.currentPage
+                                )
+
+                            }
+                        }
+
+
+
+                        PagerView(
+                            pagerState = pagerState,
+                            tabs = pagerTabs
+                        )
+
+
+                    }
+                }.composable.invoke(this)
+
+                MyDestination(dest_PlaylistViewing) {
+
+
+                    val playlistTitleArg = "playlistTitle"
+                    composable(
+                        route = "${dest_PlaylistViewing}/{${playlistTitleArg}}",
+                        arguments = listOf(navArgument(playlistTitleArg) {
+                            type = NavType.StringType
+                        })
+                    ) { backStack ->
+
+                        val playlistTitle =
+                            backStack.arguments?.getString(
+                                playlistTitleArg
+                            )
+                                ?: ""
+
+                        val playlistViewingLazyListState =
+                            rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+
+
+                        PlaylistViewing(
+                            playlistTitle = playlistTitle,
+                            lazyListState = playlistViewingLazyListState,
+                            playlistVM = playlistViewmodel,
+                            exoPlayerVM = exoPlayerVM,
+                            onBack = {
+                                navController.popBackStack()
+                            },
+                            songs = allsongs,
+                            bottomPadding = peekHeight,
+                            plusButtonClick = {
+                                navController.navigate("$dest_AddSongsToPlaylist/$playlistTitle") {
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                        )
+
+                    }
+                }.composable.invoke(this)
+
+                MyDestination(dest_AddSongsToPlaylist) {
+                    // Destination PlaylistAddSongs
+
+                    val playlistTitleArg = "playlistTitle"
+                    composable(
+                        route = "${dest_AddSongsToPlaylist}/{${playlistTitleArg}}",
+                        arguments = listOf(navArgument(playlistTitleArg) {
+                            type = NavType.StringType
+                        }),
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Up,
+                                animationSpec = tween(500, easing = EaseInOutElastic)
+                            )
+                        },// page is navigated TO normally
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Down,
+                                animationSpec = tween(500)
+                            )
+                        },
+                    ) { backStack ->
+
+                        val playlistTitle =
+                            backStack.arguments?.getString(
+                                playlistTitleArg
+                            )
+                                ?: ""
+
+                        LaunchedEffect(Unit) {
+                            scope.launch {
+                                songPlayerBottomSheetAlpha.animateTo(
+                                    0f,
+                                    animationSpec = tween(500)
+                                )
+                            }
+                        }
+
+                        val addsongstoplaylistState =
+                            rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+
+                        val onBack = {
+                            scope.launch(Dispatchers.Main) {
+                                songPlayerBottomSheetAlpha.animateTo(
+                                    1f,
+                                    animationSpec = tween(500)
+                                )
+                            }
+                            navController.popBackStack()
+                        }
+
+                        AddSongsToPlaylistPage(
+                            lazyListState = addsongstoplaylistState,
+                            playlistTitle = playlistTitle,
+                            allSongs = allsongs,
+                            navController = navController,
+                            onConfirm = { finalList ->
+
+                                scope.launch(Dispatchers.IO) {
+                                    val playlist =
+                                        Playlist.getPlaylist(contextRef, playlistTitle)
+
+                                    playlist?.songsIdList?.apply {
+
+
+                                        removeAll(finalList.filter { it -> !it.isChecked.value }
+                                            .map { it -> it.item.id })
+
+                                        finalList.filter { it -> it.isChecked.value }
+                                            .map { it -> it.item.id }.let { mappedList ->
+
+
+                                                addAll(mappedList.filter { it ->
+                                                    !this.contains(
+                                                        it
+                                                    )
+                                                })
+                                            }
+
+                                    }
+
+
+
+                                    playlist?.save(contextRef) {
+                                        onBack.invoke()
+                                    }
+
+
+                                }
+
+                            },
+                            onBack = {
+                                onBack.invoke()
+                            }
+                        )
+                    }
+                }.composable.invoke(this)
+            }
+
+
+            /**
+             * Manages navigation inside the [Main Pager] container.
+             * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
+             * */
+
+            NavHost(
+                navController = navController,
+                startDestination = dest_PrimaryPager,
+                enterTransition = {
+
+                    slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },// page is navigated TO normally
+                popExitTransition = {
+
+                    slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                },// page is navigated FROM by popBackStack() (returning FROM the page to the previous one)
+                popEnterTransition = {
+
+                    EnterTransition.None
+                },// page is being returned to by the above page animating away
+                exitTransition = {
+
+                    ExitTransition.None
+                },// page stays back while another page is animated above
+
+            ) {
+
+                this.appGraph(navController)
+
+
+            }
+
+
+            /**
+             * Bottom sheet can be "Enabled" or "Disabled" by controlling this value, which is also attached to its alpha for propper animation
+             * */
+            if (songPlayerBottomSheetAlpha.value > 0f) {
+                SongPlayingBottomSheet(
+                    modifier = Modifier
+                        .alpha(songPlayerBottomSheetAlpha.value)
+                        .fillMaxWidth()
+                        .height(expandedHeight),
+                    sheetstate = songPlayerBottomSheetState,
+                    backgroundColor = Theme.colorScheme().onBackground,
+                    shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
+                    expandedHeight = expandedHeight,
+                    peekHeight = peekHeight,
+                    exoPlayerVM = exoPlayerVM,
+
+                    )
+            }
         }
-
-
-        /**
-         * Bottom sheet can be "Enabled" or "Disabled" by controlling this value, which is also attached to its alpha for propper animation
-         * */
-        if (songPlayerBottomSheetAlpha.value > 0f)
-            SongPlayingBottomSheet(
-                modifier = Modifier
-                    .alpha(songPlayerBottomSheetAlpha.value)
-                    .fillMaxWidth()
-                    .height(expandedHeight),
-                sheetstate = songPlayerBottomSheetState,
-                backgroundColor = Theme.colorScheme().onBackground,
-                shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
-                expandedHeight = expandedHeight,
-                peekHeight = peekHeight,
-                exoPlayerVM = exoPlayerVM,
-
-                )
-
     }
 }
 

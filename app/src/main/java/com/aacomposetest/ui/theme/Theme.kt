@@ -42,10 +42,8 @@ fun ComposeTestTheme(forceDarkMode:Boolean = false,
     content: @Composable () -> Unit
 ) {
 
-    val colorScheme = if(isSystemInDarkTheme() || forceDarkMode) DarkColorScheme else LightColorScheme
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = if(isSystemInDarkTheme() || forceDarkMode) DarkColorScheme else LightColorScheme,
         typography = Typography,
         content = content
     )

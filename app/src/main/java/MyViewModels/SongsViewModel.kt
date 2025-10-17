@@ -27,39 +27,14 @@ import kotlin.getValue
 class SongsViewModel(context: Context): ViewModel() {
 
     private val dao = MyDatabaseProvider.getDatabase(context).songDao()
-    private val repo = SongRepository(dao,viewModelScope)
-
-
-
-
-
+    private val repo = SongRepository(dao)
 
 
 
     val getAllSongsFlow: Flow<List<Song>> = repo.allsongsFlow.map { list -> list.map { it.copy() } }
 
-    val getSortedSongsStateFlow: Flow<List<Song>> =
-        combine(
-            getAllSongsFlow,
-            sortTypeFlow,
-            sortDirectionFlow
-        ) { songs, type, direction ->
-            when (type) {
-                sortTypeOptions[0] -> songs.sortedBy { it.id }
-                sortTypeOptions[1] -> songs.sortedBy { it.title }
-                sortTypeOptions[2] -> songs.sortedBy { it.artistName }
-                sortTypeOptions[3] -> songs.sortedBy { it.duration }
-                else -> songs.sortedBy { it.id }
-            }.let {sortedList->
-                if (direction == sortDirectionOptions[0]) sortedList.reversed() else sortedList
-            }
-
-        }.stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            emptyList()
-        )
-
+    private val getSortedSongsStateFlow
+        get() = ListFeedingVM.SortedSongs.sortedAndFilteredSongsFlow
 
 
     fun insertSong(song: Song){
@@ -165,30 +140,6 @@ class SongsViewModel(context: Context): ViewModel() {
 
     }
 
-    companion object{
-        private val prefs by lazy {
-            MyApplication.instance.applicationContext.getSharedPreferences(MyPrefs.PrefDirs.GenericData, Context.MODE_PRIVATE)
-        }
-
-        val sortTypeOptions = listOf<String>("DateAdded","Title","Artist","Length")
-        val sortDirectionOptions = listOf<String>("Descending","Ascending")
-
-
-        private val _sortTypeFlow = MutableStateFlow(prefs.getCursorValue(MyPrefs._prefs_globalSongsSortType,sortTypeOptions.first()))
-        val sortTypeFlow: StateFlow<String> = _sortTypeFlow.asStateFlow()
-        fun setSortType(type:String){
-            _sortTypeFlow.value = type
-
-        }
-
-        private val _sortDirectionFlow = MutableStateFlow(
-            prefs.getCursorValue(MyPrefs._prefs_globalSongsSortDirection, sortDirectionOptions.first())
-        )
-        val sortDirectionFlow: StateFlow<String> = _sortDirectionFlow.asStateFlow()
-        fun setSortDirection(direction:String){
-            _sortDirectionFlow.value = direction
-        }
-    }
 
 
 }

@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -73,7 +74,11 @@ fun PlaylistViewing(
     val contextRef = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var playlist by remember { mutableStateOf(Playlist.getPlaylist(contextRef,playlistTitle)) }
+    var playlist by remember { mutableStateOf<Playlist?>(null) }
+
+    LaunchedEffect(playlistTitle) {
+        playlist = Playlist.getPlaylist(contextRef,playlistTitle)
+    }
 
     val currentlyPlayingSong by exoPlayerVM.currentSong.collectAsState()
 
@@ -97,9 +102,10 @@ fun PlaylistViewing(
             scope.launch {
                 playlist = Playlist.getPlaylist(contextRef,playlist?.title?:"")
 
-                if(playlist == null){
-                   onBack.invoke()
-                }
+                // I will NOT invoke onBack. This is in order to let the user know what has gone wrong
+//                if(playlist == null){
+//                   onBack.invoke()
+//                }
             }
         }
     }
@@ -134,10 +140,8 @@ fun PlaylistViewing(
             {
                 LazyColumn(modifier = Modifier
                     .fillMaxSize(),
-                    state = lazyListState,
                     contentPadding = PaddingValues(bottom = bottomPadding)
-                )
-                {
+                ) {
 
                     item(key = "PlaylistIcon") {
                         Box(
@@ -219,8 +223,7 @@ fun PlaylistViewing(
                         .fillMaxSize(),
                     state = lazyListState,
                     contentPadding = PaddingValues(bottom = bottomPadding)
-                )
-                {
+                ) {
 
 
                     item(key = "PlaylistIcon") {

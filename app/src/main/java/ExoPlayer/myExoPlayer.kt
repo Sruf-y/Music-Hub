@@ -2,6 +2,7 @@ package ExoPlayer
 
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
+import ExoPlayer.myExoPlayer.prefs
 import MyViewModels.DataObserverViewModel
 import MyViewModels.SongsViewModel
 import android.content.Context
@@ -40,9 +41,15 @@ object myExoPlayer {
     private val _isInitialized = MutableStateFlow<Boolean>(value = false)
     val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
 
+    private var ioScope = CoroutineScope(Dispatchers.IO)
+    private var progressJob: Job? = null
+
+    private val prefs: SharedPreferences? = MyApplication.instance.getSharedPreferences(MyPrefs.PrefDirs.GenericData,MODE_PRIVATE)
+
+
     private val progressVM = DataObserverViewModel<Long>(
         delayMillis = 250,
-        initialValue = 0,
+        initialValue = prefs?.getCursorValue(MyPrefs._prefs_LastSongPosition, 0) ?: 0,
         observingFunction = {
             val currentPos = myExoPlayer.getCurrentPosition()
             val duration = myExoPlayer.currentlyPlayingSong.value?.duration ?: 0
@@ -57,13 +64,6 @@ object myExoPlayer {
         }
     )
 
-
-    private var ioScope = CoroutineScope(Dispatchers.IO)
-    private var progressJob: Job? = null
-
-    private val prefs: SharedPreferences? by lazy {
-        MyApplication.instance.getSharedPreferences(MyPrefs.PrefDirs.GenericData,MODE_PRIVATE)
-    }
 
     var isLoopAllowed:Boolean = false
 
@@ -145,6 +145,8 @@ object myExoPlayer {
 
                     progressVM.forceValue(songPosition)
 
+                    _currentSong.value = song
+
                     // Start updating the shared prefferences
 
                     progressJob?.cancel()
@@ -218,6 +220,7 @@ object myExoPlayer {
     private fun privSetSong(song: Song?, startOnPrepared:Boolean=true,throwErrorOnError: Boolean = false) {
 
         val lastSong = currentlyPlayingSong
+
         exoPlayer?.let { player ->
             try {
                 song?.let {

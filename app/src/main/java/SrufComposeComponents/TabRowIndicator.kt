@@ -63,7 +63,8 @@ fun TabRowIndicator(tabPositions:List<TabPosition>, pagerState: PagerState, sepa
     Box(modifier = Modifier
         .offset(x = indicatorStart)
         .wrapContentSize(align = Alignment.BottomStart)
-        .fillMaxHeight(0.2f)
+        .fillMaxHeight(0.1f)
+        .padding(bottom = separatorHeight)
         .width(indicatorEnd-indicatorStart)
         .onGloballyPositioned{
             rect = it.boundsInParent()

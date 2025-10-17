@@ -11,22 +11,7 @@ import kotlinx.coroutines.launch
 
 class ExoPlayerViewModel() : ViewModel() {
 
-    val progressVM = DataObserverViewModel<Long>(
-        delayMillis = 250,
-        initialValue = 0,
-        observingFunction = {
-            val currentPos = myExoPlayer.getCurrentPosition()
-            val duration = myExoPlayer.currentlyPlayingSong.value?.duration ?: 0
-
-            val progress = if (duration > 0) {
-                currentPos
-            } else {
-                0
-            }
-
-            progress
-        }
-    )
+    val progressVM = myExoPlayer.getCurrentPositionAsFlow()
     /**
      * Null playlist = plays songs in the default order of MediaStore
      *

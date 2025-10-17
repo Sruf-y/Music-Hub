@@ -2,19 +2,11 @@ package ui.components.BottomSheets
 
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
-import ExoPlayer.myExoPlayer
 import SrufComposeComponents.Text
 import android.text.format.DateUtils
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,9 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,7 +43,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.pointerInteropFilter
@@ -72,10 +61,7 @@ import com.composables.core.BottomSheet
 import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.last
 import ui.components.ProgressBar
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -158,12 +144,19 @@ fun SongPlayingBottomSheet(
 
             val currentSong:Song? by exoPlayerVM.currentSong.collectAsState()
             val currentPosition by exoPlayerVM.currentProgress.collectAsState()
-
-
-            val sliderPosition = remember { mutableStateOf(currentPosition / (currentSong?.duration?.toFloat()?:1f)) }
-
+            val duration by remember(currentSong) { derivedStateOf { currentSong?.duration ?: 1 } }
 
             val isPlaying by exoPlayerVM.isPlaying.collectAsState()
+            val sliderPositionCalculated by remember(duration,currentSong) {
+                derivedStateOf {
+                    currentPosition.toFloat() / (duration.toFloat())
+                }
+            }
+            val sliderPosition = remember { mutableFloatStateOf(
+
+                sliderPositionCalculated
+            ) }
+
 
 
             val alpha =
@@ -177,6 +170,15 @@ fun SongPlayingBottomSheet(
             val difference by remember { mutableFloatStateOf((expandedHeight.value/2-peekHeight.value/(if(centerPictureToMiddle)2 else 1))) }
             // middle would be if both members of the equation were divided by 2, but the middle does create some flickers.
 
+
+            val isUserDragging = remember { mutableStateOf(false) }
+
+            // Keep slider following playback only if user is not dragging
+            LaunchedEffect(currentPosition, isUserDragging) {
+                if (!isUserDragging.value && (currentSong?.duration?:0) > 0) {
+                    sliderPosition.floatValue = currentPosition.toFloat() / (currentSong?.duration?:0).toFloat()
+                }
+            }
 
             ScalingBackground(
                 modifier = Modifier
@@ -192,10 +194,11 @@ fun SongPlayingBottomSheet(
                 modifier = Modifier
                     .alpha(alpha),
                 currentSong = currentSong,
-                currentPosition = currentPosition,
                 sliderPosition = sliderPosition,
                 disabled = alpha<1f,
-                isPlaying = isPlaying
+                isPlaying = isPlaying,
+                isUserDragging = isUserDragging,
+                duration = duration
             )
 
             PeekPlayer(
@@ -217,9 +220,11 @@ private fun ExpandedPlayer(
     modifier: Modifier,
     exoPlayerVM: ExoPlayerViewModel?= null,
     currentSong: Song?,
-    currentPosition: Long,
     isPlaying:Boolean,
-    sliderPosition: MutableState<Float>){
+    sliderPosition: MutableState<Float>,
+    isUserDragging: MutableState<Boolean>,
+    duration: Long
+){
 
     val iconsSize = 100.dp
 
@@ -272,9 +277,9 @@ private fun ExpandedPlayer(
 
             SongSeekBar(modifier = Modifier.weight(1f),
                 exoPlayerVM = exoPlayerVM,
-                currentSong = currentSong,
-                currentPosition = currentPosition,
-                sliderPosition = sliderPosition
+                sliderPosition = sliderPosition,
+                isUserDragging = isUserDragging,
+                duration = duration
             )
 
 
@@ -397,33 +402,15 @@ private fun ScalingBackground(
 private fun SongSeekBar(
     modifier:Modifier,
     exoPlayerVM: ExoPlayerViewModel?= null,
-    currentSong: Song?,
-    currentPosition:Long,
     /**
      *Value is to be between 0f and 1f
      * */
-    sliderPosition: MutableState<Float>
+    sliderPosition: MutableState<Float>,
+    isUserDragging: MutableState<Boolean>,
+    duration: Long
 ) {
-    val duration = currentSong?.duration ?: 0L
 
 
-
-    var isUserDragging by remember { mutableStateOf(false) }
-
-    // Keep slider following playback only if user is not dragging
-    LaunchedEffect(currentPosition, isUserDragging) {
-        if (!isUserDragging && duration > 0) {
-            sliderPosition.value = currentPosition.toFloat() / duration.toFloat()
-        }
-
-
-    }
-
-    LaunchedEffect(duration) {
-        if (!isUserDragging && duration > 0) {
-            sliderPosition.value = 0f
-        }
-    }
 
 
 
@@ -441,21 +428,15 @@ private fun SongSeekBar(
             onValueChange = { newValue ->
 
                 exoPlayerVM?.progressVM?.stopUpdates()
-                isUserDragging = true
+                isUserDragging.value = true
 
                 sliderPosition.value = newValue
-
-
-
-
             },
             onValueChangeFinished = {
 
-
-
                 val seekPosition = (sliderPosition.value * duration).toLong()
 
-                isUserDragging = false
+                isUserDragging.value = false
 
 
                 exoPlayerVM?.seekTo(pos = seekPosition, onFinish = {
@@ -463,11 +444,6 @@ private fun SongSeekBar(
                     exoPlayerVM.progressVM.forceValue(seekPosition)
                     exoPlayerVM.progressVM.startUpdates()
                 })
-
-
-
-
-
 
             },
             valueRange = 0f..1f,

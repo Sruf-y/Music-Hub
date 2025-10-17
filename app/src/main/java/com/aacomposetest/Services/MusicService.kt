@@ -82,7 +82,6 @@ class MusicService: LifecycleService() {
 
         exoPlalayerVM.progressVM.startUpdates()
 
-        taskIsPresent = true
 
 
 
@@ -92,6 +91,9 @@ class MusicService: LifecycleService() {
                 when(action){
                     Actions.STOP.name->{
                         stopNotification(killService = !taskIsPresent)
+
+                        if(!taskIsPresent)
+                            exoPlalayerVM.destroyPlayer()
                     }
                     Actions.FAVORITE.name->{
 
@@ -110,8 +112,8 @@ class MusicService: LifecycleService() {
             override fun onPause() {
                 exoPlalayerVM.toggle()
 
-                if(!taskIsPresent)
-                    stopForeground(STOP_FOREGROUND_DETACH)
+//                if(!taskIsPresent)
+//                    stopForeground(STOP_FOREGROUND_DETACH)
             }
 
             override fun onSeekTo(pos: Long) {
@@ -325,8 +327,8 @@ class MusicService: LifecycleService() {
             StartForegroundNotification(CreateNotification())
             stopForeground(STOP_FOREGROUND_REMOVE)
 
-            if (!taskIsPresent)
-                exoPlalayerVM.destroyPlayer()
+
+
 
             stopSelf()
         }
