@@ -104,7 +104,6 @@ fun CustomTab(
     unselectedContentColor:Color = Theme.colorScheme().surfaceDim,
     selectedContentColor: Color = Theme.colorScheme().outline,
     enabled: Boolean = true,
-
     text: @Composable () -> Unit
 ) {
     // Use Box instead of Tab to avoid default ripple

@@ -75,11 +75,11 @@ data class Song (
     companion object{
         val SONGS_THUMBNAIL_DIRECTORY = "Song Thumbnails"
 
-        fun emptySong(id: Long = 0):Song{
+        fun emptySong(id: Long = 0,title:String = "<unknown title>"):Song{
             return Song(
                 id = id,
                 songUri = "",
-                title = "<unknown title>",
+                title = title,
                 artistName = "<unknown artist>",
                 albumName = "<unknown album>",
                 relativePath = "<no path>",

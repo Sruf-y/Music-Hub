@@ -122,10 +122,10 @@ data class Playlist(var title:String) {
             return folder
         }
 
-        fun getPlaylist(context: Context, title:String): Playlist?{
-            val result:Playlist? = Functions.JsonOp.syncLoadFromJson(context,title,getFolder(context))
+        fun getPlaylist(context: Context, title:String?): Playlist?{
 
-            return result
+
+            return if(title!=null)Functions.JsonOp.syncLoadFromJson(context,title,getFolder(context)) else null
         }
 
         suspend fun getFromFile(file: File): Playlist?{

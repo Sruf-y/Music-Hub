@@ -4,9 +4,11 @@ import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
+import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistViewModel
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
@@ -33,7 +35,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,24 +78,31 @@ fun PlaylistViewing(
     val contextRef = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var playlist by remember { mutableStateOf<Playlist?>(null) }
 
-    LaunchedEffect(playlistTitle) {
-        playlist = Playlist.getPlaylist(contextRef,playlistTitle)
-    }
+    val playlist by ListFeedingVM.ViewingPlaylist.curPlaylist.collectAsState()
 
     val currentlyPlayingSong by exoPlayerVM.currentSong.collectAsState()
 
+
+
+    val songsListSortedExternally by ListFeedingVM.ViewingPlaylist.filteredSongsList.collectAsState(initial = emptyList())
+
+    val isSearching by ListFeedingVM.isSearching.collectAsState()
     // Get the playlist
     DisposableEffect(Unit) {
 
-        scope.launch {
-            playlist = Playlist.getPlaylist(contextRef,playlistTitle)
-        }
+        // set current playlist so feeder can feed the list to the UI
+        ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,playlistTitle)
+
+
 
         onDispose {
             // Saves on de-composition. Which does NOT happen onPause or onDestroy.
             playlist?.save(contextRef)
+
+            // Just for safety
+            ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,null)
+
         }
     }
 
@@ -100,7 +111,7 @@ fun PlaylistViewing(
         val file = playlist?.getFileIfExists(contextRef)
         Functions.JsonOp.watchFile(file) {
             scope.launch {
-                playlist = Playlist.getPlaylist(contextRef,playlist?.title?:"")
+                ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,playlistTitle)
 
                 // I will NOT invoke onBack. This is in order to let the user know what has gone wrong
 //                if(playlist == null){
@@ -120,7 +131,15 @@ fun PlaylistViewing(
 
 
     var playlistSongs by remember(songs, playlist) {
-        mutableStateOf(((playlist?.songsIdList?.map { id -> songs.firstOrNull { it.id == id } }?.filter { it!=null })?:emptyList<Song>())as List<Song> )
+        mutableStateOf(songsListSortedExternally )
+    }
+
+
+
+
+    LaunchedEffect(songs,playlist,songsListSortedExternally) {
+
+        playlistSongs = songsListSortedExternally
     }
 
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -130,10 +149,17 @@ fun PlaylistViewing(
         }
     }
 
-    Surface {
+    Surface(modifier = modifier) {
 
 
-        Box(modifier = modifier) {
+            val sHeaderTitle by remember {
+                derivedStateOf {
+                    playlist?.title?.let { it+" (${playlist!!.songsIdList.size})" } ?: "Error"
+                }
+            }
+
+
+
             // Decalare de la load time al listei, deoarece altfel, header would load first
             // Daca lista este goala, afiseaza doar header
             if(playlistSongs.isEmpty())
@@ -173,7 +199,7 @@ fun PlaylistViewing(
                         ) {
 
                             Text(
-                                text = playlist?.title ?: "Error",
+                                text = sHeaderTitle,
                                 modifier = Modifier
                                     .align(Alignment.CenterStart)
                                     .padding(horizontal = 30.dp)
@@ -257,7 +283,7 @@ fun PlaylistViewing(
                         ) {
 
                             Text(
-                                text = playlist?.title ?: "Error",
+                                text = sHeaderTitle,
                                 modifier = Modifier
                                     .align(Alignment.CenterStart)
                                     .padding(horizontal = 30.dp)
@@ -353,11 +379,7 @@ fun PlaylistViewing(
                                                 playlist?.save(contextRef, onFinished = {
                                                     // Force state update by reloading
                                                     scope.launch {
-                                                        playlist =
-                                                            Playlist.getPlaylist(
-                                                                contextRef,
-                                                                playlist?.title ?: ""
-                                                            )
+                                                        ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,playlistTitle)
                                                     }
                                                 })
 
@@ -369,6 +391,7 @@ fun PlaylistViewing(
 
                                     }
                                 ) {
+                                    if(!isSearching)
                                     androidx.compose.material3.IconButton(
                                         modifier = Modifier.draggableHandle(
                                             onDragStopped = {
@@ -404,7 +427,7 @@ fun PlaylistViewing(
                 }
             }
 
-        }
+
 
 
     }

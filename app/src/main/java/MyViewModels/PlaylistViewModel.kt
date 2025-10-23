@@ -4,8 +4,6 @@ import AppDatabase.PlaylistRelated.Playlist
 import ExoPlayer.myExoPlayer
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aacomposetest.Functions.FolderWatcher
@@ -33,12 +31,12 @@ class PlaylistViewModel(context: Context): ViewModel() {
     val allPlaylists: StateFlow<ArrayList<Playlist>> = _allPlaylists.asStateFlow()
 
 
-    val currentPlaylistTitle = myExoPlayer.currentPlaylistTitle
+    val currentMediaPlaylistTitle = myExoPlayer.currentPlaylistTitle
 
     fun saveCurrentPlaylist(context: Context){
         viewModelScope.launch {
 
-            currentPlaylistTitle.value?.apply {
+            currentMediaPlaylistTitle.value?.apply {
                 Playlist.getPlaylist(context,this)?.save(context)
             }
 
