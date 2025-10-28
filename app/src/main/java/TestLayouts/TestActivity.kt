@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -47,10 +48,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -75,6 +78,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.ViewModel
 import com.aacomposetest.ui.theme.ComposeTestTheme
 import com.aacomposetest.ui.theme.MyColor
 import com.composables.core.androidx.compose.foundation.gestures.draggable
@@ -111,7 +115,7 @@ class TestActivity : ComponentActivity() {
                         .fillMaxSize()
                         .safeContentPadding()
                 ) {
-                    val lazyListState = rememberLazyListState()
+                    val lazyListState:LazyListState? = null
 
                     var flingJob by remember{mutableStateOf<Job?>(null)}
 
@@ -163,8 +167,6 @@ class TestActivity : ComponentActivity() {
                     ) {
 
 
-
-
                         var velocityY by remember { mutableStateOf(0f) }
                         var lastPosition by remember { mutableStateOf(0f) }
                         var lastTime by remember { mutableStateOf(0L) }
@@ -189,6 +191,10 @@ class TestActivity : ComponentActivity() {
                             lastTime = currentTime
                         }
 
+                        /**
+                         * Lets non-fling items (Items unlike column/lazycolumn, Box for example) fling.
+                         * To be used with NestedScrollConnection.
+                         * */
                         fun Modifier.AttachFling(): Modifier
                             {
                                 return this.draggable2D(
@@ -196,7 +202,7 @@ class TestActivity : ComponentActivity() {
                                     onDragStarted = {
                                         flingJob?.cancel()
                                         scope.launch {
-                                            lazyListState.stopScroll()
+                                            lazyListState?.stopScroll()
                                         }
                                         lastPosition = appbarOffset
                                         lastTime = System.currentTimeMillis()
@@ -265,6 +271,7 @@ class TestActivity : ComponentActivity() {
                         }
 
                         // Tab row - becomes sticky after app bar scrolls out
+                        if(false)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -284,7 +291,7 @@ class TestActivity : ComponentActivity() {
                         }
 
                         // LazyColumn with padding to account for headers
-                        LazyColumn(state = lazyListState,
+                        LazyColumn(state = lazyListState?:rememberLazyListState(),
                             modifier = Modifier
                                 .fillMaxSize()
                                 .offset(y = with(LocalDensity.current) { totalHeaderHeight.toDp() })

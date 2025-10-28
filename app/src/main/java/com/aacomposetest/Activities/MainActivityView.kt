@@ -41,6 +41,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
@@ -74,9 +75,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -114,6 +118,7 @@ import ui.components.Pages.PlaylistsPage
 import ui.components.Pages.PlaylistViewing
 import kotlin.getValue
 import androidx.core.content.edit
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavGraphBuilder
@@ -437,10 +442,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
             .fillMaxSize()
             .navigationBarsPadding()
             .displayCutoutPadding()
-            .systemBarsPadding(),
-        topBar = {
-            SearchTopBar()
-        }
+            .systemBarsPadding()
     ) { innerPadding ->
         Surface(
             modifier = Modifier
@@ -448,6 +450,11 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                 .padding(paddingValues = innerPadding)
         ) {
             val scope = rememberCoroutineScope()
+
+
+
+
+
 
             // Save scroll position for the [All Songs] page
             LaunchedEffect(songsListState) {
@@ -626,7 +633,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
 
 
 
-                        PagerView(
+                        PagerView(tabrowModifier = Modifier.wrapContentHeight(),
                             pagerState = pagerState,
                             tabs = pagerTabs
                         )
@@ -779,42 +786,44 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
             }
 
 
-            /**
-             * Manages navigation inside the [Main Pager] container.
-             * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
-             * */
-
-            NavHost(
-                navController = navController,
-                startDestination = dest_PrimaryPager,
-                enterTransition = {
-
-                    slideIntoContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(300)
-                    )
-                },// page is navigated TO normally
-                popExitTransition = {
-
-                    slideOutOfContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(300)
-                    )
-                },// page is navigated FROM by popBackStack() (returning FROM the page to the previous one)
-                popEnterTransition = {
-
-                    EnterTransition.None
-                },// page is being returned to by the above page animating away
-                exitTransition = {
-
-                    ExitTransition.None
-                },// page stays back while another page is animated above
-
-            ) {
-
-                this.appGraph(navController)
+            Column(modifier = Modifier.fillMaxSize()) {
+                SearchTopBar()
 
 
+                /**
+                 * Manages navigation inside the [Main Pager] container.
+                 * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
+                 * */
+                NavHost(
+                    navController = navController,
+                    startDestination = dest_PrimaryPager,
+                    enterTransition = {
+
+                        slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(300)
+                        )
+                    },// page is navigated TO normally
+                    popExitTransition = {
+
+                        slideOutOfContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300)
+                        )
+                    },// page is navigated FROM by popBackStack() (returning FROM the page to the previous one)
+                    popEnterTransition = {
+
+                        EnterTransition.None
+                    },// page is being returned to by the above page animating away
+                    exitTransition = {
+
+                        ExitTransition.None
+                    },// page stays back while another page is animated above
+
+                ) {
+
+                    this.appGraph(navController)
+                }
             }
 
 

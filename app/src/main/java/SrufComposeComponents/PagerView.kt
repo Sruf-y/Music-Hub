@@ -35,7 +35,7 @@ import com.composables.core.HorizontalSeparator
 import kotlinx.coroutines.launch
 
 @Composable
-fun PagerView(modifier: Modifier = Modifier.fillMaxSize(), pagerState: PagerState, tabs:List<MyPagerTab>) {
+fun PagerView(modifier: Modifier = Modifier.fillMaxSize(), tabrowModifier:Modifier = Modifier.wrapContentHeight(), pagerState: PagerState, tabs:List<MyPagerTab>) {
 
     val animationScope = rememberCoroutineScope()
 
@@ -50,7 +50,7 @@ fun PagerView(modifier: Modifier = Modifier.fillMaxSize(), pagerState: PagerStat
 
 
 
-        TabRow(modifier = Modifier.wrapContentHeight(),
+        TabRow(modifier = tabrowModifier,
             indicator = customIndicator,
             divider = {
                 HorizontalSeparator(color = MyColor.Inactive, thickness = separatorThickness)
