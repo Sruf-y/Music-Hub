@@ -151,8 +151,8 @@ fun SongsPage(
                         SongsSort_Content(
                             currentType = curentSortType,
                             currentDirection = curentSortDirection,
-                            sortTypeOptions = ListFeedingVM.SortedSongs.sortTypeOptions,
-                            sortDirectionOptions = ListFeedingVM.SortedSongs.sortDirectionOptions,
+                            sortTypeOptions = ListFeedingVM.SortedSongs.SongSortType.entries.map { it.name },
+                            sortDirectionOptions = ListFeedingVM.SortedSongs.SongSortDirection.entries.map { it.name },
                             onConfirm = { type, direction->
                                 ListFeedingVM.SortedSongs.setSortType(type)
                                 ListFeedingVM.SortedSongs.setSortDirection(direction)

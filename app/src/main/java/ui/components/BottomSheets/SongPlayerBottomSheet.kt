@@ -2,6 +2,7 @@ package ui.components.BottomSheets
 
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
+import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.text.format.DateUtils
 import android.util.Log
@@ -24,6 +25,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -297,7 +300,8 @@ private fun PeekPlayer(
     modifier: Modifier,
     isPlaying: Boolean,
     exoPlayerVM: ExoPlayerViewModel?=null,
-    sliderPosition: MutableState<Float>){
+    sliderPosition: MutableState<Float>
+){
 
     val barHeight = 6.dp
     val iconsSize = 40.dp
@@ -311,7 +315,9 @@ private fun PeekPlayer(
             Row(modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-                verticalAlignment = Alignment.CenterVertically) {
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ) {
 
 
                 PlayPauseButton(
@@ -321,10 +327,12 @@ private fun PeekPlayer(
                     exoPlayerVM = exoPlayerVM
                 )
 
-
-
-
-
+                IconButton(imageVector = Icons.Default.LocationOn,
+                    modifier = Modifier.size(iconsSize),
+                    onclick = {
+                        // locate currently playing song by playlist. If curPlaylist == null, look in the first page of the pager, in global songs list
+                    }
+                )
 
             }
 

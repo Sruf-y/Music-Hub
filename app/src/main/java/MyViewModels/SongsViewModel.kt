@@ -33,8 +33,9 @@ class SongsViewModel(context: Context): ViewModel() {
 
     val getAllSongsFlow: Flow<List<Song>> = repo.allsongsFlow.map { list -> list.map { it.copy() } }
 
+    // Value used for playNextSong and playPreviousSong
     private val getSortedSongsStateFlow
-        get() = ListFeedingVM.SortedSongs.sortedAndFilteredSongsFlow
+        get() = ListFeedingVM.SortedSongs.sortedSongsFlow
 
 
     fun insertSong(song: Song){

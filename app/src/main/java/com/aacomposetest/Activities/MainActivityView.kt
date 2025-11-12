@@ -250,6 +250,8 @@ class MainActivityView : ComponentActivity() {
 
         /**
          * Global settings BottomSheet
+         *
+         * i HAVE to change this to a stack of bottom sheets moderated by the ViewModel later
          * */
         MyModalBottomSheet(
             viewModel = bottomSheetViewmodel,
@@ -273,6 +275,8 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
     }
 
     var isRefreshing = remember { mutableStateOf(false) }
+
+    // automatic media permission asking
     val mediaPermissionLauncher = MyPermissionLauncher()
         .buildChange(
             onGrant = {
@@ -305,6 +309,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                 isRefreshing.value = false
             }
         )
+    // manual refresh permission asking
     val manualMediaPermissionLauncher = MyPermissionLauncher()
         .buildChange(
             onGrant = {
@@ -370,13 +375,6 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                 }
                 activity.startForegroundService(intent)
             }
-        } else {
-//                if(MusicService.isStarted) {
-//                    val intent = Intent(contextRef, MusicService::class.java).apply {
-//                        action = MusicService.Actions.STOP.toString()
-//                    }
-//                    this@MainActivityView.startForegroundService(intent)
-//                }
         }
     }
 
@@ -401,11 +399,6 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
             ex.printStackTrace()
         }
     }
-
-
-
-    val peekHeight = 60.dp
-    val expandedHeight = 250.dp
 
 
 
@@ -485,11 +478,13 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
 
 
             val songPlayerBottomSheetAlpha = remember { Animatable(1f) }
+            val SongBottomSheetPeekHeight = 60.dp
             val SongBottomSheetPeek = SheetDetent("Peek") { containerHeight, sheetHeight ->
                 //containerHeight*0.2f
 
-                peekHeight
+                SongBottomSheetPeekHeight
             }
+
             val songPlayerBottomSheetState = rememberBottomSheetState(
                 initialDetent = SongBottomSheetPeek,
                 detents = listOf(SongBottomSheetPeek, SheetDetent.FullyExpanded)
@@ -539,7 +534,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                                                 prefs = prefs,
                                                 modifier = Modifier
                                                     .fillMaxSize()
-                                                    .padding(bottom = peekHeight),
+                                                    .padding(bottom = SongBottomSheetPeekHeight),
                                                 songs = sortedAllSongs,
                                                 exoPlayerVM = exoPlayerVM,
                                                 listState = songsListState,
@@ -672,7 +667,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                                 navController.popBackStack()
                             },
                             songs = allsongs,
-                            bottomPadding = peekHeight,
+                            bottomPadding = SongBottomSheetPeekHeight,
                             plusButtonClick = {
                                 navController.navigate("$dest_AddSongsToPlaylist/$playlistTitle") {
                                     launchSingleTop = true
@@ -830,6 +825,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
             /**
              * Bottom sheet can be "Enabled" or "Disabled" by controlling this value, which is also attached to its alpha for propper animation
              * */
+            val expandedHeight = 250.dp
             if (songPlayerBottomSheetAlpha.value > 0f) {
                 SongPlayingBottomSheet(
                     modifier = Modifier
@@ -840,7 +836,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                     backgroundColor = Theme.colorScheme().onBackground,
                     shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
                     expandedHeight = expandedHeight,
-                    peekHeight = peekHeight,
+                    peekHeight = SongBottomSheetPeekHeight,
                     exoPlayerVM = exoPlayerVM,
 
                     )
