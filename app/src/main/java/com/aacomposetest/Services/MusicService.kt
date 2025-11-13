@@ -17,7 +17,6 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
-import androidx.core.content.edit
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.aacomposetest.MyApplication
@@ -26,6 +25,12 @@ import androidx.media.app.NotificationCompat.MediaStyle
 import com.aacomposetest.Activities.MainActivityView
 import com.aacomposetest.Functions
 import com.aacomposetest.Logs
+import com.aacomposetest.MainActivity
+import com.aacomposetest.Services.MusicService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MusicService: LifecycleService() {
@@ -34,12 +39,9 @@ class MusicService: LifecycleService() {
 
     val exoPlalayerVM = ExoPlayerViewModel()
 
-
-
     override fun onBind(intent: Intent): IBinder? {
         return super.onBind(intent)
     }
-
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -47,25 +49,27 @@ class MusicService: LifecycleService() {
         Log.i(Logs.SERVICE.name,"Called onStartCommand.")
 
         when(intent?.action){
-            Actions.START.toString()->{
+            Actions.START.name->{
+
                 start()
-                return START_REDELIVER_INTENT
+
+                return START_NOT_STICKY
             }
-            Actions.START_BACKGROUND.name.toString()->{
+            Actions.START_BACKGROUND.name->{
 
                 UpdateNotification(CreateNotification())
-                //stopForeground(STOP_FOREGROUND_DETACH)
+                stopForeground(STOP_FOREGROUND_DETACH)
 
 
                 return START_NOT_STICKY
             }
-            Actions.STOP.toString()->{
+            Actions.STOP.name->{
                 // If task is not present, kill service
                 stopNotification(killService = !taskIsPresent)
 
             }
 
-            Actions.KILLSERVICE.toString()->{
+            Actions.KILLSERVICE.name->{
                 stopSelf()
             }
 
@@ -91,9 +95,6 @@ class MusicService: LifecycleService() {
                 when(action){
                     Actions.STOP.name->{
                         stopNotification(killService = !taskIsPresent)
-
-                        if(!taskIsPresent)
-                            exoPlalayerVM.destroyPlayer()
                     }
                     Actions.FAVORITE.name->{
 
@@ -151,19 +152,11 @@ class MusicService: LifecycleService() {
 
                 if (it) exoPlalayerVM.progressVM.startUpdates() else exoPlalayerVM.progressVM.stopUpdates()
 
-                if(isStarted) {
-                    if (it) {
-                        val intent = Intent(this@MusicService, MusicService::class.java).apply {
-                            action = MusicService.Actions.START.toString()
-                        }
-                        this@MusicService.startForegroundService(intent)
-                    } else {
-                        val intent = Intent(this@MusicService, MusicService::class.java).apply {
-                            action = MusicService.Actions.START_BACKGROUND.toString()
-                        }
-                        this@MusicService.startForegroundService(intent)
-                    }
-                }
+
+                startLogic(
+                    isPlaying = it,
+                    context = this@MusicService
+                )
 
             }
 
@@ -296,7 +289,7 @@ class MusicService: LifecycleService() {
         // Redundant initialization of the player just in case
         myExoPlayer.initializePlayer(this)
 
-        isStarted = true
+        setStarted(true)
 
 
         StartForegroundNotification(CreateNotification())
@@ -322,13 +315,17 @@ class MusicService: LifecycleService() {
 
 
         if(killService){
-            isStarted = false
+
+
+            setStarted(false)
 
             StartForegroundNotification(CreateNotification())
+
+
             stopForeground(STOP_FOREGROUND_REMOVE)
 
 
-
+            myExoPlayer.destroy()
 
             stopSelf()
         }
@@ -347,7 +344,7 @@ class MusicService: LifecycleService() {
 
         Log.i(Logs.SERVICE.name,"Task removed")
 
-        taskIsPresent = false
+        setTaskStarted(false)
 
 
 
@@ -360,19 +357,52 @@ class MusicService: LifecycleService() {
     enum class Actions{
         START,
         START_BACKGROUND,
-        STOP,
-        KILLSERVICE,
+        STOP, // only used in notification button
+        KILLSERVICE, // unused
         FAVORITE
     }
 
     companion object{
         var isStarted = false
+            private set
+
+        fun setStarted(value:Boolean){
+            isStarted = value
+            //Log.i("WTF","Serv TaskActive ${taskIsPresent} | ServiceActive ${isStarted}")
+        }
 
         // This service can ONLY be launched from the task
         var taskIsPresent = true
+            private set
+
+        fun setTaskStarted(value: Boolean){
+
+            taskIsPresent = value
+
+            startLogic()
+
+
+            //Log.i("WTF","Task TaskActive ${taskIsPresent} | ServiceActive ${isStarted}")
+        }
 
         val notification_id = 106
         val mediaSessionTag = "MusicPlayer"
+
+        fun startLogic(isPlaying:Boolean = myExoPlayer.isPlaying.value,context:Context = MyApplication.instance){
+
+                if (isPlaying || taskIsPresent) {
+                    val intent = Intent(context, MusicService::class.java).apply {
+                        action = MusicService.Actions.START.toString()
+                    }
+                    context.startForegroundService(intent)
+                } else {
+                    val intent = Intent(context, MusicService::class.java).apply {
+                        action = MusicService.Actions.START_BACKGROUND.toString()
+                    }
+                    context.startForegroundService(intent)
+                }
+
+        }
     }
 
 }

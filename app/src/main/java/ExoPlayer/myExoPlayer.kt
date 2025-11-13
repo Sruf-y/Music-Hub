@@ -89,6 +89,7 @@ object myExoPlayer {
 
     @OptIn(UnstableApi::class)
     fun initializePlayer(context: Context, onInilialized:(()-> Unit)? = null) {
+
         if(songsVM == null){
             songsVM = SongsViewModel(context)
         }
@@ -96,6 +97,9 @@ object myExoPlayer {
         val songViewModel = SongsViewModel(context)
 
         if (exoPlayer == null) {
+
+            Log.i(Logs.EXOPLAYER.name,"Attempting to CREATE exoplayer from NULL.")
+
             exoPlayer = External_ExoPlayer.Builder(context)
                 .setAudioAttributes(
                     AudioAttributes.DEFAULT,
@@ -155,9 +159,9 @@ object myExoPlayer {
                         progressVM.progress
                             .collect{position->
 
-                                Log.i(Logs.EXOPLAYER.name,"Logged songPos ${position}")
+                                //Log.i(Logs.EXOPLAYER.name,"Logged songPos ${position}")
 
-                                prefs?.edit(){
+                                prefs.edit(){
 
                                     putCursorValue(MyPrefs._prefs_LastSongPosition,position)
                                 }
@@ -500,6 +504,9 @@ object myExoPlayer {
      * It will need to be reinitialized after calling this function.
      * */
     fun destroy(){
+
+        Log.i(Logs.EXOPLAYER.name,"Attempting to DESTROY exoplayer.")
+
         progressVM.stopUpdates()
         prefs?.edit {
             putCursorValue(MyPrefs._prefs_LastSongPosition,getCurrentPosition())
@@ -518,11 +525,7 @@ object myExoPlayer {
         }
         _isInitialized.value = false
 
-        try{
-            exoPlayer?.stop()
-        }catch (ex: Exception){
-            ex.printStackTrace()
-        }
+
         try{
             exoPlayer?.release()
         }catch (ex: Exception){

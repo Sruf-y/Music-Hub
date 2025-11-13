@@ -87,7 +87,7 @@ fun PlaylistViewing(
 
     val songsListSortedExternally by ListFeedingVM.ViewingPlaylist.filteredSongsList.collectAsState(initial = emptyList())
 
-    val isSearching by ListFeedingVM.isSearching.collectAsState()
+    val isSearching by ListFeedingVM.ViewingPlaylist.isSearching.collectAsState()
     // Get the playlist
     DisposableEffect(Unit) {
 

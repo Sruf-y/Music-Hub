@@ -32,19 +32,8 @@ object ListFeedingVM {
 
     val allPlaylists: StateFlow<List<Playlist>> = playlistsVM.allPlaylists
 
-    private val _searchWord = MutableStateFlow("")
-    val searchWordFlow: StateFlow<String> = _searchWord.asStateFlow()
-
-    private val _isSearching = MutableStateFlow(false)
-    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
-    fun setSearching(value: Boolean){
-        _isSearching.value = value
-    }
 
 
-    fun setSearchWord(word:String){
-        _searchWord.value = word
-    }
 
     init {
         playlistsVM.updateList(MyApplication.instance)
@@ -57,18 +46,29 @@ object ListFeedingVM {
     private val allSettings: List<Setting<Any>>? = null
     private var sortedSettings: List<Setting<Any>>? = null
 
+    enum class SongSortType{
+        DateAdded,
+        Title,
+        Artist,
+        Length
+    }
+
+    enum class SongSortDirection{
+        Descending,
+        Ascending
+    }
+
     object SortedSongs {
 
-        enum class SongSortType{
-            DateAdded,
-            Title,
-            Artist,
-            Length
+        private val _isSearching = MutableStateFlow(false)
+        val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+        fun setSearching(value: Boolean){
+            _isSearching.value = value
         }
-
-        enum class SongSortDirection{
-            Descending,
-            Ascending
+        private val _searchWord = MutableStateFlow("")
+        val searchWordFlow: StateFlow<String> = _searchWord.asStateFlow()
+        fun setSearchWord(word:String){
+            _searchWord.value = word
         }
 
         private val _sortTypeFlow = MutableStateFlow(
@@ -155,6 +155,19 @@ object ListFeedingVM {
     }
 
     object ViewingPlaylist{
+
+        private val _isSearching = MutableStateFlow(false)
+        val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+        fun setSearching(value: Boolean){
+            _isSearching.value = value
+        }
+        private val _searchWord = MutableStateFlow("")
+        val searchWordFlow: StateFlow<String> = _searchWord.asStateFlow()
+        fun setSearchWord(word:String){
+            _searchWord.value = word
+        }
+
+
         var curPlaylistTitle:String? = null
             private  set
 
@@ -193,6 +206,68 @@ object ListFeedingVM {
             }.stateIn(
                 playlistsVM.viewModelScope,
                 SharingStarted.Eagerly,
+                emptyList()
+            )
+
+        private val _sortTypeFlow = MutableStateFlow(
+            prefs.getCursorValue(
+                MyPrefs._prefs_playlistSongsSortType,
+                SongSortType.DateAdded.name
+            )
+        )
+        val sortTypeFlow: StateFlow<String> = _sortTypeFlow.asStateFlow()
+        fun setSortType(type:String){
+            _sortTypeFlow.value = type
+
+        }
+
+        private val _sortDirectionFlow = MutableStateFlow(
+            prefs.getCursorValue(
+                MyPrefs._prefs_playlistSongsSortDirection,
+                SongSortDirection.Descending.name
+            )
+        )
+        val sortDirectionFlow: StateFlow<String> = _sortDirectionFlow.asStateFlow()
+        fun setSortDirection(direction:String){
+            _sortDirectionFlow.value = direction
+        }
+
+        val sortedSongsFlow:Flow<List<Song>> =
+            combine(
+                curPlaylistSongs,
+                sortTypeFlow,
+                sortDirectionFlow
+            ) { songs,sortType,sortDirection->
+                when(SongSortType.valueOf(sortType)){
+                    SongSortType.DateAdded -> songs.sortedBy { it.id }
+                    SongSortType.Title -> songs.sortedBy { it.title }
+                    SongSortType.Artist -> songs.sortedBy { it.artistName }
+                    SongSortType.Length -> songs.sortedBy { it.duration }
+                }.let { sortedList->
+                    when(SongSortDirection.valueOf(sortDirection)){
+                        SongSortDirection.Descending -> sortedList.reversed()
+                        SongSortDirection.Ascending -> sortedList
+                    }
+                }
+            }.stateIn(
+                songsVM.viewModelScope,
+                SharingStarted.Lazily,
+                emptyList()
+            )
+
+        val sortedAndFilteredSongsFlow: Flow<List<Song>> =
+            combine(
+                sortedSongsFlow,
+                searchWordFlow
+            ) { songs, searchWord ->
+
+                songs.filter { it->
+                    it.title.contains(other = searchWord, ignoreCase = true) || searchWord.isBlank()
+                }
+
+            }.stateIn(
+                songsVM.viewModelScope,
+                SharingStarted.Lazily,
                 emptyList()
             )
     }

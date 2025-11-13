@@ -26,6 +26,9 @@ object MyPrefs {
     val _prefs_globalSongsSortType = CursorValue("GlobalSongsSortType",String::class)
     val _prefs_globalSongsSortDirection = CursorValue("GlobalSongsSortirection",String::class)
 
+    val _prefs_playlistSongsSortType = CursorValue("PlaylistSongsSortType",String::class)
+    val _prefs_playlistSongsSortDirection = CursorValue("PlaylistSongsSortirection",String::class)
+
 
     @Throws(IllegalArgumentException::class)
     fun <T : Any> SharedPreferences.Editor.putCursorValue(cursorData: CursorValue<T>,value:T){

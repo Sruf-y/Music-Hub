@@ -6,12 +6,12 @@ import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistViewModel
 import MyViewModels.SongsViewModel
+import SrufComposeComponents.CustomPagerTab
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.KeyboardAwareBox
 import SrufComposeComponents.MyModalBottomSheet
-import SrufComposeComponents.PagerView
+import SrufComposeComponents.TabRowIndicator
 import SrufComposeComponents.Text
-import TestLayouts.TestActivity
 import android.Manifest
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
@@ -33,32 +33,22 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOutElastic
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Indication
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -67,20 +57,16 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TabPosition
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -95,14 +81,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -118,7 +102,6 @@ import ui.components.Pages.PlaylistsPage
 import ui.components.Pages.PlaylistViewing
 import kotlin.getValue
 import androidx.core.content.edit
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavGraphBuilder
@@ -134,6 +117,7 @@ import com.aacomposetest.R
 import com.aacomposetest.Services.MusicService
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
+import com.composables.core.HorizontalSeparator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.map
@@ -141,6 +125,7 @@ import kotlinx.coroutines.withContext
 import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.BottomSheets.SongPlayingBottomSheet
+import SrufComposeComponents.NestedScrollingFront
 import ui.components.Pages.AddSongsToPlaylistPage
 import ui.components.Pages.SongsRefreshPage
 import kotlin.collections.map
@@ -159,7 +144,7 @@ class MainActivityView : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        MusicService.taskIsPresent = true
+        MusicService.setTaskStarted(true)
 
         val contextRef = this
         songViewModel = SongsViewModel(this)
@@ -202,12 +187,7 @@ class MainActivityView : ComponentActivity() {
             ComposeTestTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
 
-                    val isTesting = false
-
-                    if(!isTesting)
                     MainView()
-                    else
-                    mypreview()
                 }
 
             }
@@ -267,8 +247,6 @@ class MainActivityView : ComponentActivity() {
 @Composable
 private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsViewModel, exoPlayerVM: ExoPlayerViewModel, globalBottomSheetVM: MyModalBottomSheet.ModalVM){
     val contextRef = LocalContext.current
-
-
 
     val prefs by lazy {
         activity.applicationContext.getSharedPreferences(MyPrefs.PrefDirs.GenericData,MODE_PRIVATE)
@@ -367,14 +345,9 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
 
 
-        if (hasNotificationPermission && exoplayerIsInitialized && isPlaying && !MusicService.isStarted) {
+        if (hasNotificationPermission && exoplayerIsInitialized && !MusicService.isStarted) {
 
-            if (myExoPlayer.currentlyPlayingSong.value != null) {
-                val intent = Intent(contextRef, MusicService::class.java).apply {
-                    action = MusicService.Actions.START.toString()
-                }
-                activity.startForegroundService(intent)
-            }
+            MusicService.startLogic(context = contextRef)
         }
     }
 
@@ -627,12 +600,67 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                         }
 
 
+                        /**
+                         * Main screen pager. This currently handles the Searchbar, the Tabrow and the Pager's combined scroll
+                         * */
+                        val animationScope = rememberCoroutineScope()
 
-                        PagerView(tabrowModifier = Modifier.wrapContentHeight(),
-                            pagerState = pagerState,
-                            tabs = pagerTabs
+                        val customIndicator = @Composable { tabPositions:List<TabPosition>->
+                            TabRowIndicator(tabPositions,pagerState,2.dp)
+                        }
+                        NestedScrollingFront(
+                            appbar ={
+                                SearchTopBar()
+                        },
+                            tabRow = {
+                                TabRow(modifier = Modifier.wrapContentHeight(),
+                                    indicator = customIndicator,
+                                    divider = {
+                                        HorizontalSeparator(color = MyColor.Inactive, thickness = 2.dp)
+                                    },
+                                    selectedTabIndex = pagerState.currentPage
+                                ) {
+                                    pagerTabs.forEachIndexed { index, tab ->
+                                        val interactionSource = remember { MutableInteractionSource() }
+
+                                        CustomPagerTab(modifier = Modifier.height(40.dp)
+                                            .clickable(
+                                                onClick = {},
+                                                interactionSource = interactionSource,
+                                                indication = null
+                                            ),
+                                            unselectedContentColor = Theme.colorScheme().surfaceDim,
+                                            selectedContentColor = Theme.colorScheme().outline,
+                                            selected = pagerState.currentPage == index,
+                                            onClick = {
+                                                animationScope.launch {
+                                                    pagerState.animateScrollToPage(index)
+                                                }
+                                            }, text = {
+                                                Text(text = tab.title, fontSize = 16.sp,modifier = Modifier.zIndex(2f))
+                                            }
+                                        )
+                                    }
+                                }
+                            },
+                            pager ={
+                                HorizontalPager(
+                                    state = pagerState,
+                                    modifier = Modifier.fillMaxSize()
+                                ) { newPage ->
+                                    Box(
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+
+                                        pagerTabs[newPage].content.invoke()
+
+                                    }
+                                }
+                            }
                         )
 
+
+                        // PAGER_END //
 
                     }
                 }.composable.invoke(this)
@@ -781,8 +809,6 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
             }
 
 
-            Column(modifier = Modifier.fillMaxSize()) {
-                SearchTopBar()
 
 
                 /**
@@ -790,6 +816,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                  * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
                  * */
                 NavHost(
+                    modifier = Modifier.fillMaxSize(),
                     navController = navController,
                     startDestination = dest_PrimaryPager,
                     enterTransition = {
@@ -816,10 +843,9 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                     },// page stays back while another page is animated above
 
                 ) {
-
                     this.appGraph(navController)
                 }
-            }
+
 
 
             /**
@@ -855,7 +881,7 @@ fun SearchTopBar(){
             .clipToBounds()
     ) {isImeVisible,imeInsets,navBarInset->
 
-        val searchWord by ListFeedingVM.searchWordFlow.collectAsState()
+        val searchWord by ListFeedingVM.SortedSongs.searchWordFlow.collectAsState()
 
         val isSearchInProgress by remember {
             derivedStateOf {
@@ -870,11 +896,11 @@ fun SearchTopBar(){
 
         var shouldBeFocused by remember { mutableStateOf(false) }
 
-        val isFocused by ListFeedingVM.isSearching.collectAsState()
+        val isFocused by ListFeedingVM.SortedSongs.isSearching.collectAsState()
 
 
         LaunchedEffect(isSearchInProgress,  focusState?.hasFocus, shouldBeFocused) {
-            ListFeedingVM.setSearching(isSearchInProgress || focusState?.hasFocus?:false || shouldBeFocused)
+            ListFeedingVM.SortedSongs.setSearching(isSearchInProgress || focusState?.hasFocus?:false || shouldBeFocused)
         }
 
 
@@ -919,7 +945,7 @@ fun SearchTopBar(){
                         imageVector = Icons.Default.Close,
                         onclick = {
                             focusManager.clearFocus()
-                            ListFeedingVM.setSearchWord("")
+                            ListFeedingVM.SortedSongs.setSearchWord("")
                             shouldBeFocused = false
                         }
                     )
@@ -932,7 +958,7 @@ fun SearchTopBar(){
                     },
                 value = searchWord,
                 onValueChange = {
-                    ListFeedingVM.setSearchWord(it)
+                    ListFeedingVM.SortedSongs.setSearchWord(it)
                 },
                 placeholder = {
                     Text(text = "Search")
@@ -946,133 +972,6 @@ fun SearchTopBar(){
 
 
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-@Composable
-fun mypreview(){
-    Surface(modifier = Modifier.fillMaxSize()) {
-
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding()
-                .displayCutoutPadding()
-                .systemBarsPadding(),
-            topBar = {
-
-
-
-
-                KeyboardAwareBox(
-                    modifier = Modifier
-                        .height(60.dp)
-                        .fillMaxWidth()
-                        .background(MyColor.SeparatorGray)
-                        .clipToBounds()
-                ) {isImeVisible,imeInsets,navBarInset->
-
-                    var searchWord by remember { mutableStateOf("") }
-
-                    val isSearchInProgress by remember {
-                        derivedStateOf {
-                            !searchWord.isBlank()
-                        }
-                    }
-
-                    val focusRequester = remember { FocusRequester() }
-                    var focusState by remember { mutableStateOf<FocusState?>(null) }
-
-                    val focusManager = LocalFocusManager.current
-
-                    var shouldBeFocused by remember { mutableStateOf(false) }
-
-                    val isFocused by remember {
-                        derivedStateOf {
-                            isSearchInProgress || focusState?.hasFocus?:false || shouldBeFocused
-                        }
-                    }
-
-
-                    LaunchedEffect(isImeVisible) {
-                        if(!isImeVisible) focusManager.clearFocus()
-                        shouldBeFocused = false
-                    }
-
-                    val iconModifier = Modifier
-                        .fillMaxHeight()
-                        .padding(vertical = 10.dp)
-                        .aspectRatio(1f, true)
-
-                    if(!isFocused) {
-                        Text(
-                            text = LocalContext.current.getString(R.string.app_name),
-                            fontSize = 25.sp,
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .padding(horizontal = 5.dp)
-                        )
-
-                        IconButton(modifier = iconModifier.align(Alignment.CenterEnd),
-                            imageVector = Icons.Default.Search,
-                            onclick = {
-                                shouldBeFocused = true
-
-                            }
-                        )
-                    }
-                    else {
-
-                        LaunchedEffect(isFocused) {
-                            focusRequester.requestFocus()
-                        }
-
-                        TextField(
-                            singleLine = true,
-                            trailingIcon = {
-                                IconButton(
-                                    modifier = iconModifier,
-                                    imageVector = Icons.Default.Close,
-                                    onclick = {
-                                        focusManager.clearFocus()
-                                        searchWord = ""
-                                        shouldBeFocused = false
-                                    }
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .focusRequester(focusRequester)
-                                .onFocusChanged {
-                                    focusState = it
-                                },
-                            value = searchWord,
-                            onValueChange = {
-                                searchWord = it
-                            },
-                            placeholder = {
-                                Text(text = "Search")
-                            }
-                        )
-                    }
-
-                }
-            }
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(it)
-                    .background(MyColor.Pink40)
-            ) {
-
-            }
-        }
-
-    }
-
-    }
 
 
 
