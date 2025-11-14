@@ -96,7 +96,7 @@ object myExoPlayer {
 
         val songViewModel = SongsViewModel(context)
 
-        if (exoPlayer == null) {
+        if (exoPlayer == null || exoPlayer!!.isReleased) {
 
             Log.i(Logs.EXOPLAYER.name,"Attempting to CREATE exoplayer from NULL.")
 
@@ -508,11 +508,7 @@ object myExoPlayer {
         Log.i(Logs.EXOPLAYER.name,"Attempting to DESTROY exoplayer.")
 
         progressVM.stopUpdates()
-        prefs?.edit {
-            putCursorValue(MyPrefs._prefs_LastSongPosition,getCurrentPosition())
-            putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.value?.id?:-1)
-            putCursorValue(MyPrefs._prefs_LastPlaylistTitle,currentPlaylistTitle.value?:"")
-        }
+        onDestroy_SaveLogic()
 
         _currentSong.value = null
         _currentPlaylistTitle.value = null
@@ -525,12 +521,25 @@ object myExoPlayer {
         }
         _isInitialized.value = false
 
-
         try{
-            exoPlayer?.release()
+            exoPlayer?.stop()
+
         }catch (ex: Exception){
             ex.printStackTrace()
         }
-        exoPlayer = null
+
+        exoPlayer?.release()
+    }
+
+    fun release(){
+        exoPlayer?.release()
+    }
+
+    fun onDestroy_SaveLogic(){
+        prefs?.edit {
+            putCursorValue(MyPrefs._prefs_LastSongPosition,getCurrentPosition())
+            putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.value?.id?:-1)
+            putCursorValue(MyPrefs._prefs_LastPlaylistTitle,currentPlaylistTitle.value?:"")
+        }
     }
 }

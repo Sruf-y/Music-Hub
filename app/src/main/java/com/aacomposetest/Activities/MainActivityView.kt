@@ -14,7 +14,6 @@ import SrufComposeComponents.TabRowIndicator
 import SrufComposeComponents.Text
 import android.Manifest
 import android.content.Context.MODE_PRIVATE
-import android.content.Intent
 import android.database.ContentObserver
 import android.os.Bundle
 import android.os.Handler
@@ -126,6 +125,7 @@ import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.BottomSheets.SongPlayingBottomSheet
 import SrufComposeComponents.NestedScrollingFront
+import com.aacomposetest.MyApplication
 import ui.components.Pages.AddSongsToPlaylistPage
 import ui.components.Pages.SongsRefreshPage
 import kotlin.collections.map
@@ -144,7 +144,6 @@ class MainActivityView : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        MusicService.setTaskStarted(true)
 
         val contextRef = this
         songViewModel = SongsViewModel(this)
@@ -345,9 +344,9 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
 
 
-        if (hasNotificationPermission && exoplayerIsInitialized && !MusicService.isStarted) {
+        if(hasNotificationPermission && exoplayerIsInitialized) {
 
-            MusicService.startLogic(context = contextRef)
+            MusicService.handleOnAppStart(contextRef)
         }
     }
 

@@ -2,6 +2,7 @@ package com.aacomposetest.Services
 
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -17,20 +18,16 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.aacomposetest.MyApplication
 import com.aacomposetest.R
 import androidx.media.app.NotificationCompat.MediaStyle
 import com.aacomposetest.Activities.MainActivityView
+import com.aacomposetest.Classes.AutoStateFlow
 import com.aacomposetest.Functions
 import com.aacomposetest.Logs
-import com.aacomposetest.MainActivity
-import com.aacomposetest.Services.MusicService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MusicService: LifecycleService() {
@@ -39,13 +36,16 @@ class MusicService: LifecycleService() {
 
     val exoPlalayerVM = ExoPlayerViewModel()
 
+
     override fun onBind(intent: Intent): IBinder? {
         return super.onBind(intent)
     }
 
+    var startId:Int = 0
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
+        this.startId = startId
         Log.i(Logs.SERVICE.name,"Called onStartCommand.")
 
         when(intent?.action){
@@ -55,19 +55,6 @@ class MusicService: LifecycleService() {
 
                 return START_NOT_STICKY
             }
-            Actions.START_BACKGROUND.name->{
-
-                UpdateNotification(CreateNotification())
-                stopForeground(STOP_FOREGROUND_DETACH)
-
-
-                return START_NOT_STICKY
-            }
-            Actions.STOP.name->{
-                // If task is not present, kill service
-                stopNotification(killService = !taskIsPresent)
-
-            }
 
             Actions.KILLSERVICE.name->{
                 stopSelf()
@@ -75,6 +62,7 @@ class MusicService: LifecycleService() {
 
             else -> {
 
+                Log.e(Logs.SERVICE.name,"Service onStartCommand was passed an Action which is either INVALID or not handled.")
             }
         }
         return START_NOT_STICKY
@@ -86,7 +74,7 @@ class MusicService: LifecycleService() {
 
         exoPlalayerVM.progressVM.startUpdates()
 
-
+        MyApplication.registerServiceInstance(this)
 
 
         val actionsCallback = object: MediaSessionCompat.Callback(){
@@ -94,7 +82,21 @@ class MusicService: LifecycleService() {
 
                 when(action){
                     Actions.STOP.name->{
-                        stopNotification(killService = !taskIsPresent)
+
+                        // If task is not on the tasktray, stop the service, marking the proccess for deletion
+                       if(!isAppTaskStillExists()){
+
+                           myExoPlayer.destroy()
+
+                           // when its paused, it becomes a background service. StopForeground will not work on a background service. I need to manually cancel the notification.
+                           val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                           notificationManager.cancel(notification_id)
+
+                           stopSelf()
+                       }else{
+                           stopForeground(STOP_FOREGROUND_REMOVE)
+                       }
+
                     }
                     Actions.FAVORITE.name->{
 
@@ -112,9 +114,6 @@ class MusicService: LifecycleService() {
 
             override fun onPause() {
                 exoPlalayerVM.toggle()
-
-//                if(!taskIsPresent)
-//                    stopForeground(STOP_FOREGROUND_DETACH)
             }
 
             override fun onSeekTo(pos: Long) {
@@ -153,15 +152,11 @@ class MusicService: LifecycleService() {
                 if (it) exoPlalayerVM.progressVM.startUpdates() else exoPlalayerVM.progressVM.stopUpdates()
 
 
-                startLogic(
-                    isPlaying = it,
-                    context = this@MusicService
-                )
+                playPauseLogic(it,this@MusicService)
 
             }
 
         }
-
 
         Log.i(Logs.SERVICE.name,"Called onCreate.")
     }
@@ -169,10 +164,14 @@ class MusicService: LifecycleService() {
 
 
     override fun onDestroy() {
-
+        super.onDestroy()
         exoPlalayerVM.progressVM.stopUpdates()
 
-        super.onDestroy()
+        notificationState.setValue(NotificationState.Dead)
+
+        MyApplication.unregisterServiceInstance()
+
+
     }
 
 
@@ -289,9 +288,6 @@ class MusicService: LifecycleService() {
         // Redundant initialization of the player just in case
         myExoPlayer.initializePlayer(this)
 
-        setStarted(true)
-
-
         StartForegroundNotification(CreateNotification())
     }
 
@@ -311,32 +307,6 @@ class MusicService: LifecycleService() {
 
 
 
-    fun stopNotification(killService:Boolean = false){
-
-
-        if(killService){
-
-
-            setStarted(false)
-
-            StartForegroundNotification(CreateNotification())
-
-
-            stopForeground(STOP_FOREGROUND_REMOVE)
-
-
-            myExoPlayer.destroy()
-
-            stopSelf()
-        }
-        else{
-
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        }
-
-
-    }
-
 
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -344,65 +314,86 @@ class MusicService: LifecycleService() {
 
         Log.i(Logs.SERVICE.name,"Task removed")
 
-        setTaskStarted(false)
-
 
 
         if(!exoPlalayerVM.isPlaying.value)
-            stopForeground(STOP_FOREGROUND_DETACH)
+            sendToBackground(this)
 
     }
 
 
     enum class Actions{
         START,
-        START_BACKGROUND,
         STOP, // only used in notification button
         KILLSERVICE, // unused
         FAVORITE
     }
 
+
+    var notificationState = AutoStateFlow<NotificationState>(NotificationState.Dead)
+
+    fun playPauseLogic(isPlaying:Boolean = myExoPlayer.isPlaying.value,context:Context = MyApplication.instance){
+
+        if (isPlaying || isAppTaskStillExists()) {
+            sendToForeground(context)
+        } else {
+            sendToBackground(context)
+        }
+
+        UpdateNotification(CreateNotification())
+    }
+
+    fun sendToForeground(context: Context){
+        start()
+
+        notificationState.setValue(NotificationState.Foreground)
+    }
+
+    fun sendToBackground(context: Context){
+        if(notificationState.stateFlow.value == NotificationState.Foreground){
+
+            stopForeground(STOP_FOREGROUND_DETACH)
+
+            notificationState.setValue(NotificationState.Background)
+        }else{
+            Log.e(Logs.SERVICE.name,"Attempted to send service to background in invalid state [${notificationState.stateFlow.value.name}]")
+        }
+    }
+
+
+
     companion object{
-        var isStarted = false
-            private set
-
-        fun setStarted(value:Boolean){
-            isStarted = value
-            //Log.i("WTF","Serv TaskActive ${taskIsPresent} | ServiceActive ${isStarted}")
+        enum class NotificationState {
+            Foreground,
+            Background,
+            Dead
         }
 
-        // This service can ONLY be launched from the task
-        var taskIsPresent = true
-            private set
-
-        fun setTaskStarted(value: Boolean){
-
-            taskIsPresent = value
-
-            startLogic()
-
-
-            //Log.i("WTF","Task TaskActive ${taskIsPresent} | ServiceActive ${isStarted}")
-        }
-
-        val notification_id = 106
-        val mediaSessionTag = "MusicPlayer"
-
-        fun startLogic(isPlaying:Boolean = myExoPlayer.isPlaying.value,context:Context = MyApplication.instance){
-
-                if (isPlaying || taskIsPresent) {
-                    val intent = Intent(context, MusicService::class.java).apply {
-                        action = MusicService.Actions.START.toString()
-                    }
-                    context.startForegroundService(intent)
-                } else {
-                    val intent = Intent(context, MusicService::class.java).apply {
-                        action = MusicService.Actions.START_BACKGROUND.toString()
-                    }
-                    context.startForegroundService(intent)
+        fun handleOnAppStart(context: Context){
+            if(MyApplication.serviceInstance == null){
+                val intent = Intent(context, MusicService::class.java).apply {
+                    action = MusicService.Actions.START.toString()
                 }
-
+                context.startForegroundService(intent)
+            }else if(MyApplication.serviceInstance!!.notificationState.stateFlow.value == NotificationState.Background){
+                MyApplication.serviceInstance!!.sendToForeground(context)
+            }
         }
+
+
+        fun isAppTaskStillExists(): Boolean {
+            val activityManager = getSystemService(MyApplication.instance, ActivityManager::class.java) as ActivityManager
+            val appTasks = activityManager.appTasks
+
+//            appTasks.forEach {
+//                Log.i("WTF",it.taskInfo.topActivity?.className?:"Nothing.")
+//            }
+            return appTasks.isNotEmpty()
+        }
+
+
+        const val notification_id = 106
+        const val mediaSessionTag = "MusicPlayer"
     }
 
 }

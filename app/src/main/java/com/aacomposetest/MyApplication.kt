@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
+import com.aacomposetest.Services.MusicService
 
 class MyApplication: Application() {
     override fun onCreate() {
@@ -32,12 +33,24 @@ class MyApplication: Application() {
     companion object{
         lateinit var instance: Application
             private set
+
+
+        private var _serviceInstance: MusicService? = null
+        val serviceInstance: MusicService?
+            get() = _serviceInstance
+
+        fun registerServiceInstance(service: MusicService) {
+            _serviceInstance = service
+        }
+
+        fun unregisterServiceInstance() {
+            _serviceInstance = null
+        }
     }
 
     object MusicNotification{
-        val id = "music channel"
-        val name = "Music Player"
-
+        const val id = "music channel"
+        const val name = "Music Player"
 
     }
 }
