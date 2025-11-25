@@ -1,7 +1,7 @@
 package SrufComposeComponents
 
 
-import Settings.Storeables
+import com.aacomposetest.Classes.Storeables
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.updateTransition

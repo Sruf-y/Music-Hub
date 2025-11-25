@@ -31,7 +31,19 @@ data class Song (
     var lastModified:Long,
 
     @ColumnInfo(name = "timesPlayed")
-    var timesPlayed:Long = 0
+    var timesPlayed:Long = 0,
+
+    @ColumnInfo(name = "album_artist")
+    var albumArtist:String,
+    @ColumnInfo(name = "size")
+    var size:Long,
+    @ColumnInfo(name = "mime_type")
+    var mimeType:String,
+    @ColumnInfo(name = "year")
+    var year: Int?,
+    @ColumnInfo(name = "album_id")
+    var albumId:Long?
+
 
 ){
 
@@ -86,7 +98,12 @@ data class Song (
                 duration = 0,
                 thumbnailPath = "<no thumbnail>",
                 timesPlayed = 0,
-                lastModified = 0
+                lastModified = 0,
+                albumArtist = "<unknown albumArtist>",
+                size = 0L,
+                year = 0,
+                mimeType = "<unknown mimeType>",
+                albumId = null
             )
         }
     }

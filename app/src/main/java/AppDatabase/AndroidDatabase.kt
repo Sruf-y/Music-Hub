@@ -55,7 +55,13 @@ object AndroidDatabase {
                 MediaStore.Audio.Media.ALBUM,
                 MediaStore.Audio.Media.DATE_MODIFIED,
                 MediaStore.Audio.Media.RELATIVE_PATH,
-                MediaStore.Audio.Media.GENRE
+                MediaStore.Audio.Media.GENRE,
+
+                MediaStore.Audio.Media.ALBUM_ARTIST,
+                MediaStore.Audio.Media.SIZE,
+                MediaStore.Audio.Media.MIME_TYPE,
+                MediaStore.Audio.Media.YEAR,
+                MediaStore.Audio.Media.ALBUM_ID
             )
 
             val selection = null //"${MediaStore.Audio.Media.RELATIVE_PATH} LIKE ?"
@@ -94,7 +100,16 @@ object AndroidDatabase {
                         cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.RELATIVE_PATH))
                     val lastModified =
                         cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED))
-
+                    val albumArtist =
+                        cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ARTIST))
+                    val size =
+                        cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE))
+                    val mimeType =
+                        cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE))
+                    val year =
+                        cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR))
+                    val albumId =
+                        cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID))
 
                     var thumbnailFile: File? = null
                     var thumbFILE = File(File(context.filesDir, SONGS_DIR),contentUri.lastPathSegment.toString()+".jpeg")
@@ -135,7 +150,12 @@ object AndroidDatabase {
                             relativePath = relativePath,
                             duration = duration,
                             thumbnailPath = thumbnailFile?.path?:"",
-                            lastModified = lastModified
+                            lastModified = lastModified,
+                            mimeType = mimeType,
+                            year = year,
+                            size = size,
+                            albumArtist = albumArtist?:"",
+                            albumId = albumId
                         )
 
 

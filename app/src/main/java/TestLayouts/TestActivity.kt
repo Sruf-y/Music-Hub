@@ -42,59 +42,64 @@ class TestActivity : ComponentActivity() {
         enableEdgeToEdge()
 
 
-        val songsList =
-            List(100) { index -> Song.emptySong(id = index.toLong(), title = "Song ${index}") }
+
         setContent {
             ComposeTestTheme {
-
-
-                val pagerState = rememberPagerState( initialPage = 0){3}
-                NestedScrollingFront(
-                    appbar = {
-                        Text("Hello appbar",modifier = Modifier.fillMaxWidth().height(200.dp).background(MyColor.Green)
-                        )
-                    },
-                    tabRow = {
-                        val scope = rememberCoroutineScope()
-                        TabRow(
-                            selectedTabIndex = pagerState.currentPage,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp)
-                        ) {
-                            listOf("Tab 1", "Tab 2", "Tab 3").forEachIndexed { index, title ->
-                                Tab(
-                                    selected = pagerState.currentPage == index,
-                                    onClick = {
-                                        scope.launch {
-                                            pagerState.animateScrollToPage(index)
-                                        }
-                                    },
-                                    text = { Text(title) }
-                                )
-                            }
-                        }
-                    },
-                    pager = {
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier
-                                .fillMaxSize()
-                        ) { page ->
-                            when (page) {
-                                0 -> MyPagerPage(songsList)
-                                1 -> MySecondPage(songsList)
-                                2 -> MyThirdPage()
-                            }
-                        }
-                    }
-                )
+                NestedScrollTest()
             }
         }
 
     }
 }
 
+
+@Composable
+private fun NestedScrollTest(){
+    val songsList =
+        List(100) { index -> Song.emptySong(id = index.toLong(), title = "Song ${index}") }
+
+    val pagerState = rememberPagerState( initialPage = 0){3}
+    NestedScrollingFront(
+        appbar = {
+            Text("Hello appbar",modifier = Modifier.fillMaxWidth().height(200.dp).background(MyColor.Green)
+            )
+        },
+        tabRow = {
+            val scope = rememberCoroutineScope()
+            TabRow(
+                selectedTabIndex = pagerState.currentPage,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+            ) {
+                listOf("Tab 1", "Tab 2", "Tab 3").forEachIndexed { index, title ->
+                    Tab(
+                        selected = pagerState.currentPage == index,
+                        onClick = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                        },
+                        text = { Text(title) }
+                    )
+                }
+            }
+        },
+        pager = {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .fillMaxSize()
+            ) { page ->
+                when (page) {
+                    0 -> MyPagerPage(songsList)
+                    1 -> MySecondPage(songsList)
+                    2 -> MyThirdPage()
+                }
+            }
+        }
+    )
+}
 
 @Composable
 fun MyPagerPage(a:List<Song>){

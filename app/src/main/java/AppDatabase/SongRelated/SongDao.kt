@@ -36,13 +36,18 @@ interface SongDao {
         val existing = getSongById(song.id)
         if (existing == null) insert(song)
         else update(song.copy(
-            // merge or override only the fields you want
+            // override certain fields
             title = song.title,
             songUri = song.songUri,
             artistName = song.artistName,
             duration = song.duration,
             relativePath = song.relativePath,
-            albumName = song.albumName
+            albumName = song.albumName,
+            timesPlayed = song.timesPlayed,
+            year = song.year,
+            lastModified = song.lastModified,
+            thumbnailPath = song.thumbnailPath,
+            albumId = song.albumId
         ))
     }
 

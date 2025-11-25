@@ -146,10 +146,12 @@ object Functions {
 
     }
 
-    fun map(x:Float, in_min:Float, in_max:Float, out_min:Float, out_max:Float):Float {
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+//    fun map(x:Float, in_min:Float, in_max:Float, out_min:Float, out_max:Float):Float {
+//        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+//    }
+    fun Float.map(in_min:Float, in_max:Float, out_min:Float, out_max:Float):Float {
+        return (this - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
     }
-
 
     object JsonOp{
         private val jsonMutex: Mutex = Mutex()
