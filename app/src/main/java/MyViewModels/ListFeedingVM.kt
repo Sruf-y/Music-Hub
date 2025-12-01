@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.update
 object ListFeedingVM {
 
     private val prefs by lazy {
-        MyApplication.instance.applicationContext.getSharedPreferences(MyPrefs.PrefDirs.GenericData, Context.MODE_PRIVATE)
+        MyPrefs.getPrefs(MyApplication.instance)
     }
 
     private val songsVM = SongsViewModel(MyApplication.instance)

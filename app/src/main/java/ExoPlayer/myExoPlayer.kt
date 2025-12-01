@@ -44,7 +44,7 @@ object myExoPlayer {
     private var ioScope = CoroutineScope(Dispatchers.IO)
     private var progressJob: Job? = null
 
-    private val prefs: SharedPreferences? = MyApplication.instance.getSharedPreferences(MyPrefs.PrefDirs.GenericData,MODE_PRIVATE)
+    private val prefs: SharedPreferences? = MyPrefs.getPrefs(MyApplication.instance)
 
 
     private val progressVM = DataObserverViewModel<Long>(

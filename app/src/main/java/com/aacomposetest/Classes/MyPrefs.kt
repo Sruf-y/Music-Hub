@@ -1,13 +1,23 @@
 package com.aacomposetest.Classes
 
+import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import androidx.compose.ui.input.key.Key
 import com.aacomposetest.Classes.CursorValue
 import kotlin.jvm.Throws
 
 
 object MyPrefs {
-    object PrefDirs{
-        val GenericData = "Generic Data"
+    enum class PrefDirs(val dirKey: String){
+        GenericData("Generic Data")
+    }
+
+
+
+
+    fun getPrefs(context: Context,dir: PrefDirs = PrefDirs.GenericData): SharedPreferences {
+        return context.applicationContext.getSharedPreferences(dir.dirKey, MODE_PRIVATE)
     }
 
 

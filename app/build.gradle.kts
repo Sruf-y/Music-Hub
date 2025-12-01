@@ -110,6 +110,8 @@ dependencies {
 
     //Navigation
     implementation("androidx.navigation:navigation-compose:2.9.5")
+    implementation("io.github.raamcosta.compose-destinations:core:1.9.55")
+    kapt("io.github.raamcosta.compose-destinations:ksp:1.9.55")
 
     //Service
     implementation("androidx.lifecycle:lifecycle-service:2.9.4")

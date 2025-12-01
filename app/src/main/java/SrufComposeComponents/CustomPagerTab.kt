@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import com.aacomposetest.Classes.NavigationRelated.MyPagerTab
+import com.aacomposetest.Classes.MyPagerTab
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
