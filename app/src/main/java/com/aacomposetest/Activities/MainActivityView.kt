@@ -36,6 +36,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOutElastic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.displayCutoutPadding
@@ -116,11 +117,18 @@ import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.BottomSheets.SongPlayingBottomSheet
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.util.fastRoundToInt
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.toRoute
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
+import com.aacomposetest.Functions.map
 import ui.components.Pages.AddSongsToPlaylistPage
 import ui.components.Pages.SongsRefreshPage
 import kotlin.collections.map
+import kotlin.math.roundToInt
 
 class MainActivityView : ComponentActivity() {
 
@@ -206,7 +214,7 @@ class MainActivityView : ComponentActivity() {
     @Composable
     private fun MainView(){
 
-        val bottomSheetViewmodel :MyModalBottomSheet.ModalVM by viewModels()
+        val bottomSheetViewmodel :MyModalBottomSheet.ModalVM = viewModel()
         val modalSettingsSheetState = rememberBottomSheetState(initialDetent = SheetDetent.Hidden)
 
 
@@ -389,6 +397,18 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
 
     val drawerState = rememberViewDrawerState(initialValue = ViewDrawerValue.Closed)
 
+    val contentScale by remember {
+        derivedStateOf {
+            drawerState.currentOffset.map(0f,1f,1f,0.8f)
+        }
+    }
+
+    val contentShapeCorner by remember {
+        derivedStateOf {
+            20.dp.times(drawerState.currentOffset )
+        }
+    }
+
     /**
      * Container for EVERYTHING that can have a [Settings Sheet] in front of it. So basically the entire application
      *
@@ -406,6 +426,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
         ViewDrawer(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MyColor.WorkInProgress)
                 .padding(innerPadding),
             state = drawerState,
             mainContent = {
@@ -413,6 +434,12 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
+                        .graphicsLayer {
+                            scaleX = contentScale
+                            scaleY = contentScale
+                            transformOrigin = TransformOrigin.Center
+                        },
+                    shape = RoundedCornerShape(size = contentShapeCorner)
                 ) {
                     val scope = rememberCoroutineScope()
 
@@ -465,7 +492,6 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                     )
 
 
-
                     /**
                      * Manages navigation inside the [Main Pager] container.
                      * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
@@ -498,14 +524,16 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                         },// page stays back while another page is animated above
 
                     ) {
+
                         composable<MainPage> {
-                            val initialPage = remember { prefs.getCursorValue(MyPrefs._prefs_PagerPosition,0) }
+                            val initialPage =
+                                remember { prefs.getCursorValue(MyPrefs._prefs_PagerPosition, 0) }
 
 
 
-                            MainPage.invoke(initialPage){ newPage->
-                                when(newPage){
-                                    0->{
+                            MainPage.invoke(initialPage) { newPage ->
+                                when (newPage) {
+                                    0 -> {
                                         SongsRefreshPage(
                                             prefs = prefs,
                                             modifier = Modifier
@@ -525,7 +553,8 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                                             }
                                         )
                                     }
-                                    1->{
+
+                                    1 -> {
                                         // State yet unused for the playlist viewing dropdown menu.
                                         val playlistsPageMoreMenuState by remember {
                                             mutableStateOf(
@@ -591,7 +620,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
 
                         }
 
-                        composable<PlaylistPage>{
+                        composable<PlaylistPage> {
                             val args = it.toRoute<PlaylistPage>()
 
                             val playlistViewingLazyListState =
@@ -632,7 +661,7 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                                     animationSpec = tween(500)
                                 )
                             }
-                        ){backStack->
+                        ) { backStack ->
                             val args = backStack.toRoute<PlaylistAddSongsPage>()
 
                             val playlistTitle =
@@ -711,7 +740,6 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                     }
 
 
-
                     val expandedHeight = 250.dp
                     /**
                      * Bottom sheet can be "Enabled" or "Disabled" by controlling this value, which is also attached to its alpha for propper animation
@@ -739,11 +767,16 @@ private fun ParentContainer(activity: ComponentActivity, songViewModel: SongsVie
                         .fillMaxHeight()
                         .width(250.dp)
                         .background(Color.Cyan)
+                        .pointerInput(Unit) {
+                            detectTapGestures()
+                        }
                 ) {
 
                 }
             }
         )
+
+
     }
 
 

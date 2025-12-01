@@ -99,6 +99,7 @@ class ViewDrawerState(initialValue: ViewDrawerValue){
 
     /**
      * Drawer's current offset. Is Float.NAN before being initialized OR if the drawer's content is empty.
+     * Otherwise it ranges between 0F at CLOSED and 1F at OPEN
      * */
     var currentOffset by mutableFloatStateOf(0f)
         private set
@@ -153,10 +154,12 @@ class ViewDrawerState(initialValue: ViewDrawerValue){
     fun initDrawer(){
         when(currentValue){
             ViewDrawerValue.Open -> {
-                drawerView.value?.open()
+                currentOffset = 1f
+                open()
             }
             ViewDrawerValue.Closed -> {
-                drawerView.value?.close()
+                currentOffset = 0f
+                close()
             }
         }
     }

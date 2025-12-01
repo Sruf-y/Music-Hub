@@ -34,6 +34,7 @@ object MyColor{
     @Stable val SeparatorGray = Color(0xFFB6B6B6)
     @Stable val SurfaceDark  = Color(0xFF4B6572)
     @Stable val Magenta = Color(0xFFFF00FF)
+    @Stable val WorkInProgress = Magenta
     val Inactive = Color(0xFF565656)
 
     val Myprimary = Color(0xFF44CBA2)
