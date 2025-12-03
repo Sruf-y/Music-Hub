@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.remember
+import com.aacomposetest.ui.theme.MyColor
 
 /**
  * Animation state enum for [ViewDrawerState]
@@ -222,6 +223,7 @@ fun ViewDrawer(
         factory = { ctx ->
 
             DrawerLayout(ctx).apply {
+
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
@@ -234,6 +236,7 @@ fun ViewDrawer(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
+
                 }
 
                 // Create main ComposeView - fill parent
@@ -243,6 +246,7 @@ fun ViewDrawer(
                         ViewGroup.LayoutParams.WRAP_CONTENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT
                     )
+
                 }
 
                 // Create drawer ComposeView with specific width
@@ -254,6 +258,7 @@ fun ViewDrawer(
                     ).apply {
                         gravity = GravityCompat.START
                     }
+
                 }
 
                 // Build hierarchy

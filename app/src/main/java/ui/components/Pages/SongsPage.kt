@@ -56,56 +56,7 @@ import kotlinx.coroutines.launch
 import ui.components.BottomSheets.Content.SongsSort_Content
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SongsRefreshPage(
-    modifier: Modifier = Modifier.fillMaxSize(),
-    prefs: SharedPreferences,
-    listPadding: PaddingValues = PaddingValues(0.dp),
-    songs: List<Song>,
-    songsVM: SongsViewModel,
-    exoPlayerVM: ExoPlayerViewModel,
-    onOptionsClick: @Composable ((MutableState<Boolean>,Song) -> Unit)? = null,
-    listState: LazyListState,
-    isRefreshing: MutableState<Boolean>,
-    onRefresh: suspend () -> Unit = {},
-    settingsBottomSheetVM: MyModalBottomSheet.ModalVM? = null,
-) {
-    val scope = rememberCoroutineScope()
 
-
-
-    val refreshState = rememberPullToRefreshState()
-
-
-    PullToRefreshBox(
-        state = refreshState,
-        modifier = modifier,
-        isRefreshing = isRefreshing.value,
-        onRefresh = {
-            scope.launch {
-                onRefresh.invoke()
-            }
-
-        }
-    ) {
-        SongsPage(
-            prefs = prefs,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(listPadding),
-            settingsBottomSheetVM = settingsBottomSheetVM,
-            songs = songs,
-            exoPlayerVM = exoPlayerVM,
-            onOptionsClick = onOptionsClick,
-            state = listState,
-            songsVM = songsVM
-        )
-    }
-
-
-
-}
 
 
 
@@ -113,21 +64,19 @@ fun SongsRefreshPage(
 @Composable
 fun SongsPage(
     modifier: Modifier = Modifier.fillMaxSize(),
-    songsVM: SongsViewModel,
     settingsBottomSheetVM: MyModalBottomSheet.ModalVM? = null,
-    prefs: SharedPreferences,
     songs:List<Song>,
     exoPlayerVM: ExoPlayerViewModel,
     onOptionsClick:@Composable ((MutableState<Boolean>,Song) -> Unit)? = null,
     state: LazyListState
 ){
+    val contextRef = LocalContext.current
+
+    val prefs = remember { MyPrefs.getPrefs(contextRef) }
 
     val curentSortType by ListFeedingVM.SortedSongs.sortTypeFlow.collectAsState()
     val curentSortDirection by ListFeedingVM.SortedSongs.sortDirectionFlow.collectAsState()
 
-
-
-    val contextRef = LocalContext.current
 
     val currentlyPlayingSong by exoPlayerVM.currentSong.collectAsState()
 

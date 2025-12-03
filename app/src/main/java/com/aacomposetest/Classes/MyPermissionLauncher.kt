@@ -4,57 +4,23 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.core.app.ActivityOptionsCompat
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
-class MyPermissionLauncher {
-
-
-    private var onGrant:()->Unit = {}
-    private var onDeny:()->Unit = {}
-    private var onFinish:(success: Boolean)->Unit = {}
-
-    private var launcher:ManagedActivityResultLauncher<String, Boolean>? = null
-
-
+object MyPermissionLauncher {
 
     @Composable
-    fun buildChange(onGrant:(()->Unit)?= {}, onDeny:(()-> Unit)? = null, onFinish: ((success:Boolean) -> Unit)? = null): MyPermissionLauncher {
-        if(onGrant!=null){
-            this.onGrant = onGrant
-        }
-        if(onDeny!=null){
-            this.onDeny = onDeny
-        }
-        if(onFinish!=null){
-            this.onFinish = onFinish
-        }
-
-        buildLauncher()
-
-        return this
-    }
-
-    @Composable
-    private fun buildLauncher(){
-        launcher = rememberLauncherForActivityResult(
+    fun rememberLauncher(onGrant:(() -> Unit)? = null,onDeny:(() -> Unit)? = null,onFinish:((Boolean) -> Unit)? = null): ManagedActivityResultLauncher<String, Boolean> {
+        return rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission()
         ) { granted ->
             if (granted) {
-                // Permission granted, safe to query MediaStore
-                this.onGrant.invoke()
+                onGrant?.invoke()
             } else {
-                // Handle denied case
-                this.onDeny.invoke()
+                onDeny?.invoke()
             }
-            this.onFinish.invoke(granted)
+            onFinish?.invoke(granted)
         }
     }
-
-
-
-    fun launch(input:String, options: ActivityOptionsCompat? = null){
-        launcher?.launch(input,options)
-    }
-
-
 }

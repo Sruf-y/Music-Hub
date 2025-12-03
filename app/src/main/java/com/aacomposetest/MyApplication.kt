@@ -54,3 +54,15 @@ class MyApplication: Application() {
 
     }
 }
+
+fun Log(message:String,type:String = "i"){
+    when(type){
+        "e"->{
+            Log.e("WTF",message)
+        }
+        "i"->{
+            Log.i("WTF",message)
+        }
+    }
+
+}

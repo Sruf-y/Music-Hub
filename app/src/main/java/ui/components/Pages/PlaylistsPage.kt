@@ -63,7 +63,6 @@ import ui.components.PlaylistItem
 fun PlaylistsPage(
     state: LazyListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() },
     modifier: Modifier = Modifier.fillMaxSize(),
-    playlistViewModel: PlaylistViewModel,
     playlists: List<Playlist>,
     bottomPadding: Dp = 70.dp,
     onPlusClick: (() -> Unit)? = null,
@@ -71,15 +70,6 @@ fun PlaylistsPage(
     onPlaylistClick: ((Playlist) -> Unit)? = null,
     onPlaylistOptionsClick: @Composable ((it:Playlist, menuIsOpen:MutableState<Boolean>)->Unit)? = null
 ) {
-    val contextRef = LocalContext.current
-
-
-
-
-
-
-
-
 
 
     Box(modifier = modifier) {

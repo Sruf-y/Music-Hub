@@ -5,33 +5,30 @@ import AppDatabase.MyDatabaseProvider
 import AppDatabase.SongRelated.Song
 import AppDatabase.SongRelated.SongRepository
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aacomposetest.Classes.MyPrefs
-import com.aacomposetest.Classes.MyPrefs.getCursorValue
-import com.aacomposetest.MyApplication
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.getValue
 
 class SongsViewModel(context: Context): ViewModel() {
 
     private val dao = MyDatabaseProvider.getDatabase(context).songDao()
     private val repo = SongRepository(dao)
 
+    init {
+        viewModelScope.launch {
+            repo.allsongsFlow.collect{songs->
+                _songsAsFlow.value = songs
+            }
+        }
+
+    }
 
 
-    val getAllSongsFlow: Flow<List<Song>> = repo.allsongsFlow.map { list -> list.map { it.copy() } }
+    private val _songsAsFlow = MutableStateFlow<List<Song>>(emptyList())
+    val getAllSongsFlow = _songsAsFlow.asStateFlow()
 
     // Value used for playNextSong and playPreviousSong
     private val getSortedSongsStateFlow
@@ -124,9 +121,7 @@ class SongsViewModel(context: Context): ViewModel() {
     }
 
     suspend fun getSongById(id: Long): Song?{
-        return withContext(viewModelScope.coroutineContext) {
-            repo.getSongById(id)
-        }
+        return repo.getSongById(id)
     }
 
     suspend fun resyncWithMediastore(context: Context, alsoPictures:Boolean, forceUpdate:Boolean, onFinish:( suspend ()->Unit)? = null):Int{
@@ -140,7 +135,5 @@ class SongsViewModel(context: Context): ViewModel() {
         )
 
     }
-
-
 
 }

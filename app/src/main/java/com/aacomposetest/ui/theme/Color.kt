@@ -18,6 +18,9 @@ object MyColor{
     @Stable val Black = Color.Black
     @Stable val White = Color.White
 
+    @Stable private val BackgroundLight = Color(0xFFE5E5E5)
+    @Stable private val BackgroundDark = Color(0xFF2B2B2B)
+
 
     @Stable val Orange = Color(0xFFFF9900)
     @Stable val Red = Color(0xFFFF0000)
@@ -27,7 +30,7 @@ object MyColor{
     @Stable val Teal = Color(0xFF00FFA6)
     @Stable val SemiTransparentBackground = Color(0x9A4E4E4E)
     @Stable val SemiTransparentDark = Color(0x54000000)
-    @Stable val SemiTransparentBright = Color(0x54FFFFFF)
+    @Stable val SemiTransparentLight = Color(0x54FFFFFF)
     @Stable val Purple = Color(0xFF7227C7)
     @Stable val SelectedBlue = Color(0xFF55ACFF)
     @Stable val Unselected = Color(0xFF787878)
@@ -46,7 +49,7 @@ object MyColor{
         return if(isDarkMode)
             SemiTransparentDark
         else
-            SemiTransparentBright
+            SemiTransparentLight
     }
     @Composable
     fun TextColor(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
@@ -54,6 +57,14 @@ object MyColor{
             White
         else
             Black
+    }
+
+    @Composable
+    fun Background(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
+        return if(isDarkMode)
+            BackgroundDark
+        else
+            BackgroundLight
     }
 }
 

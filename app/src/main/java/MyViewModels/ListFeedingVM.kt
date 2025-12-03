@@ -1,13 +1,17 @@
 package MyViewModels
 
+import AppDatabase.MyDatabaseProvider
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
+import AppDatabase.SongRelated.SongRepository
 import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.Setting
 import com.aacomposetest.MyApplication
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,11 +28,17 @@ object ListFeedingVM {
         MyPrefs.getPrefs(MyApplication.instance)
     }
 
-    private val songsVM = SongsViewModel(MyApplication.instance)
+    // Using this in order to not create a SongViewModel for no reason
+    private val dao = MyDatabaseProvider.getDatabase(MyApplication.instance).songDao()
+    private val repo = SongRepository(dao)
+    private val scope = CoroutineScope(Dispatchers.Default)
+
+
+    //private val songsVM = SongsViewModel(MyApplication.instance)
     private val playlistsVM = PlaylistViewModel(MyApplication.instance)
 
 
-    val allSongs: Flow<List<Song>> = songsVM.getAllSongsFlow
+    val allSongs: Flow<List<Song>> = repo.allsongsFlow
 
     val allPlaylists: StateFlow<List<Playlist>> = playlistsVM.allPlaylists
 
@@ -112,7 +122,7 @@ object ListFeedingVM {
                     }
                 }
             }.stateIn(
-                songsVM.viewModelScope,
+                scope,
                 SharingStarted.Lazily,
                 emptyList()
             )
@@ -128,7 +138,7 @@ object ListFeedingVM {
                 }
 
             }.stateIn(
-                songsVM.viewModelScope,
+                scope,
                 SharingStarted.Lazily,
                 emptyList()
             )
@@ -250,7 +260,7 @@ object ListFeedingVM {
                     }
                 }
             }.stateIn(
-                songsVM.viewModelScope,
+                scope,
                 SharingStarted.Lazily,
                 emptyList()
             )
@@ -266,7 +276,7 @@ object ListFeedingVM {
                 }
 
             }.stateIn(
-                songsVM.viewModelScope,
+                scope,
                 SharingStarted.Lazily,
                 emptyList()
             )

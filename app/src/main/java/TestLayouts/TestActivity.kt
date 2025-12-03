@@ -32,6 +32,13 @@ import com.aacomposetest.ui.theme.ComposeTestTheme
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.launch
 import SrufComposeComponents.NestedScrollingFront
+import android.view.View
+import android.widget.FrameLayout
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.Surface
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.drawerlayout.widget.DrawerLayout
 
 
 class TestActivity : ComponentActivity() {
@@ -45,7 +52,25 @@ class TestActivity : ComponentActivity() {
 
         setContent {
             ComposeTestTheme {
-                NestedScrollTest()
+
+                Surface(modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding(), color = MyColor.Red) {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .background(MyColor.Magenta), contentAlignment = Alignment.Center){
+                        AndroidView(
+                            modifier = Modifier.fillMaxSize(0.5f),
+                            factory = {
+                                FrameLayout(it).apply {
+                                    addView(ComposeView(it))
+                                }
+                            }
+                        )
+                    }
+                }
+
+                //NestedScrollTest()
             }
         }
 
@@ -61,7 +86,10 @@ private fun NestedScrollTest(){
     val pagerState = rememberPagerState( initialPage = 0){3}
     NestedScrollingFront(
         appbar = {
-            Text("Hello appbar",modifier = Modifier.fillMaxWidth().height(200.dp).background(MyColor.Green)
+            Text("Hello appbar",modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(MyColor.Green)
             )
         },
         tabRow = {
