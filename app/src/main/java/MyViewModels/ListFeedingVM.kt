@@ -38,7 +38,11 @@ object ListFeedingVM {
     private val playlistsVM = PlaylistViewModel(MyApplication.instance)
 
 
-    val allSongs: Flow<List<Song>> = repo.allsongsFlow
+    val allSongs: StateFlow<List<Song>> = repo.allsongsFlow.stateIn(
+        scope,
+        SharingStarted.Eagerly,
+        emptyList()
+    )
 
     val allPlaylists: StateFlow<List<Playlist>> = playlistsVM.allPlaylists
 
@@ -104,7 +108,7 @@ object ListFeedingVM {
             _sortDirectionFlow.value = direction
         }
 
-        val sortedSongsFlow:Flow<List<Song>> =
+        val sortedSongsFlow: StateFlow<List<Song>> =
             combine(
                 allSongs,
                 sortTypeFlow,
@@ -127,7 +131,7 @@ object ListFeedingVM {
                 emptyList()
             )
 
-        val sortedAndFilteredSongsFlow: Flow<List<Song>> =
+        val sortedAndFilteredSongsFlow: StateFlow<List<Song>> =
             combine(
                 sortedSongsFlow,
                 searchWordFlow

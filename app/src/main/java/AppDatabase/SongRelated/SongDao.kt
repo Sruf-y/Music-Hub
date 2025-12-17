@@ -35,20 +35,23 @@ interface SongDao {
     suspend fun upsert(song: Song) {
         val existing = getSongById(song.id)
         if (existing == null) insert(song)
-        else update(song.copy(
-            // override certain fields
-            title = song.title,
-            songUri = song.songUri,
-            artistName = song.artistName,
-            duration = song.duration,
-            relativePath = song.relativePath,
-            albumName = song.albumName,
-            timesPlayed = song.timesPlayed,
-            year = song.year,
-            lastModified = song.lastModified,
-            thumbnailPath = song.thumbnailPath,
-            albumId = song.albumId
-        ))
+        else update(
+            song.copy(
+                // override certain fields
+                title = song.title,
+                songUri = song.songUri,
+                artistName = song.artistName,
+                duration = song.duration,
+                relativePath = song.relativePath,
+                albumName = song.albumName,
+                timesPlayed = existing.timesPlayed,
+                year = song.year,
+                lastModified = song.lastModified,
+                thumbnailPath = song.thumbnailPath,
+                albumId = song.albumId
+            )
+        )
+
     }
 
 

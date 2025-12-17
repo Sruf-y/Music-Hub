@@ -7,7 +7,9 @@ import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistViewModel
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
+import MyViewModels.SongsViewModelFactory
 import MyViewModels.rememberRefreshState
+import Navigation.DrawerStandardLayout
 import Navigation.MainPage
 import Navigation.PlaylistAddSongsPage
 import Navigation.PlaylistPage
@@ -40,6 +42,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.displayCutout
@@ -61,7 +64,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -117,18 +119,16 @@ import kotlinx.coroutines.flow.map
 import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.BottomSheets.SongPlayingBottomSheet
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.toRoute
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
@@ -388,7 +388,11 @@ private fun ParentContainer(
 
     val drawerState = rememberViewDrawerState(initialValue = ViewDrawerValue.Closed)
 
+    val contextref = LocalContext.current
 
+    val vm: SongsViewModel = viewModel(factory = SongsViewModelFactory(contextref))
+
+    val allSongs by vm.getAllSongsFlow.collectAsState()
 
     /**
      * Container for EVERYTHING that can have a [Settings Sheet] in front of it. So basically the entire application
@@ -396,7 +400,7 @@ private fun ParentContainer(
      * THIS EXCLUDES: Other Activities, Notifications, Widgets etc that are not inside the Main Activity View
      * */
     Surface(
-        modifier = Modifier.fillMaxSize(), color = MyColor.WorkInProgress
+        modifier = Modifier.fillMaxSize(), color = tempBackgroundColor
     ) {
         val systemBars = WindowInsets.systemBars
         val navBars = WindowInsets.navigationBars
@@ -440,20 +444,37 @@ private fun ParentContainer(
             },
             drawerContent = {
 
-
-                Scaffold(
+                DrawerStandardLayout(
                     modifier = Modifier
                         .fillMaxHeight()
                         .alpha(drawerState.currentOffset)
-                        .width(250.dp)
-                        .background(Color.Cyan)
+                        //.width(250.dp)
+                        .background(tempDrawerColor)
                         .pointerInput(Unit) {
                             detectTapGestures()
-                        },
-                    containerColor = MyColor.Transparent
-                ) { innerPadding ->
-                    Button(modifier = Modifier.padding(innerPadding), onClick = {}) {
-                        Text("Hello there!")
+                        }
+                        .padding(
+                            start = 10.dp,
+                            top = 10.dp
+                        ),
+                    header = {
+
+                    }
+                ) {
+                    LazyColumn {
+                        items(
+                            items = allSongs,
+                            key = { item -> item.id }  // Only item, no index
+                        ) { song ->
+                            // Your item content
+                            Row(){
+                                Text("${song.id}|")
+
+                                Text("${song.timesPlayed}|")
+
+                                Text(song.title)
+                            }
+                        }
                     }
                 }
 
@@ -632,7 +653,7 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                                     modifier = Modifier
                                         .fillMaxSize(),
                                     settingsBottomSheetVM = globalBottomSheetVM,
-                                    songs = allsongs,
+                                    songs = sortedAllSongs,
                                     exoPlayerVM = exoPlayerVM,
                                     onOptionsClick = null,
                                     state = songsListState
@@ -948,7 +969,9 @@ fun SearchTopBar(){
 }
 
 
+val tempBackgroundColor = MyColor.Black
 
+val tempDrawerColor = MyColor.SemiTransparentDark
 
 
 

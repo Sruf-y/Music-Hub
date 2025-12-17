@@ -130,4 +130,7 @@ dependencies {
 
     // SLF4J No-Op implementation
     implementation("org.slf4j:slf4j-nop:2.0.13")
+
+    // ColorPicker
+    implementation("com.github.skydoves:colorpicker-compose:1.0.0")
 }

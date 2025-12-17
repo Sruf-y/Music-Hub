@@ -2,6 +2,7 @@ package TestLayouts
 
 
 import AppDatabase.SongRelated.Song
+import SrufComposeComponents.Experimental.ColorPicker
 import SrufComposeComponents.Text
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -55,19 +56,8 @@ class TestActivity : ComponentActivity() {
 
                 Surface(modifier = Modifier
                     .fillMaxSize()
-                    .safeDrawingPadding(), color = MyColor.Red) {
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .background(MyColor.Magenta), contentAlignment = Alignment.Center){
-                        AndroidView(
-                            modifier = Modifier.fillMaxSize(0.5f),
-                            factory = {
-                                FrameLayout(it).apply {
-                                    addView(ComposeView(it))
-                                }
-                            }
-                        )
-                    }
+                    .safeDrawingPadding(), color = MyColor.SemiTransparentBackground) {
+                    ColorPicker()
                 }
 
                 //NestedScrollTest()

@@ -132,7 +132,8 @@ fun SongPlayingBottomSheet(
     expandedHeight: Dp= 250.dp,
     peekHeight:Dp= 60.dp,
     exoPlayerVM: ExoPlayerViewModel,
-    centerPictureToMiddle:Boolean = false
+    centerPictureToMiddle:Boolean = false,
+    goToCurrentSong:()-> Unit = {} // I will use this for the "Go to the currently playing song" feature
 ){
 
 
@@ -149,12 +150,11 @@ fun SongPlayingBottomSheet(
 
             val currentSong:Song? by exoPlayerVM.currentSong.collectAsState()
             val currentPosition by exoPlayerVM.currentProgress.collectAsState()
-            val duration by remember(currentSong) { derivedStateOf { currentSong?.duration ?: 1 } }
 
             val isPlaying by exoPlayerVM.isPlaying.collectAsState()
-            val sliderPositionCalculated by remember(duration,currentSong) {
+            val sliderPositionCalculated by remember {
                 derivedStateOf {
-                    currentPosition.toFloat() / (duration.toFloat())
+                    currentPosition.toFloat() / (currentSong?.duration?.toFloat()?:1f)
                 }
             }
             val sliderPosition = remember { mutableFloatStateOf(
@@ -203,7 +203,7 @@ fun SongPlayingBottomSheet(
                 disabled = alpha<1f,
                 isPlaying = isPlaying,
                 isUserDragging = isUserDragging,
-                duration = duration
+                duration = currentSong?.duration?:1L
             )
 
             PeekPlayer(

@@ -22,6 +22,7 @@ import androidx.media3.exoplayer.ExoPlayer as External_ExoPlayer
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.MyPrefs.putCursorValue
+import com.aacomposetest.Log
 import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
 import kotlinx.coroutines.CoroutineScope
@@ -297,7 +298,9 @@ object myExoPlayer {
 
         // Update song in database if its not null
         song?.let {
-            songsVM?.updateSong(it)
+            songsVM?.updateSong(it).also {
+                Log("Song updated")
+            }
         }
 
 
@@ -340,8 +343,8 @@ object myExoPlayer {
 
 
                             previousSongId?.let {
-                                privSetSong(
-                                    song = songsVM!!.getSongById(it), startOnPrepared = true
+                                setSong(
+                                    song = songsVM!!.getSongById(it), startOnPrepared = true, playlistTitle = _currentPlaylistTitle.value
                                 )
                             }
                         }
@@ -366,8 +369,8 @@ object myExoPlayer {
 
                         // only play previous if previous song id is not null
                         previousSong?.let {
-                            privSetSong(
-                                song = it, startOnPrepared = true
+                            setSong(
+                                song = it, startOnPrepared = true,playlistTitle = _currentPlaylistTitle.value
                             )
                         }
 
@@ -412,8 +415,8 @@ object myExoPlayer {
 
                             // only play next if next song id is not null
                             nextSongId?.let {
-                                privSetSong(
-                                    song = songsVM!!.getSongById(it), startOnPrepared = true
+                                setSong(
+                                    song = songsVM!!.getSongById(it), startOnPrepared = true, playlistTitle = _currentPlaylistTitle.value
                                 )
                             }
 
@@ -441,8 +444,8 @@ object myExoPlayer {
 
                         // only play next if next song id is not null
                         nextSong?.let {
-                            privSetSong(
-                                song = it, startOnPrepared = true
+                            setSong(
+                                song = it, startOnPrepared = true,playlistTitle = _currentPlaylistTitle.value
                             )
                         }
 

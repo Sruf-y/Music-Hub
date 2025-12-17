@@ -7,11 +7,17 @@ import android.app.NotificationManager
 import android.content.Context
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
+import coil.request.CachePolicy
+import coil.util.DebugLogger
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
 import com.aacomposetest.Services.MusicService
 
-class MyApplication: Application() {
+class MyApplication: Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
 
@@ -28,6 +34,27 @@ class MyApplication: Application() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
 
         instance = this
+    }
+
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader(this).newBuilder()
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .memoryCache {
+                MemoryCache.Builder(this)
+                    .maxSizePercent(0.1)
+                    .strongReferencesEnabled(true)
+                    .weakReferencesEnabled(true)
+                    .build()
+            }
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .diskCache {
+                DiskCache.Builder()
+                    .maxSizePercent(0.03)
+                    .directory(cacheDir)
+                    .build()
+            }
+            .logger(DebugLogger())
+            .build()
     }
 
     companion object{
