@@ -1,4 +1,4 @@
-package Navigation
+package Presentation.Navigation
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column

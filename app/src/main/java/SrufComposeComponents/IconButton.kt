@@ -28,10 +28,10 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun IconButton(
     @DrawableRes resId: Int,
-    modifier: Modifier = Modifier.size(45.dp,45.dp),
+    modifier: Modifier = IconButtonDefaults.modifier,
     /**Float scalar. Must be between 0f and 1f*/
-    iconSize:Size = Size(1f,1f),
-    iconTint:Color = if(isSystemInDarkTheme()) Color.White else Color.Black,
+    iconSize:Size = IconButtonDefaults.iconSize,
+    iconTint:Color = IconButtonDefaults.iconTint(),
     onclick:(()->Unit)? = null
 ) {
 
@@ -71,10 +71,10 @@ fun IconButton(
 @Composable
 fun IconButton(
     imageVector: ImageVector,
-    modifier: Modifier = Modifier.size(45.dp,45.dp),
+    modifier: Modifier = IconButtonDefaults.modifier,
     /**Float scalar. Must be between 0f and 1f*/
-    iconSize:Size = Size(1f,1f),
-    iconTint:Color = if(isSystemInDarkTheme()) Color.White else Color.Black,
+    iconSize:Size = IconButtonDefaults.iconSize,
+    iconTint:Color = IconButtonDefaults.iconTint(),
     onclick:(()->Unit)? = null
 ) {
 
@@ -109,4 +109,14 @@ fun IconButton(
     }
 
 
+}
+
+object IconButtonDefaults{
+
+    val modifier =Modifier.size(45.dp,45.dp)
+
+    val iconSize:Size = Size(1f,1f)
+
+    @Composable
+    fun iconTint():Color = if(isSystemInDarkTheme()) Color.White else Color.Black
 }

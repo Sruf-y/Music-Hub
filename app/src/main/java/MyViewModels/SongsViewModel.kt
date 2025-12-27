@@ -125,6 +125,9 @@ class SongsViewModel(context: Context): ViewModel() {
         return repo.getSongById(id)
     }
 
+    fun unsafeGetSongById(id: Long): Song?{
+        return repo.unsafeGetSongById(id)
+    }
     suspend fun resyncWithMediastore(context: Context, alsoPictures:Boolean, forceUpdate:Boolean, onFinish:( suspend ()->Unit)? = null):Int{
 
         return AndroidDatabase.doSongsQuery(

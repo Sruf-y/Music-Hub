@@ -2,9 +2,12 @@ package ui.components.Pages
 
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
+import ExoPlayer.myExoPlayer
+import MyViewModels.ListFeedingVM
 import SrufComposeComponents.ElevatedButton
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,6 +36,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -54,8 +59,13 @@ import androidx.navigation.NavHostController
 import androidx.room.util.TableInfo
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ui.components.SongItem
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import com.aacomposetest.Log
 
 
 @Preview(showBackground = true)
@@ -76,34 +86,37 @@ fun AddSongsToPlaylistPage(
     modifier: Modifier = Modifier.fillMaxSize(),
     lazyListState: LazyListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() },
     playlistTitle: String= "",
-    allSongs: List<Song>? = null,
-    navController: NavHostController? = null,
-    onBack:()->Unit = {},
-    onConfirm: ((List<Checkable<Song>>) -> Unit)? = null
+    onBack:()->Unit = {}
 ) {
-    val contextRef = LocalContext.current
+    val allSongs by ListFeedingVM.allSongs.collectAsState()
+
     val scope = rememberCoroutineScope()
 
-    var playlist: Playlist? by remember { mutableStateOf(null) }
+    val contextRef = LocalContext.current
 
-    DisposableEffect(Unit) {
-
-        scope.launch {
-            playlist = Playlist.getPlaylist(contextRef,playlistTitle)
+    val playlist by produceState<Playlist?>(initialValue = null, playlistTitle) {
+        value = withContext(Dispatchers.IO) {
+            Playlist.getPlaylist(contextRef, playlistTitle)
         }
-
-        onDispose {}
     }
 
+    val checkableItems = remember(allSongs, playlist) {
+        val initialCheckedIds = playlist?.songsIdList?.toSet() ?: emptySet()
 
-    val validList = remember(allSongs, playlist) {
         allSongs?.map { song ->
-                Checkable(
-                    item = song,
-                    isChecked = playlist?.songsIdList?.contains(song.id) == true
-                )
-        }?:emptyList()
+            Checkable(
+                item = song,
+                isChecked = initialCheckedIds.contains(song.id)  // This initializes properly
+            )
+        } ?: emptyList()
     }
+
+    val selectedCount by remember(checkableItems) {
+        derivedStateOf {
+            checkableItems.count { it.isChecked.value }
+        }
+    }
+
 
     BackHandler(true) {
         onBack.invoke()
@@ -112,11 +125,7 @@ fun AddSongsToPlaylistPage(
 
     Surface(modifier = modifier){
 
-        var selectedCount by rememberSaveable {
-            mutableIntStateOf(
-                validList.count { it.isChecked.value }
-            )
-        }
+
         Column {
             // Header
             Box(modifier = Modifier
@@ -132,7 +141,7 @@ fun AddSongsToPlaylistPage(
                         .fillMaxHeight()
                         .padding(horizontal = 10.dp)
                 ){
-                    Text(text = "Selected: $selectedCount",modifier = Modifier )
+                    Text(text = "Selected: $selectedCount from ${checkableItems.size}",modifier = Modifier )
                 }
 
                 // More button
@@ -167,27 +176,33 @@ fun AddSongsToPlaylistPage(
             ) {
 
 
-                if (playlist != null)
-                    items(items = validList) { item ->
-                        SongItem(
-                            leftmostContent = {
-                                val checkboxInteractionSong = remember { MutableInteractionSource() }
-                                Checkbox(
-                                    modifier = Modifier
-                                        .padding(horizontal = 10.dp),
-                                    checked = item.isChecked.value,
-                                    onCheckedChange = null
-                                )
-                            },
-                            song = item.item,
-                            modifier = Modifier.clickable(
-                                onClick = {
-                                    // inverse the check and update the selected count
-                                    item.isChecked.value = !item.isChecked.value
+                    if(playlist!=null) {
+                        items(items = checkableItems, key = { it.item.id }) { item ->
+                            SongItem(
+                                leftmostContent = {
+                                    val checkboxInteractionSong =
+                                        remember { MutableInteractionSource() }
+                                    Checkbox(
+                                        modifier = Modifier
+                                            .padding(horizontal = 10.dp),
+                                        checked = item.isChecked.value,
+                                        onCheckedChange = null
+                                    )
+                                },
+                                song = item.item,
+                                modifier = Modifier.clickable(
+                                    onClick = {
+                                        // inverse the check and update the selected count
+                                        item.isChecked.value = !item.isChecked.value
 
-                                    selectedCount = validList.count { it.isChecked.value }
-                                })
-                        )
+                                    }
+                                )
+                            )
+                        }
+                    }else{
+                        item {
+                            Text("Playlist is NULL. Title = [${playlistTitle}]")
+                        }
                     }
             }
         }
@@ -199,9 +214,50 @@ fun AddSongsToPlaylistPage(
 
             // If the current valid list is different from the playlist list
             //if(playlist?.songsIdList?.containsAll(validList.filter { it->it.isChecked.value }.map{it->it.item.id})==false)
-                ElevatedButton(onClick = {
-                    onConfirm?.invoke(validList.map { it -> it })
-                }) {
+                ElevatedButton(
+                    onClick = {
+
+
+
+                            playlist?.songsIdList?.apply {
+
+
+                                removeAll(checkableItems.filter { it -> !it.isChecked.value }
+                                    .map { it -> it.item.id })
+
+                                checkableItems.filter { it -> it.isChecked.value }
+                                    .map { it -> it.item.id }.let { mappedList ->
+
+
+                                        addAll(mappedList.filter { it ->
+                                            !this.contains(
+                                                it
+                                            )
+                                        })
+                                    }
+
+                            }
+
+
+
+                            playlist?.save(contextRef) {
+
+                                /**
+                                 * If the currently playing song was in this playlist, don't continue playing in this playlist.
+                                 * */
+                                myExoPlayer.currentlyPlayingSong.value?.let {
+                                    if(playlist?.songsIdList?.contains(it.id) == true){
+                                        myExoPlayer.setCurrentPlaylist(null)
+                                    }
+                                }
+
+                                onBack.invoke()
+                            }
+
+
+
+                }
+                ) {
                     Text(text = "Confirm", fontSize = 18.sp, modifier = Modifier.padding(5.dp))
                 }
 

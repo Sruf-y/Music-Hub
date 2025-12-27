@@ -43,7 +43,6 @@ object myExoPlayer {
     val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
 
     private var ioScope = CoroutineScope(Dispatchers.IO)
-    private var progressJob: Job? = null
 
     private val prefs: SharedPreferences? = MyPrefs.getPrefs(MyApplication.instance)
 
@@ -55,13 +54,19 @@ object myExoPlayer {
             val currentPos = myExoPlayer.getCurrentPosition()
             val duration = myExoPlayer.currentlyPlayingSong.value?.duration ?: 0
 
+
             val progress = if (duration > 0) {
                 currentPos
             } else {
                 0
             }
-
+            Log("Ran OBSERVING function and got ${progress}")
             progress
+        }, onValueChange = {
+            prefs?.edit(){
+                Log("I put song position as ${it}")
+                putCursorValue(MyPrefs._prefs_LastSongPosition,it)
+            }
         }
     )
 
@@ -149,26 +154,12 @@ object myExoPlayer {
                     val playlist = Playlist.getPlaylist(context,playlistTitle?:"")
 
                     progressVM.forceValue(songPosition)
+                    Log("Song position ${songPosition}")
 
                     _currentSong.value = song
 
-                    // Start updating the shared prefferences
 
-                    progressJob?.cancel()
-                    progressJob = ioScope.launch {
 
-                        progressVM.progress
-                            .collect{position->
-
-                                //Log.i(Logs.EXOPLAYER.name,"Logged songPos ${position}")
-
-                                prefs.edit(){
-
-                                    putCursorValue(MyPrefs._prefs_LastSongPosition,position)
-                                }
-                            }
-
-                    }
 
                     withContext(Dispatchers.Main) {
                         setSong(song = song, initialPosition = songPosition, startOnPrepared = false,playlistTitle = playlist?.title )
@@ -229,7 +220,7 @@ object myExoPlayer {
         exoPlayer?.let { player ->
             try {
                 song?.let {
-                    _currentSong.value = song
+                    _currentSong.tryEmit(song)
                     val mediaItem = MediaItem.Builder()
                         .setUri(song.songUri.toUri())
                         .setMediaMetadata(
@@ -298,9 +289,7 @@ object myExoPlayer {
 
         // Update song in database if its not null
         song?.let {
-            songsVM?.updateSong(it).also {
-                Log("Song updated")
-            }
+            songsVM?.updateSong(it)
         }
 
 
@@ -516,12 +505,7 @@ object myExoPlayer {
         _currentSong.value = null
         _currentPlaylistTitle.value = null
 
-        try{
-            progressJob?.cancel("Player destroyed.")
 
-        }catch (ex: Exception){
-            ex.printStackTrace()
-        }
         _isInitialized.value = false
 
         try{

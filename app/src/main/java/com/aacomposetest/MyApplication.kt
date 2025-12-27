@@ -53,7 +53,7 @@ class MyApplication: Application(), ImageLoaderFactory {
                     .directory(cacheDir)
                     .build()
             }
-            .logger(DebugLogger())
+            //.logger(DebugLogger()) // ONLY for when i NEED a logger otherwise it clogs the logs.
             .build()
     }
 

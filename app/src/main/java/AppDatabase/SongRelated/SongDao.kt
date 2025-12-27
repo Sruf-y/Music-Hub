@@ -32,6 +32,9 @@ interface SongDao {
     @Query("SELECT * FROM songs WHERE id = :id")
     suspend fun getSongById(id:Long): Song?
 
+    @Query("SELECT * FROM songs WHERE id = :id")
+    fun unsafeGetSongById(id:Long):Song?
+
     suspend fun upsert(song: Song) {
         val existing = getSongById(song.id)
         if (existing == null) insert(song)

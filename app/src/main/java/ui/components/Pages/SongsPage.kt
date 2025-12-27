@@ -6,6 +6,7 @@ import ExoPlayer.ExoPlayerViewModel
 import MyViewModels.ListFeedingVM
 import MyViewModels.SongsViewModel
 import SrufComposeComponents.IconButton
+import SrufComposeComponents.IconButtonDefaults
 import SrufComposeComponents.MyModalBottomSheet
 import android.content.Context
 import android.content.SharedPreferences
@@ -134,23 +135,29 @@ fun SongsPage(
 
 /**
  * Header for sorting items
+ * IF onFilterClick == null then doesn't show the filter button at all.
  * */
 @Composable
 private fun SongsSortHeader(
     songs: List<Song>,
     onFilterClick: (() -> Unit)? = null
 ) {
-    Box(modifier = Modifier
-        .wrapContentHeight()
-        .fillMaxWidth(), contentAlignment = Alignment.CenterStart){
-        Text(text = "Songs(${songs.size})")
-        Row(modifier = Modifier.align(Alignment.CenterEnd)) {
+    Box(
+        modifier = Modifier
+            .wrapContentHeight()
+            .fillMaxWidth(), contentAlignment = Alignment.CenterStart
+    ) {
 
-            if (onFilterClick != null) {
-                IconButton(R.drawable.ic_sort) {
-                    onFilterClick.invoke()
-                }
+        Text(text = "Songs(${songs.size})")
+
+        if (onFilterClick != null) {
+            IconButton(
+                resId = R.drawable.ic_sort,
+                modifier = IconButtonDefaults.modifier.align(Alignment.CenterEnd)
+            ) {
+                onFilterClick.invoke()
             }
+
         }
     }
 }
@@ -168,10 +175,9 @@ fun LazyListScope.SongsLazyListItems(
             .animateItem()
             .clickable(
                 onClick = {
-                    exoPlayerVM.setSong(
+                    ExoPlayerViewModel.setSong(
                         song = it,
                         startOnPrepared = true,
-                        context = contextRef,
                         playlistTitle = playlistTitle,
 
                         )
@@ -193,8 +199,8 @@ fun LazyListScope.SongsLazyListItems(
             song = song,
             textColor = textColor,
             modifier = itemModifier(song),
-            onOptionsClick = {
-                onOptionsClick?.invoke(it, song)
+            optionsMenu = {
+
             }
         )
     }

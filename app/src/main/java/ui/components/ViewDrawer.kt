@@ -1,4 +1,4 @@
-package Navigation
+package ui.components
 
 import android.view.View
 import android.view.ViewGroup
@@ -38,7 +38,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.remember
-import com.aacomposetest.ui.theme.MyColor
 
 /**
  * Animation state enum for [ViewDrawerState]

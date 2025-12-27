@@ -1,11 +1,9 @@
-package Navigation
+package Presentation.Navigation.Destinations
 
 import SrufComposeComponents.CustomPagerTab
 import SrufComposeComponents.NestedScrollingFront
 import SrufComposeComponents.TabRowIndicator
 import SrufComposeComponents.Text
-import android.content.SharedPreferences
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -31,7 +29,6 @@ import androidx.compose.ui.zIndex
 import androidx.core.content.edit
 import com.aacomposetest.Activities.SearchTopBar
 import com.aacomposetest.Classes.MyPrefs
-import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator

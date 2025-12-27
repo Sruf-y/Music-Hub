@@ -18,6 +18,8 @@ class SongRepository(private val dao: SongDao) {
 
     suspend fun getSongById(id:Long) = dao.getSongById(id)
 
+    fun unsafeGetSongById(id:Long) = dao.unsafeGetSongById(id)
+
     suspend fun deleteSong(song:Song) = dao.delete(song)
 
     suspend fun deleteSongById(id:Long) = dao.deleteById(id)

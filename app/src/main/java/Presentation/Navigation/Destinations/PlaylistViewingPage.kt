@@ -1,10 +1,10 @@
-package Navigation
+package Presentation.Navigation.Destinations
 
 import androidx.compose.runtime.Composable
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class PlaylistPage(val title: String) {
+data class PlaylistViewingPage(val title: String) {
 
     companion object{
         @Composable

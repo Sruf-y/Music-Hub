@@ -85,14 +85,11 @@ fun SongItem(
     artistFontSize: TextUnit = 12.sp,
     thumbNailSize:Float = 55f,
     height:Dp = 70.dp,
+    iconTint:Color = if(isSystemInDarkTheme()) Color.White else Color.Black,
     textPadding: PaddingValues = PaddingValues(10.dp,0.dp),
-    optionsSize: Float = 45f,
-    showOptionsButton: Boolean = true,
-    onOptionsClick: @Composable ((MutableState<Boolean>) -> Unit)? = {},
+    optionsMenu: @Composable ((isExpanded: MutableState<Boolean>)-> Unit)? = null,
     leftmostContent: @Composable (RowScope.() -> Unit)? = null
 ) {
-
-    val iconTint = if(isSystemInDarkTheme()) Color.White else Color.Black
 
 
     Box(modifier = modifier){
@@ -141,9 +138,11 @@ fun SongItem(
             }
 
             // Song title & artist
-            Box(modifier = Modifier
+            Box(
+                modifier = Modifier
                 .weight(1f)
-                .padding(textPadding)){
+                .padding(textPadding)
+            ){
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -177,12 +176,13 @@ fun SongItem(
             var menuIsExpanded = remember { mutableStateOf(false) }
 
             // Playlist More options
-            if(showOptionsButton) {
+
+            if(optionsMenu!=null){
                 Box(contentAlignment = Alignment.Center,modifier = Modifier.padding(5.dp)) {
 
                     IconButton(
                         imageVector = Icons.Default.MoreVert,
-                        modifier = Modifier.size(optionsSize.dp,optionsSize.dp),
+                        modifier = Modifier.size(45.dp,45.dp),
                         iconSize = Size(0.75f,0.75f),
                         iconTint = iconTint,
                         onclick = {
@@ -190,7 +190,7 @@ fun SongItem(
                         }
                     )
 
-                    onOptionsClick?.invoke(menuIsExpanded)
+                    optionsMenu.invoke(menuIsExpanded)
                 }
             }
         }

@@ -350,16 +350,15 @@ fun PlaylistViewing(
                                         .background(if (isDragging) MyColor.SemiTransparentDark else MyColor.Transparent)
                                         .clickable(
                                             onClick = {
-                                                exoPlayerVM.setSong(
+                                                ExoPlayerViewModel.setSong(
                                                     song = song,
                                                     startOnPrepared = true,
-                                                    context = contextRef,
                                                     playlistTitle = playlist?.title,
                                                 )
                                             }
                                         )
                                         .animateItem(),
-                                    onOptionsClick = { showMenu ->
+                                    optionsMenu = { showMenu ->
                                         DropdownMenu(
                                             expanded = showMenu.value,
                                             onDismissRequest = { showMenu.value = false }) {

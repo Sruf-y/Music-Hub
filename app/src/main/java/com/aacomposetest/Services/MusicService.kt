@@ -28,6 +28,7 @@ import com.aacomposetest.Activities.MainActivityView
 import com.aacomposetest.Classes.AutoStateFlow
 import com.aacomposetest.Functions
 import com.aacomposetest.Logs
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class MusicService: LifecycleService() {
@@ -72,7 +73,7 @@ class MusicService: LifecycleService() {
     override fun onCreate() {
         super.onCreate()
 
-        exoPlalayerVM.progressVM.startUpdates()
+
 
         MyApplication.registerServiceInstance(this)
 
@@ -109,27 +110,27 @@ class MusicService: LifecycleService() {
             }
 
             override fun onPlay() {
-                exoPlalayerVM.toggle()
+                ExoPlayerViewModel.toggle()
             }
 
             override fun onPause() {
-                exoPlalayerVM.toggle()
+                ExoPlayerViewModel.toggle()
             }
 
             override fun onSeekTo(pos: Long) {
-                exoPlalayerVM.seekTo(pos)
+                ExoPlayerViewModel.seekTo(pos)
             }
 
             override fun onSkipToNext() {
-                exoPlalayerVM.playNext()
+                ExoPlayerViewModel.playNext()
             }
 
             override fun onSkipToPrevious() {
-                exoPlalayerVM.playPrevious()
+                ExoPlayerViewModel.playPrevious()
             }
 
             override fun onRewind() {
-                exoPlalayerVM.rewind()
+                ExoPlayerViewModel.rewind()
             }
 
         }
@@ -145,14 +146,19 @@ class MusicService: LifecycleService() {
 
             Log.i(Logs.SERVICE.name, "Launched an observer for exoplayer.isPlaying.")
 
+
+
             exoPlalayerVM.isPlaying.collect {
 
                 Log.i(Logs.SERVICE.name, "isPlaying value is ${it}")
 
+
                 if (it) exoPlalayerVM.progressVM.startUpdates() else exoPlalayerVM.progressVM.stopUpdates()
 
 
-                playPauseLogic(it,this@MusicService)
+                playPauseLogic(it, this@MusicService)
+
+
 
             }
 

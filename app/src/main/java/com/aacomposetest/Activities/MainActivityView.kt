@@ -8,15 +8,18 @@ import MyViewModels.PlaylistViewModel
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
 import MyViewModels.SongsViewModelFactory
+import ui.components.BottomSheets.rememberBottomSheetConfig
 import MyViewModels.rememberRefreshState
-import Navigation.DrawerStandardLayout
-import Navigation.MainPage
-import Navigation.PlaylistAddSongsPage
-import Navigation.PlaylistPage
-import Navigation.ViewDrawer
-import Navigation.ViewDrawerState
-import Navigation.ViewDrawerValue
-import Navigation.rememberViewDrawerState
+import Presentation.Navigation.DrawerStandardLayout
+import Presentation.Navigation.Destinations.MainPage
+import Presentation.Navigation.Destinations.PlaylistAddSongsPage
+import Presentation.Navigation.Destinations.PlaylistViewingPage
+import Presentation.Navigation.MainNavigation
+import ui.components.ViewDrawer
+import ui.components.ViewDrawerState
+import ui.components.ViewDrawerValue
+import ui.components.rememberViewDrawerState
+import Presentation.SongsPage.MainSongsColumn
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.KeyboardAwareBox
 import SrufComposeComponents.MyModalBottomSheet
@@ -34,9 +37,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOutElastic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -104,7 +104,6 @@ import kotlin.getValue
 import androidx.core.content.edit
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.compose.NavHost
 import com.aacomposetest.Classes.MyPermissionLauncher
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.putCursorValue
@@ -135,7 +134,6 @@ import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Functions.map
 import kotlinx.coroutines.withContext
 import ui.components.Pages.AddSongsToPlaylistPage
-import ui.components.Pages.SongsPage
 import kotlin.collections.map
 
 class MainActivityView : ComponentActivity() {
@@ -200,16 +198,11 @@ class MainActivityView : ComponentActivity() {
 
 
     override fun onPause() {
-
-
-        exoPlayerVM.progressVM.stopUpdates()
-
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        exoPlayerVM.progressVM.startUpdates()
     }
 
 
@@ -577,51 +570,24 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
         }
 
 
-        val songPlayerBottomSheetAlpha = remember { Animatable(1f) }
-        val SongBottomSheetPeekHeight = 60.dp
-        val SongBottomSheetPeek = SheetDetent("Peek") { containerHeight, sheetHeight ->
-            //containerHeight*0.2f
 
-            SongBottomSheetPeekHeight
-        }
 
-        val songPlayerBottomSheetState = rememberBottomSheetState(
-            initialDetent = SongBottomSheetPeek,
-            detents = listOf(SongBottomSheetPeek, SheetDetent.FullyExpanded)
+        val songBS_Config = rememberBottomSheetConfig()
+
+        val songPlayerBS_State = rememberBottomSheetState(
+            initialDetent = songBS_Config.peekDetent?: SheetDetent.Hidden,
+            detents = songBS_Config.detents
         )
+
+
         val refreshBoxState = rememberPullToRefreshState()
 
         /**
          * Manages navigation inside the [Main Pager] container.
          * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
          * */
-        NavHost(
-            modifier = Modifier.fillMaxSize(),
-            navController = navController,
-            startDestination = MainPage,
-            enterTransition = {
-
-                slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(300)
-                )
-            },// page is navigated TO normally
-            popExitTransition = {
-
-                slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(300)
-                )
-            },// page is navigated FROM by popBackStack() (returning FROM the page to the previous one)
-            popEnterTransition = {
-
-                EnterTransition.None
-            },// page is being returned to by the above page animating away
-            exitTransition = {
-
-                ExitTransition.None
-            },// page stays back while another page is animated above
-
+        MainNavigation(
+            navController = navController
         ) {
 
             composable<MainPage> {
@@ -633,8 +599,8 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                 MainPage.invoke(initialPage) { newPage ->
                     when (newPage) {
 
+                        // Main songs page
                         0 -> {
-
 
 
 
@@ -642,25 +608,24 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                                 state = refreshBoxState,
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(bottom = SongBottomSheetPeekHeight),
+                                    .padding(bottom = songBS_Config.bottomHeight),
                                 isRefreshing = refreshState.state,
                                 onRefresh = {
                                     refreshState.state = true
                                     refreshState.onRefresh.invoke()
                                 }
                             ) {
-                                SongsPage(
-                                    modifier = Modifier
-                                        .fillMaxSize(),
+
+
+                                MainSongsColumn(
+                                    modifier = Modifier.fillMaxSize(),
                                     settingsBottomSheetVM = globalBottomSheetVM,
-                                    songs = sortedAllSongs,
-                                    exoPlayerVM = exoPlayerVM,
-                                    onOptionsClick = null,
                                     state = songsListState
                                 )
                             }
                         }
 
+                        // Playlists page
                         1 -> {
                             // State yet unused for the playlist viewing dropdown menu.
                             val playlistsPageMoreMenuState by remember {
@@ -673,7 +638,7 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                                 playlists = allPlaylists,
                                 state = playlistsListState,
                                 onPlaylistClick = {
-                                    navController.navigate(PlaylistPage(it.title)) {
+                                    navController.navigate(PlaylistViewingPage(it.title)) {
                                         launchSingleTop = true
                                         restoreState = true
                                     }
@@ -726,8 +691,8 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
 
             }
 
-            composable<PlaylistPage> {
-                val args = it.toRoute<PlaylistPage>()
+            composable<PlaylistViewingPage> {
+                val args = it.toRoute<PlaylistViewingPage>()
 
                 val playlistViewingLazyListState =
                     rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
@@ -742,7 +707,7 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                         navController.popBackStack()
                     },
                     songs = allsongs,
-                    bottomPadding = SongBottomSheetPeekHeight,
+                    bottomPadding = songBS_Config.bottomHeight,
                     plusButtonClick = {
                         navController.navigate(PlaylistAddSongsPage(args.title)) {
                             launchSingleTop = true
@@ -770,15 +735,11 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
             ) { backStack ->
                 val args = backStack.toRoute<PlaylistAddSongsPage>()
 
-                val playlistTitle =
-                    backStack.arguments?.getString(
-                        args.title
-                    )
-                        ?: ""
+                val playlistTitle = args.title
 
                 LaunchedEffect(Unit) {
                     scope.launch {
-                        songPlayerBottomSheetAlpha.animateTo(
+                        songBS_Config.alpha.animateTo(
                             0f,
                             animationSpec = tween(500)
                         )
@@ -790,7 +751,7 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
 
                 val onBack = {
                     scope.launch(Dispatchers.Main) {
-                        songPlayerBottomSheetAlpha.animateTo(
+                        songBS_Config.alpha.animateTo(
                             1f,
                             animationSpec = tween(500)
                         )
@@ -801,43 +762,6 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                 AddSongsToPlaylistPage(
                     lazyListState = addsongstoplaylistState,
                     playlistTitle = playlistTitle,
-                    allSongs = allsongs,
-                    navController = navController,
-                    onConfirm = { finalList ->
-
-                        scope.launch(Dispatchers.IO) {
-                            val playlist =
-                                Playlist.getPlaylist(contextRef, playlistTitle)
-
-                            playlist?.songsIdList?.apply {
-
-
-                                removeAll(finalList.filter { it -> !it.isChecked.value }
-                                    .map { it -> it.item.id })
-
-                                finalList.filter { it -> it.isChecked.value }
-                                    .map { it -> it.item.id }.let { mappedList ->
-
-
-                                        addAll(mappedList.filter { it ->
-                                            !this.contains(
-                                                it
-                                            )
-                                        })
-                                    }
-
-                            }
-
-
-
-                            playlist?.save(contextRef) {
-                                onBack.invoke()
-                            }
-
-
-                        }
-
-                    },
                     onBack = {
                         onBack.invoke()
                     }
@@ -846,21 +770,24 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
         }
 
 
-        val expandedHeight = 250.dp
+
+
+
+
         /**
          * Bottom sheet can be "Enabled" or "Disabled" by controlling this value, which is also attached to its alpha for propper animation
          * */
-        if (songPlayerBottomSheetAlpha.value > 0f) {
+        if (songBS_Config.alpha.value > 0f) {
             SongPlayingBottomSheet(
                 modifier = Modifier
-                    .alpha(songPlayerBottomSheetAlpha.value)
+                    .alpha(songBS_Config.alpha.value)
                     .fillMaxWidth()
-                    .height(expandedHeight),
-                sheetstate = songPlayerBottomSheetState,
+                    .height(songBS_Config.expandedHeight),
+                sheetstate = songPlayerBS_State,
                 backgroundColor = Theme.colorScheme().onBackground,
                 shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
-                expandedHeight = expandedHeight,
-                peekHeight = SongBottomSheetPeekHeight,
+                expandedHeight = songBS_Config.expandedHeight,
+                peekHeight = songBS_Config.bottomHeight,
                 exoPlayerVM = exoPlayerVM,
 
                 )

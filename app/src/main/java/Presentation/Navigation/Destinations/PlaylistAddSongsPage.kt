@@ -1,4 +1,4 @@
-package Navigation
+package Presentation.Navigation.Destinations
 
 import androidx.compose.runtime.Composable
 import kotlinx.serialization.Serializable

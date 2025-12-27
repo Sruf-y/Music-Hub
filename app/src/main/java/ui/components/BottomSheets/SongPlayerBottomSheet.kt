@@ -1,8 +1,11 @@
 package ui.components.BottomSheets
 
 import AppDatabase.SongRelated.Song
+import AppDatabase.SongRelated.SongDao
+import AppDatabase.SongRelated.SongRepository
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
+import MyViewModels.SongsViewModel
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.text.format.DateUtils
@@ -58,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Log
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
@@ -135,8 +139,9 @@ fun SongPlayingBottomSheet(
     centerPictureToMiddle:Boolean = false,
     goToCurrentSong:()-> Unit = {} // I will use this for the "Go to the currently playing song" feature
 ){
+    val contextRef = LocalContext.current
 
-
+    val pres = remember { MyPrefs.getPrefs(contextRef) }
 
 
 
@@ -146,21 +151,28 @@ fun SongPlayingBottomSheet(
         modifier = modifier
     ) {
 
+
+
         Box(modifier = Modifier.fillMaxSize()) {
 
             val currentSong:Song? by exoPlayerVM.currentSong.collectAsState()
             val currentPosition by exoPlayerVM.currentProgress.collectAsState()
 
             val isPlaying by exoPlayerVM.isPlaying.collectAsState()
-            val sliderPositionCalculated by remember {
+
+            val calculatedSliderPos by remember {
                 derivedStateOf {
-                    currentPosition.toFloat() / (currentSong?.duration?.toFloat()?:1f)
+                    (currentPosition.toFloat()/(currentSong?.duration?:1L)).apply {
+                        Log("${currentSong?.title}, ${currentPosition}")
+                    }
                 }
             }
-            val sliderPosition = remember { mutableFloatStateOf(
 
-                sliderPositionCalculated
-            ) }
+            val sliderPosition = remember {
+                mutableFloatStateOf(
+                    calculatedSliderPos
+                )
+            }
 
 
 
@@ -179,9 +191,9 @@ fun SongPlayingBottomSheet(
             val isUserDragging = remember { mutableStateOf(false) }
 
             // Keep slider following playback only if user is not dragging
-            LaunchedEffect(currentPosition, isUserDragging) {
+            LaunchedEffect(currentPosition, isUserDragging,currentPosition) {
                 if (!isUserDragging.value && (currentSong?.duration?:0) > 0) {
-                    sliderPosition.floatValue = currentPosition.toFloat() / (currentSong?.duration?:0).toFloat()
+                    sliderPosition.floatValue = calculatedSliderPos
                 }
             }
 
@@ -252,7 +264,7 @@ private fun ExpandedPlayer(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                             indication = null, onClick = {
-                                exoPlayerVM?.playPrevious()
+                                ExoPlayerViewModel?.playPrevious()
                             }
                         )
                 )
@@ -272,7 +284,7 @@ private fun ExpandedPlayer(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                             indication = null, onClick = {
-                                exoPlayerVM?.playNext()
+                                ExoPlayerViewModel?.playNext()
                             }
                         )
                 )
@@ -367,7 +379,7 @@ private fun PlayPauseButton(modifier: Modifier,isPlaying:Boolean,exoPlayerVM: Ex
             .clickable(interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                 indication = null,
                 onClick = {
-                    exoPlayerVM?.toggle()
+                    ExoPlayerViewModel?.toggle()
                 }), update = { view ->
             // runs everytime isPlaying changes
             view.isActivated =
@@ -449,10 +461,10 @@ private fun SongSeekBar(
                 isUserDragging.value = false
 
 
-                exoPlayerVM?.seekTo(pos = seekPosition, onFinish = {
+                ExoPlayerViewModel.seekTo(pos = seekPosition, onFinish = {
                     // value was up to 250ms too slow, due to progressVM post times
-                    exoPlayerVM.progressVM.forceValue(seekPosition)
-                    exoPlayerVM.progressVM.startUpdates()
+                    exoPlayerVM?.progressVM?.forceValue(seekPosition)
+                    exoPlayerVM?.progressVM?.startUpdates()
                 })
 
             },
