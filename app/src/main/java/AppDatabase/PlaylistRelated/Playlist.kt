@@ -15,8 +15,12 @@ import com.aacomposetest.R
  * Songs can be moved around, added and removed at will.
  *
  * */
-data class Playlist(var title:String) {
+data class Playlist(
+    var title: String,
 
+) {
+    // list of song IDs
+    var songsIdList: ArrayList<Long> = ArrayList()
 
     var thumbNail: Int = Defaults.Thumbnail()
         get() = R.drawable.ic_launcher_foreground
@@ -28,8 +32,7 @@ data class Playlist(var title:String) {
         thumbNail = context.resources.getIdentifier(_thumbnailString, "drawable", context.packageName)
     }
 
-    // list of song IDs
-    var songsIdList: ArrayList<Long> = ArrayList()
+
 
     fun save(context: Context,onFinished: (suspend () -> Unit)? = null){
 
@@ -41,6 +44,11 @@ data class Playlist(var title:String) {
             onFinished = onFinished
         )
     }
+
+    fun delete(context: Context): Boolean{
+        return getFileIfExists(context)?.delete() == true
+    }
+
 
     fun getFileIfExists(context: Context): File?{
         val file = File(getFolder(context), "$title.json")
@@ -97,9 +105,25 @@ data class Playlist(var title:String) {
         }
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
 
+        other as Playlist
 
+        if (thumbNail != other.thumbNail) return false
+        if (title != other.title) return false
+        if (songsIdList != other.songsIdList) return false
 
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = thumbNail
+        result = 31 * result + title.hashCode()
+        result = 31 * result + songsIdList.hashCode()
+        return result
+    }
 
 
     companion object {

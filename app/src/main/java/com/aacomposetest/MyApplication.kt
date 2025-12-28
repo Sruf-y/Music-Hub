@@ -5,6 +5,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Process
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import coil.ImageLoader
@@ -65,6 +66,11 @@ class MyApplication: Application(), ImageLoaderFactory {
         private var _serviceInstance: MusicService? = null
         val serviceInstance: MusicService?
             get() = _serviceInstance
+
+        fun killProccess(){
+            android.os.Process.killProcess(Process.myPid())
+        }
+
 
         fun registerServiceInstance(service: MusicService) {
             _serviceInstance = service

@@ -1,14 +1,11 @@
 package ui.components.Pages
 
-import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
-import MyViewModels.PlaylistViewModel
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
@@ -35,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -51,11 +47,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.aacomposetest.Functions
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
-import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import ui.components.SongItem
@@ -64,7 +58,6 @@ import ui.components.SongItem
 fun PlaylistViewing(
     modifier:Modifier = Modifier.fillMaxSize(),
     lazyListState: LazyListState,
-    playlistVM: PlaylistViewModel,
     exoPlayerVM: ExoPlayerViewModel,
     playlistTitle: String,
     onBack:()-> Unit = {},
@@ -92,7 +85,7 @@ fun PlaylistViewing(
     DisposableEffect(Unit) {
 
         // set current playlist so feeder can feed the list to the UI
-        ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,playlistTitle)
+        ListFeedingVM.ViewingPlaylist.enterCurPlaylist(contextRef,playlistTitle)
 
 
 
@@ -101,25 +94,25 @@ fun PlaylistViewing(
             playlist?.save(contextRef)
 
             // Just for safety
-            ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,null)
+            ListFeedingVM.ViewingPlaylist.delCurPlaylist()
 
         }
     }
 
 
-    playlist.apply {
-        val file = playlist?.getFileIfExists(contextRef)
-        Functions.JsonOp.watchFile(file) {
-            scope.launch {
-                ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,playlistTitle)
-
-                // I will NOT invoke onBack. This is in order to let the user know what has gone wrong
-//                if(playlist == null){
-//                   onBack.invoke()
-//                }
-            }
-        }
-    }
+//    playlist.apply {
+//        val file = playlist?.getFileIfExists(contextRef)
+//        Functions.JsonOp.watchFile(file) {
+//            scope.launch {
+//                ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,playlistTitle)
+//
+//                // I will NOT invoke onBack. This is in order to let the user know what has gone wrong
+////                if(playlist == null){
+////                   onBack.invoke()
+////                }
+//            }
+//        }
+//    }
 
 
     val thumbNailSize = 150.dp
@@ -375,12 +368,7 @@ fun PlaylistViewing(
                                                 playlist?.songsIdList?.clear()
                                                 playlist?.songsIdList?.addAll(playlistSongs.map { it.id })
 
-                                                playlist?.save(contextRef, onFinished = {
-                                                    // Force state update by reloading
-                                                    scope.launch {
-                                                        ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,playlistTitle)
-                                                    }
-                                                })
+                                                playlist?.save(contextRef)
 
 
 

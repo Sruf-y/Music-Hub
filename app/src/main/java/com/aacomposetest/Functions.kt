@@ -12,14 +12,16 @@ import android.os.FileObserver.MOVE_SELF
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import androidx.lifecycle.ViewModel
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -309,31 +311,107 @@ object Functions {
         }
     }
 
-    class FolderWatcher(
-        private val folder: File,
-        private val onChange: () -> Unit
-    )
+
+
+    class FileWatcher(
+        private val dir:File,
+        onChangeListeners:List<FileWatchListener> = emptyList()
+    ): ViewModel()
     {
+        val listenerScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+        private val onChangeListenerList: ArrayList<FileWatchListener> = ArrayList()
+
+        init {
+
+            if(instances.map { it.second }.contains(dir.path)){
+                throw DuplicateWatchingException()
+            }
+
+            onChangeListeners.forEach {
+                addOnChangeListener(it)
+            }
+        }
+
+        fun addOnChangeListener(listener: FileWatchListener): Boolean {
+            if(onChangeListenerList.map { it.key }.contains(listener.key)){
+                Log.w(Logs.DATA_ERROR.name,"Attempted to add duplicate listeners with the same key!")
+                return false
+            }else{
+                return onChangeListenerList.add(listener)
+            }
+        }
+
+        fun removeOnChangeListener(key: Any): Boolean {
+            return onChangeListenerList.removeIf { it.key == key }
+        }
+
+
         private var observer: FileObserver? = null
 
         fun startWatching() {
             if (observer != null) return
 
-            observer = object : FileObserver(folder, CREATE or DELETE or MODIFY or MOVED_TO or MOVED_FROM) {
+            observer = object : FileObserver(dir, CREATE or DELETE_SELF or DELETE or MODIFY or MOVED_TO or MOVED_FROM or CLOSE_WRITE) {
                 override fun onEvent(event: Int, path: String?) {
-                    if (event and (CREATE or DELETE or MODIFY or MOVED_TO or MOVED_FROM) != 0) {
-                        onChange()
+                    // Only trigger if our specific file changed
+
+                    val eventType = when (event) {
+                        CREATE -> "CREATE"
+                        DELETE -> "DELETE"
+                        MODIFY -> "MODIFY"
+                        MOVED_FROM -> "MOVED_FROM"
+                        MOVED_TO -> "MOVED_TO"
+                        CLOSE_WRITE -> "CLOSE_WRITE"
+                        DELETE_SELF -> "DELETE_SELF"
+                        MOVE_SELF -> "MOVE_SELF"
+                        else -> "UNKNOWN($event)"
                     }
+
+                    onChangeListenerList.forEach {
+
+                        it.onEvent.invoke(this,event,path)
+                    }
+
                 }
             }
             observer?.startWatching()
         }
 
+
+
         fun stopWatching() {
             observer?.stopWatching()
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+
+            stopWatching()
             observer = null
         }
+
+        companion object{
+            private val instances:List<Pair<Int, String>> = emptyList()
+            internal class DuplicateWatchingException(): Exception("This folder is already being watched! Two instances watching the same folder will butt heads!")
+
+            data class FileWatchListener(val key: Any,val onEvent:FileObserver.(event: Int, name: String?)-> Unit)
+
+        }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Renames the file and accounts for the extension.

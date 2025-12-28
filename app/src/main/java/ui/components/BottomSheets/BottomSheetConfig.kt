@@ -6,7 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
+import com.composables.core.rememberBottomSheetState
 
 data class BottomSheetConfig(
     val peekHeight: Dp? = BSConfigDefaults.peekHeight,
@@ -35,7 +37,15 @@ data class BottomSheetConfig(
         it
     }.toList(),
     val bottomHeight: Dp = peekHeight?:0.dp
-)
+){
+    @Composable
+    fun rememberDerivedBottomSheetState(): BottomSheetState {
+        return rememberBottomSheetState(
+            initialDetent = detents.first(),
+            detents = detents
+        )
+    }
+}
 
 @Composable
 fun rememberBottomSheetConfig(

@@ -1,10 +1,8 @@
 package com.aacomposetest.Activities
 
-import AppDatabase.PlaylistRelated.Playlist
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
-import MyViewModels.PlaylistViewModel
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
 import MyViewModels.SongsViewModelFactory
@@ -487,13 +485,11 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
 
     val contextRef = LocalContext.current
 
-    val playlistViewmodel by remember { mutableStateOf(PlaylistViewModel(contextRef)) }
-
     val navController = rememberNavController()
 
     val allsongs by ListFeedingVM.allSongs.map { list -> list.map { it.copy() } }.collectAsStateWithLifecycle(initialValue = emptyList())
     val sortedAllSongs by ListFeedingVM.SortedSongs.sortedAndFilteredSongsFlow.map { list -> list.map { it.copy() } }.collectAsStateWithLifecycle(initialValue = emptyList())
-    val allPlaylists by ListFeedingVM.SortedPlaylists.filteredPlaylists.collectAsStateWithLifecycle(initialValue = emptyList())
+    val allPlaylists by ListFeedingVM.SortedPlaylists.filteredPlaylists.collectAsState(emptyList())
 
 
 
@@ -670,8 +666,7 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                                                     .show {
                                                         PlaylistDelete_Content(
                                                             playlist = playlist,
-                                                            bottomSheetVM = globalBottomSheetVM,
-                                                            playlistViewModel = playlistViewmodel
+                                                            bottomSheetVM = globalBottomSheetVM
                                                         )
                                                     }
 
@@ -698,10 +693,10 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                     rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
 
 
+
                 PlaylistViewing(
-                    playlistTitle = args.title,
+                    playlistTitle = args.title ,
                     lazyListState = playlistViewingLazyListState,
-                    playlistVM = playlistViewmodel,
                     exoPlayerVM = exoPlayerVM,
                     onBack = {
                         navController.popBackStack()
@@ -791,6 +786,8 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                 exoPlayerVM = exoPlayerVM,
 
                 )
+
+
         }
     }
 }

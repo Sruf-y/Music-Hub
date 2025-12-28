@@ -1,17 +1,19 @@
 package ui.components.BottomSheets
 
+import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
-import AppDatabase.SongRelated.SongDao
-import AppDatabase.SongRelated.SongRepository
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
-import MyViewModels.SongsViewModel
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.text.format.DateUtils
-import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +22,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,6 +47,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -56,6 +60,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -64,6 +69,7 @@ import coil.request.ImageRequest
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Log
 import com.aacomposetest.R
+import com.aacomposetest.ui.theme.ComposeTestTheme
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.BottomSheet
@@ -162,9 +168,7 @@ fun SongPlayingBottomSheet(
 
             val calculatedSliderPos by remember {
                 derivedStateOf {
-                    (currentPosition.toFloat()/(currentSong?.duration?:1L)).apply {
-                        Log("${currentSong?.title}, ${currentPosition}")
-                    }
+                    currentPosition.toFloat()/(currentSong?.duration?:1L)
                 }
             }
 
@@ -176,8 +180,8 @@ fun SongPlayingBottomSheet(
 
 
 
-            val alpha =
-                if(sheetstate.targetDetent == SheetDetent.FullyExpanded)
+            val scaleFactor =
+                if (sheetstate.targetDetent == SheetDetent.FullyExpanded)
                     sheetstate.progress // Peek fades in
                 else
                     1f - sheetstate.progress
@@ -202,17 +206,16 @@ fun SongPlayingBottomSheet(
                     .fillMaxWidth()
                     //.height(currentHeightPx.dp/3),
                     .fillMaxHeight()
-                    .offset(y = ((1f - alpha) * (-difference)).dp),
-                currentSong = currentSong,
-                exoPlayerVM = exoPlayerVM
+                    .offset(y = ((1f - scaleFactor) * (-difference)).dp),
+                currentSong = currentSong
             )
 
             ExpandedPlayer(exoPlayerVM = exoPlayerVM,
                 modifier = Modifier
-                    .alpha(alpha),
+                    .alpha(scaleFactor),
                 currentSong = currentSong,
                 sliderPosition = sliderPosition,
-                disabled = alpha<1f,
+                disabled = scaleFactor<1f,
                 isPlaying = isPlaying,
                 isUserDragging = isUserDragging,
                 duration = currentSong?.duration?:1L
@@ -222,7 +225,7 @@ fun SongPlayingBottomSheet(
                 modifier = Modifier
                     .height(peekHeight)
                     .fillMaxWidth()
-                    .alpha(1f - alpha),
+                    .alpha(1f - scaleFactor),
                 sliderPosition = sliderPosition,
                 isPlaying = isPlaying,
                 exoPlayerVM = exoPlayerVM
@@ -264,7 +267,7 @@ private fun ExpandedPlayer(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                             indication = null, onClick = {
-                                ExoPlayerViewModel?.playPrevious()
+                                ExoPlayerViewModel.playPrevious(true)
                             }
                         )
                 )
@@ -272,8 +275,7 @@ private fun ExpandedPlayer(
                 // PAUSE/PLAY BUTTON
                 PlayPauseButton(
                     modifier = Modifier.size(iconsSize),
-                    isPlaying = isPlaying,
-                    exoPlayerVM = exoPlayerVM
+                    isPlaying = isPlaying
                 )
 
                 Image(
@@ -284,11 +286,10 @@ private fun ExpandedPlayer(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                             indication = null, onClick = {
-                                ExoPlayerViewModel?.playNext()
+                                ExoPlayerViewModel.playNext(true)
                             }
                         )
                 )
-
 
             }
 
@@ -337,8 +338,7 @@ private fun PeekPlayer(
                 PlayPauseButton(
                     modifier = Modifier
                         .size(iconsSize),
-                    isPlaying = isPlaying,
-                    exoPlayerVM = exoPlayerVM
+                    isPlaying = isPlaying
                 )
 
                 IconButton(imageVector = Icons.Default.LocationOn,
@@ -366,7 +366,7 @@ private fun PeekPlayer(
 }
 
 @Composable
-private fun PlayPauseButton(modifier: Modifier,isPlaying:Boolean,exoPlayerVM: ExoPlayerViewModel?=null){
+private fun PlayPauseButton(modifier: Modifier,isPlaying:Boolean){
 
 
     AndroidView(
@@ -393,7 +393,6 @@ private fun PlayPauseButton(modifier: Modifier,isPlaying:Boolean,exoPlayerVM: Ex
 private fun ScalingBackground(
     modifier: Modifier = Modifier.fillMaxSize(),
     currentSong: Song?,
-    exoPlayerVM: ExoPlayerViewModel?,
     @DrawableRes errorDrawable: Int? = R.drawable.exclamation_sign
 
 ){
@@ -530,5 +529,128 @@ private fun SongProgressBar(
         }
     )
 
+
+}
+
+
+@Composable
+fun ResponsivePlayerBS(
+    modifier:Modifier = Modifier,
+    state: BottomSheetState,
+    shape:Shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
+    expandedHeight: Dp= 250.dp,
+    peekHeight:Dp= 60.dp,
+    currentSong: Song?,
+    centerPictureToMiddle:Boolean = false,
+    gotoSong: (Song, Playlist?) -> Unit = {currentSong,playlist->  },
+    shufleFromCurrentPlaylist:(Playlist)-> Unit = {
+        myExoPlayer
+    }
+) {
+
+    // middle would be if both members of the equation were divided by 2, but the middle does create some flickers.
+    /**
+     * Difference at which point the image's center sits at either (down->up) 75% if not centered, or 50% if centered.
+     * */
+    val difference by remember { mutableFloatStateOf((expandedHeight.value/2-peekHeight.value/(if(centerPictureToMiddle)2 else 1))) }
+
+    /**
+     * State progress as a float 0~1 value between the lowest point and the highest point.
+     * */
+    val progressScalar by remember {
+        derivedStateOf {
+
+            if (state.targetDetent == SheetDetent.FullyExpanded)
+                state.progress // Peek fades in
+            else
+                1f - state.progress
+
+        }
+    }
+
+    /**
+     * Final offset calculation for the background
+     * */
+    val backgroundYoffset by remember {
+        derivedStateOf {
+            (1f - progressScalar) * (-difference)
+        }
+    }
+
+
+    BottomSheet(
+        modifier = modifier.height(expandedHeight),
+        state = state,
+        shape = shape
+    ) {
+
+        ScalingBackground(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(y = backgroundYoffset.dp),
+            currentSong = currentSong
+        )
+
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ){
+
+            // Text area
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
+            ) {
+
+            }
+
+        }
+
+
+
+        Column(verticalArrangement = Arrangement.SpaceAround) {
+
+
+
+
+        }
+
+
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ResponsivePlayerPreview(){
+    ComposeTestTheme {
+        Surface {
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .background(MyColor.White)){
+
+                val config = rememberBottomSheetConfig()
+                val state = config.rememberDerivedBottomSheetState()
+
+                //val currentSong by myExoPlayer.currentlyPlayingSong.collectAsState()
+
+                Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Spacer(Modifier.height(50.dp))
+
+
+                }
+
+                ResponsivePlayerBS(
+                    state = state,
+                    currentSong = null
+                )
+
+            }
+        }
+    }
+
+}
+
+
+object ResponsivePlayerBSDefaults{
 
 }

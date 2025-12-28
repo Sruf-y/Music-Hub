@@ -4,11 +4,17 @@ import AppDatabase.MyDatabaseProvider
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
 import AppDatabase.SongRelated.SongRepository
+import ExoPlayer.myExoPlayer
 import android.content.Context
-import androidx.lifecycle.viewModelScope
+import android.os.FileObserver.CLOSE_WRITE
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.Setting
+import com.aacomposetest.Functions.FileWatcher
+import com.aacomposetest.Functions.FileWatcher.Companion.FileWatchListener
+import com.aacomposetest.Log
 import com.aacomposetest.MyApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 
 object ListFeedingVM {
@@ -28,14 +35,47 @@ object ListFeedingVM {
         MyPrefs.getPrefs(MyApplication.instance)
     }
 
+    private val IOscope = CoroutineScope(Dispatchers.IO)
+
     // Using this in order to not create a SongViewModel for no reason
     private val dao = MyDatabaseProvider.getDatabase(MyApplication.instance).songDao()
     private val repo = SongRepository(dao)
     private val scope = CoroutineScope(Dispatchers.Default)
 
 
-    //private val songsVM = SongsViewModel(MyApplication.instance)
-    private val playlistsVM = PlaylistViewModel(MyApplication.instance)
+
+
+    private val playlistHolder = PlaylistHolder(IOscope)
+    val allPlaylists = playlistHolder.allPlaylists // pass refference to the stateflow
+
+
+    val playlistFolderWatcher:FileWatcher = FileWatcher(
+    Playlist.getFolder(MyApplication.instance)
+    )
+
+
+
+
+
+    init {
+
+
+        // watch the folder itself
+        playlistFolderWatcher.addOnChangeListener(
+            FileWatchListener(
+                "folderWatcher",
+                { event,path ->
+                    playlistHolder.updateList(MyApplication.instance)
+                }
+            )
+        )
+        playlistHolder.updateList(MyApplication.instance)
+
+        playlistFolderWatcher.startWatching()
+    }
+
+
+
 
 
     val allSongs: StateFlow<List<Song>> = repo.allsongsFlow.stateIn(
@@ -43,16 +83,6 @@ object ListFeedingVM {
         SharingStarted.Eagerly,
         emptyList()
     )
-
-    val allPlaylists: StateFlow<List<Playlist>> = playlistsVM.allPlaylists
-
-
-
-
-    init {
-        playlistsVM.updateList(MyApplication.instance)
-        playlistsVM.startWatchingFolder()
-    }
 
 
 
@@ -73,6 +103,8 @@ object ListFeedingVM {
     }
 
     object SortedSongs {
+
+        val songsScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 
         private val _isSearching = MutableStateFlow(false)
         val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
@@ -126,7 +158,7 @@ object ListFeedingVM {
                     }
                 }
             }.stateIn(
-                scope,
+                songsScope,
                 SharingStarted.Lazily,
                 emptyList()
             )
@@ -142,7 +174,7 @@ object ListFeedingVM {
                 }
 
             }.stateIn(
-                scope,
+                songsScope,
                 SharingStarted.Lazily,
                 emptyList()
             )
@@ -152,8 +184,8 @@ object ListFeedingVM {
 
 
         // I have removed filtering for playlists because its simply annoying. I might re-add it later in some way.
-        val filteredPlaylists: Flow<List<Playlist>>
-            get() = allPlaylists
+
+        val filteredPlaylists: Flow<List<Playlist>> = allPlaylists
 
 //        val filteredPlaylists: Flow<List<Playlist>> =
 //            combine(
@@ -170,6 +202,8 @@ object ListFeedingVM {
 
     object ViewingPlaylist{
 
+        val viewPlaylistScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+
         private val _isSearching = MutableStateFlow(false)
         val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
         fun setSearching(value: Boolean){
@@ -182,7 +216,7 @@ object ListFeedingVM {
         }
 
 
-        var curPlaylistTitle:String? = null
+        var curPlaylistTitle:MutableState<String?> = mutableStateOf(null)
             private  set
 
         val _curPlaylist = MutableStateFlow<Playlist?>(null)
@@ -198,17 +232,41 @@ object ListFeedingVM {
                 songsById[id]
             } ?: emptyList()
         }.stateIn(
-            playlistsVM.viewModelScope,
+            viewPlaylistScope,
             SharingStarted.Eagerly,
             emptyList()
         )
 
+        val playlistChangeCallback = FileWatchListener(
+            "currentlyViewedPlaylsit",
+            { event, name ->
 
-        fun setCurPlaylist(context:Context,title:String?){
+                val myName = curPlaylist.value?.getFileIfExists(MyApplication.instance)?.name
+
+
+                if(name == myName && event == CLOSE_WRITE){
+
+                    _setCurPlaylist(MyApplication.instance,curPlaylist.value?.title)
+                }
+            }
+        )
+
+        private fun _setCurPlaylist(context:Context,title:String?){
+
             val playlist = Playlist.getPlaylist(context,title)
-            curPlaylistTitle = title
+            curPlaylistTitle.value = title
             _curPlaylist.update { playlist }
 
+        }
+
+        fun enterCurPlaylist(context: Context,title: String?){
+            _setCurPlaylist(context,title)
+            playlistFolderWatcher.addOnChangeListener(playlistChangeCallback)
+        }
+
+        fun delCurPlaylist(){
+            curPlaylistTitle.value = null
+            _curPlaylist.update { null }
         }
         val filteredSongsList: StateFlow<List<Song>> =
             combine(
@@ -218,7 +276,7 @@ object ListFeedingVM {
             ) { songs,cursongs,searchWord->
                 cursongs.filter{ it->it.title.contains(other = searchWord, ignoreCase = true ) || searchWord.isBlank() }
             }.stateIn(
-                playlistsVM.viewModelScope,
+                viewPlaylistScope,
                 SharingStarted.Eagerly,
                 emptyList()
             )
@@ -264,7 +322,7 @@ object ListFeedingVM {
                     }
                 }
             }.stateIn(
-                scope,
+                viewPlaylistScope,
                 SharingStarted.Lazily,
                 emptyList()
             )
@@ -280,10 +338,50 @@ object ListFeedingVM {
                 }
 
             }.stateIn(
-                scope,
+                viewPlaylistScope,
                 SharingStarted.Lazily,
                 emptyList()
             )
+    }
+
+}
+
+private class PlaylistHolder(val IOscope: CoroutineScope){
+    val _allPlaylists = MutableStateFlow<List<Playlist>>(emptyList())
+    val allPlaylists: StateFlow<List<Playlist>> = _allPlaylists.asStateFlow()
+
+    fun updateList(context: Context,onfinished: (() -> Unit)? = null) {
+
+
+        val filesList = Playlist.getFolder(context).listFiles()
+
+        val newlist: ArrayList<Playlist> = ArrayList()
+
+        if (filesList != null) {
+
+            IOscope.launch {
+
+                filesList.forEachIndexed { index, file ->
+
+                    Playlist.getFromFile(file)?.let { loadedPlaylist ->
+                        newlist.add(loadedPlaylist)
+                    }
+
+                }
+
+
+                _allPlaylists.update { old->
+
+                    newlist
+                }
+                onfinished?.invoke()
+            }
+
+
+        } else {
+            _allPlaylists.update { old-> newlist  }
+            onfinished?.invoke()
+        }
     }
 
 }

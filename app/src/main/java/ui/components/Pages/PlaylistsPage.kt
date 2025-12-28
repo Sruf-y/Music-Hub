@@ -1,14 +1,11 @@
 package ui.components.Pages
 
 import AppDatabase.PlaylistRelated.Playlist
-import MyViewModels.PlaylistViewModel
-import SrufComposeComponents.MyModalBottomSheet
 import SrufComposeComponents.Text
 import TestLayouts.TestActivity
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.res.Configuration
-import androidx.appcompat.widget.PopupMenu
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +27,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -52,7 +47,6 @@ import com.aacomposetest.ui.theme.ComposeTestTheme
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
-import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.PlaylistItem
 
@@ -202,7 +196,7 @@ private fun TopBar(
 private fun PDeletePreview(){
     ComposeTestTheme(forceDarkMode = true) {
         Surface(){
-            PlaylistDelete_Content(playlist = Playlist("My playlist"),null,null)
+            PlaylistDelete_Content(playlist = Playlist("My playlist"),null)
         }
     }
 }

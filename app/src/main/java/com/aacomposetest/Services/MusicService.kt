@@ -19,6 +19,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat.getSystemService
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.aacomposetest.MyApplication
@@ -57,10 +58,6 @@ class MusicService: LifecycleService() {
                 return START_NOT_STICKY
             }
 
-            Actions.KILLSERVICE.name->{
-                stopSelf()
-            }
-
             else -> {
 
                 Log.e(Logs.SERVICE.name,"Service onStartCommand was passed an Action which is either INVALID or not handled.")
@@ -94,6 +91,7 @@ class MusicService: LifecycleService() {
                            notificationManager.cancel(notification_id)
 
                            stopSelf()
+                           MyApplication.killProccess()
                        }else{
                            stopForeground(STOP_FOREGROUND_REMOVE)
                        }
@@ -152,10 +150,6 @@ class MusicService: LifecycleService() {
 
                 Log.i(Logs.SERVICE.name, "isPlaying value is ${it}")
 
-
-                if (it) exoPlalayerVM.progressVM.startUpdates() else exoPlalayerVM.progressVM.stopUpdates()
-
-
                 playPauseLogic(it, this@MusicService)
 
 
@@ -176,8 +170,6 @@ class MusicService: LifecycleService() {
         notificationState.setValue(NotificationState.Dead)
 
         MyApplication.unregisterServiceInstance()
-
-
     }
 
 
@@ -282,15 +274,10 @@ class MusicService: LifecycleService() {
             .setContentTitle("Title")
             .setContentText("Content text")
             .build()
-
-
-
-
-
     }
 
 
-    fun start(onFinish: () -> Unit = {}){
+    fun start(){
         // Redundant initialization of the player just in case
         myExoPlayer.initializePlayer(this)
 
@@ -323,7 +310,7 @@ class MusicService: LifecycleService() {
 
 
         if(!exoPlalayerVM.isPlaying.value)
-            sendToBackground(this)
+            sendToBackground()
 
     }
 
@@ -331,7 +318,6 @@ class MusicService: LifecycleService() {
     enum class Actions{
         START,
         STOP, // only used in notification button
-        KILLSERVICE, // unused
         FAVORITE
     }
 
@@ -341,21 +327,21 @@ class MusicService: LifecycleService() {
     fun playPauseLogic(isPlaying:Boolean = myExoPlayer.isPlaying.value,context:Context = MyApplication.instance){
 
         if (isPlaying || isAppTaskStillExists()) {
-            sendToForeground(context)
+            sendToForeground()
         } else {
-            sendToBackground(context)
+            sendToBackground()
         }
 
         UpdateNotification(CreateNotification())
     }
 
-    fun sendToForeground(context: Context){
+    fun sendToForeground(){
         start()
 
         notificationState.setValue(NotificationState.Foreground)
     }
 
-    fun sendToBackground(context: Context){
+    fun sendToBackground(){
         if(notificationState.stateFlow.value == NotificationState.Foreground){
 
             stopForeground(STOP_FOREGROUND_DETACH)
@@ -382,7 +368,7 @@ class MusicService: LifecycleService() {
                 }
                 context.startForegroundService(intent)
             }else if(MyApplication.serviceInstance!!.notificationState.stateFlow.value == NotificationState.Background){
-                MyApplication.serviceInstance!!.sendToForeground(context)
+                MyApplication.serviceInstance!!.sendToForeground()
             }
         }
 

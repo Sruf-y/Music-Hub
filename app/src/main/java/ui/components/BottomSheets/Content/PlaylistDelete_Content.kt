@@ -1,7 +1,6 @@
 package ui.components.BottomSheets.Content
 
 import AppDatabase.PlaylistRelated.Playlist
-import MyViewModels.PlaylistViewModel
 import SrufComposeComponents.MyModalBottomSheet
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +23,7 @@ import com.aacomposetest.ui.theme.Theme
 import ui.components.CancelConfirm
 
 @Composable
-fun PlaylistDelete_Content(playlist: Playlist, playlistViewModel: PlaylistViewModel?, bottomSheetVM: MyModalBottomSheet.ModalVM?){
+fun PlaylistDelete_Content(playlist: Playlist, bottomSheetVM: MyModalBottomSheet.ModalVM?){
 
     val context = LocalContext.current
 
@@ -68,7 +67,8 @@ fun PlaylistDelete_Content(playlist: Playlist, playlistViewModel: PlaylistViewMo
         CancelConfirm(onCancel = {
             onDismiss.invoke()
         }, onConfirm = {
-            playlistViewModel?.delete(playlist,context = context)
+
+            playlist.delete(context)
             onDismiss.invoke()
         })
     }

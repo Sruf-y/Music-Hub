@@ -2,17 +2,17 @@ package ExoPlayer
 
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
-import ExoPlayer.myExoPlayer.prefs
 import MyViewModels.DataObserverViewModel
+import MyViewModels.ListFeedingVM
+import MyViewModels.PlaylistWatcher
 import MyViewModels.SongsViewModel
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.core.content.edit
 import androidx.core.net.toUri
-import androidx.lifecycle.viewModelScope
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -27,13 +27,9 @@ import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -42,7 +38,7 @@ object myExoPlayer {
     private val _isInitialized = MutableStateFlow<Boolean>(value = false)
     val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
 
-    private var ioScope = CoroutineScope(Dispatchers.IO)
+    private var playScope = CoroutineScope(Dispatchers.Main)
 
     private val prefs: SharedPreferences? = MyPrefs.getPrefs(MyApplication.instance)
 
@@ -60,15 +56,17 @@ object myExoPlayer {
             } else {
                 0
             }
-            Log("Ran OBSERVING function and got ${progress}")
+
             progress
         }, onValueChange = {
             prefs?.edit(){
-                Log("I put song position as ${it}")
+                Log.i(Logs.SHARED_PREFFERENCES.name,"PUT current song position")
                 putCursorValue(MyPrefs._prefs_LastSongPosition,it)
             }
         }
     )
+
+
 
 
     var isLoopAllowed:Boolean = false
@@ -82,11 +80,16 @@ object myExoPlayer {
     private val _currentSong = MutableStateFlow<Song?>(value = null)
     val currentlyPlayingSong: StateFlow<Song?> = _currentSong.asStateFlow()
 
+    private val allSongs = ListFeedingVM.SortedSongs.sortedSongsFlow
 
-    private val _currentPlaylistTitle = MutableStateFlow<String?>(value = null)
-    val currentPlaylistTitle: StateFlow<String?> = _currentPlaylistTitle.asStateFlow()
-    fun setCurrentPlaylist(title:String?){
-        _currentPlaylistTitle.value = title
+    val curPlaylistVM = PlaylistWatcher(
+        context = MyApplication.instance
+    )
+
+
+
+    fun setCurrentPlaylist(title:String?,context: Context = MyApplication.instance){
+        curPlaylistVM.changePlaylist(playlistTitle = title,context = context)
     }
 
     // Player state tracking
@@ -134,6 +137,8 @@ object myExoPlayer {
 
                             if(isPlaying){
                                 progressVM.startUpdates()
+                            }else{
+                                progressVM.stopUpdates()
                             }
                         }
                     })
@@ -154,7 +159,7 @@ object myExoPlayer {
                     val playlist = Playlist.getPlaylist(context,playlistTitle?:"")
 
                     progressVM.forceValue(songPosition)
-                    Log("Song position ${songPosition}")
+
 
                     _currentSong.value = song
 
@@ -273,7 +278,6 @@ object myExoPlayer {
 
 
 
-
     /**
      * To be used inside composables to set the song's playlist along with the song
      *
@@ -281,8 +285,7 @@ object myExoPlayer {
     fun setSong(song: Song?, startOnPrepared:Boolean=true, playlistTitle: String? =  null, initialPosition: Long = 0L){
 
 
-
-        _currentPlaylistTitle.value = playlistTitle
+        setCurrentPlaylist(playlistTitle)
 
         privSetSong(song = song, startOnPrepared = startOnPrepared)
         seekTo(initialPosition)
@@ -293,10 +296,11 @@ object myExoPlayer {
         }
 
 
+
         prefs?.edit(){
             putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.value?.id?:-1)
 
-            putCursorValue(MyPrefs._prefs_LastPlaylistTitle,currentPlaylistTitle.value?:"")
+            putCursorValue(MyPrefs._prefs_LastPlaylistTitle,playlistTitle?:"")
         }
     }
 
@@ -307,147 +311,116 @@ object myExoPlayer {
      *
      * [allowWrapAround] - If function is allowed to wrap around to the last song in the playlist
      * */
-    fun playPreviousInPlaylist(allowWrapAround:Boolean = false){
-        CoroutineScope(Dispatchers.Main).launch {
-            val playlist = Playlist.getPlaylist(MyApplication.instance,currentPlaylistTitle.value?:"")
+    fun playPreviousInPlaylist(
+        allowWrapAround: Boolean = false,
+        onError: () -> Unit = {
+            Toast.makeText(MyApplication.instance, "CurSong not found", Toast.LENGTH_SHORT).show()
+        }
+    ) {
 
-            if(playlist!=null) {
-                playlist.songsIdList.let { songsList ->
+        currentlyPlayingSong.value?.let {currentSong->
 
-                    currentlyPlayingSong.value?.let { currentSong ->
-                        val currentId = currentSong.id
+            val curList = curPlaylistVM.playlist.value?.songsIdList?:allSongs.value.map { it.id }
 
-                        songsVM?.viewModelScope?.launch {
-
-                            val previousSongUnchecked = playlist.getPreviousId(currentId)
-
-                            // if allowLoop, then make the next song first if its null. Otheriwse let it be null if its last
-                            // song and as such, nothing will play
-                            val previousSongId =try {
-                                if (allowWrapAround) previousSongUnchecked ?: songsList.last()
-                                else previousSongUnchecked
-                            }catch (ex: NoSuchElementException){
-                                null
-                            }
+            val curIndex = curList.indexOf(currentSong.id)
 
 
-                            previousSongId?.let {
-                                setSong(
-                                    song = songsVM!!.getSongById(it), startOnPrepared = true, playlistTitle = _currentPlaylistTitle.value
-                                )
-                            }
-                        }
+
+
+
+            if(curIndex == -1){
+                onError.invoke()
+            }else if(curIndex == 0 && allowWrapAround){
+                playScope.launch {
+
+                    val song = try {
+                        songsVM?.getSongById(curList[curList.lastIndex])
+                    }catch (ex: Exception){
+                        null
                     }
+
+                    setSong(
+                        song = song,
+                        playlistTitle =  curPlaylistVM.playlist.value?.title
+                    )
                 }
-            }else{
-                currentlyPlayingSong.value?.let {currentSong->
-                    val currentId = currentSong.id
+            }else if(curIndex <= curList.size && curIndex>0 ){
+                playScope.launch {
 
-                    songsVM?.viewModelScope?.launch {
-
-                        val previousSongUnchecked = songsVM!!.getPreviousSongById(currentId)
-
-                        // if allowLoop, then make the next song first if its null. Otheriwse let it be null if its last
-                        // song and as such, nothing will play
-                        val previousSong =try {
-                            if (allowWrapAround) previousSongUnchecked ?: songsVM!!.getAllSongsFlow.firstOrNull()?.last()
-                            else previousSongUnchecked
-                        }catch (ex: NoSuchElementException){
-                            null
-                        }
-
-                        // only play previous if previous song id is not null
-                        previousSong?.let {
-                            setSong(
-                                song = it, startOnPrepared = true,playlistTitle = _currentPlaylistTitle.value
-                            )
-                        }
-
+                    val song = try {
+                        songsVM?.getSongById(curList[curIndex-1])
+                    }catch (ex: Exception){
+                        null
                     }
+
+                    setSong(
+                        song = song,
+                        playlistTitle =  curPlaylistVM.playlist.value?.title
+                    )
                 }
             }
-
         }
 
 
     }
-
 
     /**
      * Plays the next song in the current playlist.
      *
      * [allowLoop] - If function is allowed to loop back to the first son in the playlist.
      * */
-    fun playNextInPlaylist(allowLoop:Boolean = false){
-        CoroutineScope(Dispatchers.Main).launch {
-            val playlist =
-                Playlist.getPlaylist(MyApplication.instance, currentPlaylistTitle.value ?: "")
+    fun playNextInPlaylist(
+        allowLoop: Boolean = true,
+        onError: () -> Unit = {
+            Toast.makeText(MyApplication.instance, "CurSong not found", Toast.LENGTH_SHORT).show()
+        },
+    ) {
 
-            if(playlist!=null && playlist.songsIdList.contains(currentlyPlayingSong.value?.id)==true) {
-                playlist.songsIdList.let { songsList->
+        currentlyPlayingSong.value?.let {currentSong->
 
-                    currentlyPlayingSong.value?.let {currentSong->
-                        val currentId = currentSong.id
+            val curList = curPlaylistVM.playlist.value?.songsIdList?:allSongs.value.map { it.id }
 
-                        songsVM?.viewModelScope?.launch {
+            val curIndex = curList.indexOf(currentSong.id)
 
-                            val nextSongIdUnchecked = playlist.getNextId(currentId)
 
-                            // if allowLoop, then make the next song first if its null. Otheriwse let it be null if its last
-                            // song and as such, nothing will play
-                            val nextSongId =try {
-                                if (allowLoop) nextSongIdUnchecked ?: songsList.first()
-                                else nextSongIdUnchecked
-                            }catch (ex: NoSuchElementException){
-                                null
-                            }
 
-                            // only play next if next song id is not null
-                            nextSongId?.let {
-                                setSong(
-                                    song = songsVM!!.getSongById(it), startOnPrepared = true, playlistTitle = _currentPlaylistTitle.value
-                                )
-                            }
+            if(curIndex == -1) {
+                onError.invoke()
+            }else if(curIndex == curList.size && allowLoop){
+                playScope.launch {
 
-                        }
+
+                    val song = try {
+                        songsVM?.getSongById(curList[0])
+                    } catch (ex: Exception) {
+                        null
                     }
+
+                    setSong(
+                        song = song,
+                        playlistTitle = curPlaylistVM.playlist.value?.title
+                    )
+                }
+            }else if( curIndex <= curList.size-1 && curIndex>=0 ){
+                playScope.launch {
+                    val song = try {
+                        songsVM?.getSongById(curList[curIndex+1])
+                    }catch (ex: Exception){
+                        null
+                    }
+                    setSong(
+                        song = song,
+                        playlistTitle =  curPlaylistVM.playlist.value?.title
+                    )
                 }
             }
-            else{
-                currentlyPlayingSong.value?.let {currentSong->
-                    val currentId = currentSong.id
-
-                    songsVM?.viewModelScope?.launch {
-
-                        val nextSongIdUnchecked = songsVM!!.getNextSongById(currentId)
-
-                        // if allowLoop, then make the next song first if its null. Otheriwse let it be null if its last
-                        // song and as such, nothing will play
-                        val nextSong = try {
-                            if (allowLoop) nextSongIdUnchecked ?: songsVM!!.getAllSongsFlow
-                                .first().first()
-                            else nextSongIdUnchecked
-                        }catch (ex: NoSuchElementException){
-                            null
-                        }
-
-                        // only play next if next song id is not null
-                        nextSong?.let {
-                            setSong(
-                                song = it, startOnPrepared = true,playlistTitle = _currentPlaylistTitle.value
-                            )
-                        }
-
-                    }
-                }
-            }
-
-
         }
 
 
-
     }
+
+
+
 
 
     /**
@@ -503,7 +476,7 @@ object myExoPlayer {
         onDestroy_SaveLogic()
 
         _currentSong.value = null
-        _currentPlaylistTitle.value = null
+        setCurrentPlaylist(null)
 
 
         _isInitialized.value = false
@@ -526,7 +499,7 @@ object myExoPlayer {
         prefs?.edit {
             putCursorValue(MyPrefs._prefs_LastSongPosition,getCurrentPosition())
             putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.value?.id?:-1)
-            putCursorValue(MyPrefs._prefs_LastPlaylistTitle,currentPlaylistTitle.value?:"")
+            putCursorValue(MyPrefs._prefs_LastPlaylistTitle,curPlaylistVM.playlist.value?.title?:"")
         }
     }
 }

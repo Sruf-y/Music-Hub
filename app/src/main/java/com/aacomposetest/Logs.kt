@@ -6,6 +6,8 @@ enum class Logs {
     PERMISSIONS,
     SERVICE,
     EXOPLAYER,
-    HTTP
+    HTTP,
+    FILE_IO,
+    SHARED_PREFFERENCES
 
 }
