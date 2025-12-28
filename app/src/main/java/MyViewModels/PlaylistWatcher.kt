@@ -23,14 +23,14 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 
 
-class PlaylistWatcher(context: Context) {
+class PlaylistWatcher(context: Context): ViewModel(){
 
     var file:MutableState<File?> = mutableStateOf(null)
         private set
     private val _curPlaylist = MutableStateFlow<Playlist?>(null)
     val playlist = _curPlaylist.asStateFlow()
 
-
+    val listenerKey = Random.nextInt(200)
 
 
     private fun onChangeNoticed(context: Context,title:String? = playlist.value?.title) {
@@ -46,7 +46,6 @@ class PlaylistWatcher(context: Context) {
 
             file.value = result.getFileIfExists(context)!!
         }
-
     }
 
 
@@ -55,28 +54,25 @@ class PlaylistWatcher(context: Context) {
         onChangeNoticed(context,playlistTitle)
     }
 
+    val listener = FileWatchListener(
+        key = listenerKey,
+        onEvent = { event, name ->
 
+            if (name == file.value?.name && event == CLOSE_WRITE) {
+                onChangeNoticed(context)
+            }
+
+        }
+    )
 
     init {
-
-
-
-        ListFeedingVM.playlistFolderWatcher.addOnChangeListener(
-            FileWatchListener(
-                key = Random.nextInt(200),
-                onEvent = { event, name ->
-
-
-                    if (name == file.value?.name && event == CLOSE_WRITE) {
-                        onChangeNoticed(context)
-                    }
-
-                }
-            )
-        )
-
+        ListFeedingVM.playlistFolderWatcher.addOnChangeListener(listener)
     }
 
+    override fun onCleared() {
+        super.onCleared()
 
+        ListFeedingVM.playlistFolderWatcher.removeOnChangeListener(listenerKey)
+    }
 
 }

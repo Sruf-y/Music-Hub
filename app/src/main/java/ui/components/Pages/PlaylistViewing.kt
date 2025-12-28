@@ -1,9 +1,9 @@
 package ui.components.Pages
 
-import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
+import MyViewModels.PlaylistWatcher
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.widget.Toast
@@ -63,56 +63,67 @@ fun PlaylistViewing(
     onBack:()-> Unit = {},
     bottomPadding: Dp = 0.dp,
     plusButtonClick:(()-> Unit)? =null,
-    onOptionsClickShowMenu: @Composable ((MutableState<Boolean>) -> Unit)? = null,
-    songs: List<Song>
+    onOptionsClickShowMenu: @Composable ((MutableState<Boolean>) -> Unit)? = null
 ) {
+
+    // Use this value for searching/filtering in the playlist.
+    val isSearching = remember { false }
 
 
     val contextRef = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    val allSongs by ListFeedingVM.allSongs.collectAsState()
 
-    val playlist by ListFeedingVM.ViewingPlaylist.curPlaylist.collectAsState()
+    val playlistVM = remember { PlaylistWatcher(contextRef) }
+
+    val playlist by playlistVM.playlist.collectAsState()
 
     val currentlyPlayingSong by exoPlayerVM.currentSong.collectAsState()
 
 
+    val const_PlaylistSongs by remember {
+        derivedStateOf {
 
-    val songsListSortedExternally by ListFeedingVM.ViewingPlaylist.filteredSongsList.collectAsState(initial = emptyList())
 
-    val isSearching by ListFeedingVM.ViewingPlaylist.isSearching.collectAsState()
+
+
+            val unOrderedList = allSongs.filter {
+                playlist?.songsIdList?.contains(it.id) == true
+            }
+
+            playlist?.songsIdList?.map { id->
+                unOrderedList.first { it.id == id }
+            }?:emptyList()
+        }
+    }
+
+    var playlistSongs by remember {
+        mutableStateOf(
+            allSongs.filter {
+                playlist?.songsIdList?.contains(it.id) == true
+            }
+        )
+    }
+
+
     // Get the playlist
     DisposableEffect(Unit) {
 
         // set current playlist so feeder can feed the list to the UI
-        ListFeedingVM.ViewingPlaylist.enterCurPlaylist(contextRef,playlistTitle)
-
-
+        playlistVM.changePlaylist(playlistTitle,contextRef)
 
         onDispose {
             // Saves on de-composition. Which does NOT happen onPause or onDestroy.
             playlist?.save(contextRef)
 
             // Just for safety
-            ListFeedingVM.ViewingPlaylist.delCurPlaylist()
+
 
         }
     }
 
 
-//    playlist.apply {
-//        val file = playlist?.getFileIfExists(contextRef)
-//        Functions.JsonOp.watchFile(file) {
-//            scope.launch {
-//                ListFeedingVM.ViewingPlaylist.setCurPlaylist(contextRef,playlistTitle)
-//
-//                // I will NOT invoke onBack. This is in order to let the user know what has gone wrong
-////                if(playlist == null){
-////                   onBack.invoke()
-////                }
-//            }
-//        }
-//    }
 
 
     val thumbNailSize = 150.dp
@@ -122,17 +133,9 @@ fun PlaylistViewing(
 
 
 
+    LaunchedEffect(const_PlaylistSongs) {
 
-    var playlistSongs by remember(songs, playlist) {
-        mutableStateOf(songsListSortedExternally )
-    }
-
-
-
-
-    LaunchedEffect(songs,playlist,songsListSortedExternally) {
-
-        playlistSongs = songsListSortedExternally
+        playlistSongs = const_PlaylistSongs
     }
 
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -343,6 +346,7 @@ fun PlaylistViewing(
                                         .background(if (isDragging) MyColor.SemiTransparentDark else MyColor.Transparent)
                                         .clickable(
                                             onClick = {
+
                                                 ExoPlayerViewModel.setSong(
                                                     song = song,
                                                     startOnPrepared = true,

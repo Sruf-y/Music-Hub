@@ -701,7 +701,6 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
                     onBack = {
                         navController.popBackStack()
                     },
-                    songs = allsongs,
                     bottomPadding = songBS_Config.bottomHeight,
                     plusButtonClick = {
                         navController.navigate(PlaylistAddSongsPage(args.title)) {
