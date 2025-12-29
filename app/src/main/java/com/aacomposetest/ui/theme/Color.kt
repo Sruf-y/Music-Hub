@@ -15,8 +15,8 @@ object MyColor{
 
     @Stable val Transparent = Color(0x00FFFFFF)
 
-    @Stable val Black = Color.Black
-    @Stable val White = Color.White
+    @Stable val Black = Color(0xFF000000)
+    @Stable val White = Color(0xFFFFFFFF)
 
     @Stable private val BackgroundLight = Color(0xFFE5E5E5)
     @Stable private val BackgroundDark = Color(0xFF2B2B2B)

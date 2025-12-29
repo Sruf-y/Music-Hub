@@ -3,19 +3,14 @@ package ui.components.BottomSheets
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
-import ExoPlayer.myExoPlayer
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.text.format.DateUtils
 import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.graphics.res.animatedVectorResource
-import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
-import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -46,14 +41,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.pointerInteropFilter
@@ -67,7 +61,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.aacomposetest.Classes.MyPrefs
-import com.aacomposetest.Log
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.ComposeTestTheme
 import com.aacomposetest.ui.theme.MyColor
@@ -76,6 +69,7 @@ import com.composables.core.BottomSheet
 import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
+import ui.components.MarqueeText
 import ui.components.ProgressBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -207,7 +201,7 @@ fun SongPlayingBottomSheet(
                     //.height(currentHeightPx.dp/3),
                     .fillMaxHeight()
                     .offset(y = ((1f - scaleFactor) * (-difference)).dp),
-                currentSong = currentSong
+                song = currentSong
             )
 
             ExpandedPlayer(exoPlayerVM = exoPlayerVM,
@@ -366,7 +360,7 @@ private fun PeekPlayer(
 }
 
 @Composable
-private fun PlayPauseButton(modifier: Modifier,isPlaying:Boolean){
+private fun PlayPauseButton(modifier: Modifier = Modifier,isPlaying:Boolean){
 
 
     AndroidView(
@@ -392,20 +386,22 @@ private fun PlayPauseButton(modifier: Modifier,isPlaying:Boolean){
 @Composable
 private fun ScalingBackground(
     modifier: Modifier = Modifier.fillMaxSize(),
-    currentSong: Song?,
+    song: Song?,
     @DrawableRes errorDrawable: Int? = R.drawable.exclamation_sign
 
 ){
     AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
-            .data(currentSong?.thumbnailPath)
+            .data(song?.thumbnailPath)
             .allowHardware(true)
-            .memoryCacheKey(currentSong?.thumbnailPath)
-            .placeholderMemoryCacheKey(currentSong?.thumbnailPath)
-            .apply {
+            .memoryCacheKey(song?.thumbnailPath)
+            .placeholderMemoryCacheKey(song?.thumbnailPath)
+            .let {
                 if(errorDrawable!=null){
-                    this.error(errorDrawable)
+                    it.error(errorDrawable)
                 }
+                else
+                    it
             }
             .build(),
         contentDescription = "Song thumbnail scaled",
@@ -414,6 +410,7 @@ private fun ScalingBackground(
         contentScale = ContentScale.Crop // CenterCrop
     )
 
+    // Why is this here??? I forgot
     Box(modifier = modifier.background(color = Color(0x54000000)))
 }
 
@@ -534,17 +531,59 @@ private fun SongProgressBar(
 
 
 @Composable
+private fun ButtonsRow(modifier: Modifier = Modifier.fillMaxWidth(), horizontalArrangement: Arrangement.Horizontal = Arrangement.Center, iconSize:Dp = 90.dp) {
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = horizontalArrangement
+    ) {
+
+        Image(
+            painter = painterResource(R.drawable.ic_previous),
+            contentDescription = null,
+            modifier = Modifier
+                .size(iconSize)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
+                    indication = null, onClick = {
+                        ExoPlayerViewModel.playPrevious(true)
+                    }
+                )
+        )
+
+
+        PlayPauseButton(modifier = Modifier.size(iconSize),isPlaying = false)
+
+        Image(
+            painter = painterResource(R.drawable.ic_next),
+            contentDescription = null,
+            modifier = Modifier
+                .size(iconSize)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
+                    indication = null, onClick = {
+                        ExoPlayerViewModel.playNext(true)
+                    }
+                )
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun ResponsivePlayerBS(
     modifier:Modifier = Modifier,
     state: BottomSheetState,
+    config: BottomSheetConfig,
     shape:Shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
     expandedHeight: Dp= 250.dp,
     peekHeight:Dp= 60.dp,
     currentSong: Song?,
     centerPictureToMiddle:Boolean = false,
+    swapControls:Boolean = false,
     gotoSong: (Song, Playlist?) -> Unit = {currentSong,playlist->  },
     shufleFromCurrentPlaylist:(Playlist)-> Unit = {
-        myExoPlayer
+
     }
 ) {
 
@@ -560,13 +599,20 @@ fun ResponsivePlayerBS(
     val progressScalar by remember {
         derivedStateOf {
 
-            if (state.targetDetent == SheetDetent.FullyExpanded)
+            if (state.targetDetent == config.detents.last())
                 state.progress // Peek fades in
             else
                 1f - state.progress
-
         }
     }
+
+    val invertedProgressScalar by remember {
+        derivedStateOf {
+            1f - progressScalar
+        }
+    }
+
+
 
     /**
      * Final offset calculation for the background
@@ -588,36 +634,195 @@ fun ResponsivePlayerBS(
             modifier = Modifier
                 .fillMaxSize()
                 .offset(y = backgroundYoffset.dp),
-            currentSong = currentSong
+            song = currentSong
         )
 
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ){
+        val range by remember {
+            derivedStateOf {
+                0f..(currentSong?.duration?.toFloat()?:1f)
+            }
+        }
+        val sliderPosition = remember { mutableFloatStateOf(1f) }
+        val isUserDragging = remember { mutableStateOf(false) }
 
-            // Text area
-            Box(
+        // Expanded
+        if(progressScalar >0f) {
+
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart)
+                    .fillMaxSize()
+                    .alpha(progressScalar),
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-            }
+                // Text area
+                Box(
+                    modifier = Modifier.fillMaxWidth(0.9f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    MarqueeText(currentSong?.title ?: "<unknown>")
+                }
 
+                if (swapControls == false) {
+                    Slider(
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f),
+                        value = sliderPosition.floatValue,
+                        onValueChange = { newValue ->
+
+
+                            isUserDragging.value = true
+
+                            sliderPosition.floatValue = newValue.coerceIn(range)
+                        },
+                        onValueChangeFinished = {
+
+                            // TODO -- myExoplayer.seekTo()
+
+                            isUserDragging.value = false
+
+                        },
+                        valueRange = range,
+                        thumb = {
+                            Box(
+                                Modifier
+                                    .size(20.dp)
+                                    .background(Color.White, CircleShape)
+                            )
+                        },
+                        track = {
+                            val shape = remember { RoundedCornerShape(10.dp) }
+
+                            val borderColor: Color? = remember { MyColor.Black }
+
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp).shadow(elevation = 3.dp)
+                                    .clip(shape)
+                                    .background(MyColor.SeparatorGray)
+                                    .let {
+                                        if (borderColor != null) {
+                                            it.border(
+                                                width = Dp.Hairline,
+                                                color = borderColor,
+                                                shape = shape
+                                            )
+                                        } else {
+                                            it
+                                        }
+                                    }
+
+
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(sliderPosition.floatValue / range.endInclusive)
+                                        .fillMaxHeight()
+                                        .background(color = MyColor.Blue)
+                                )
+                            }
+                        }
+                    )
+                    ButtonsRow(iconSize = 90.dp,
+                        modifier = Modifier.shadow(
+                            5.dp,
+                            RoundedCornerShape(100),
+                            ambientColor = Color(0x25000000),
+                            spotColor = MyColor.SemiTransparentBackground
+                        )
+                    )
+                } else
+                {
+                    ButtonsRow(iconSize = 90.dp)
+
+                    Slider(
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f),
+                        value = sliderPosition.floatValue,
+                        onValueChange = { newValue ->
+
+
+                            isUserDragging.value = true
+
+                            sliderPosition.floatValue = newValue.coerceIn(range)
+                        },
+                        onValueChangeFinished = {
+
+                            // TODO -- myExoplayer.seekTo()
+
+                            isUserDragging.value = false
+
+                        },
+                        valueRange = range,
+                        thumb = {
+                            Box(
+                                Modifier
+                                    .size(20.dp)
+                                    .background(Color.White, CircleShape)
+                            )
+                        },
+                        track = {
+                            val shape = remember { RoundedCornerShape(10.dp) }
+
+                            val borderColor: Color? = remember { MyColor.Black }
+
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(shape)
+                                    .background(MyColor.SeparatorGray)
+                                    .let {
+                                        if (borderColor != null) {
+                                            it.border(
+                                                width = Dp.Hairline,
+                                                color = borderColor,
+                                                shape = shape
+                                            )
+                                        } else {
+                                            it
+                                        }
+                                    }
+
+
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(sliderPosition.floatValue / range.endInclusive)
+                                        .fillMaxHeight()
+                                        .background(color = MyColor.Blue)
+                                )
+                            }
+                        }
+                    )
+                }
+
+            }
         }
 
 
+        // Minimized
+        if(progressScalar<1f){
 
-        Column(verticalArrangement = Arrangement.SpaceAround) {
-
-
-
-
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(peekHeight)
+                    .alpha(invertedProgressScalar)
+                    .background(MyColor.Green),
+                horizontalArrangement = Arrangement.End
+            ) {
+                // TODO buttons and text
+            }
         }
 
 
     }
 }
+
+
 
 @Preview(showBackground = true)
 @Composable
@@ -629,7 +834,7 @@ fun ResponsivePlayerPreview(){
                 .background(MyColor.White)){
 
                 val config = rememberBottomSheetConfig()
-                val state = config.rememberDerivedBottomSheetState()
+                val state = config.rememberDerivedBottomSheetState(config.detents[1])
 
                 //val currentSong by myExoPlayer.currentlyPlayingSong.collectAsState()
 
@@ -641,6 +846,7 @@ fun ResponsivePlayerPreview(){
 
                 ResponsivePlayerBS(
                     state = state,
+                    config = config,
                     currentSong = null
                 )
 
@@ -649,6 +855,7 @@ fun ResponsivePlayerPreview(){
     }
 
 }
+
 
 
 object ResponsivePlayerBSDefaults{

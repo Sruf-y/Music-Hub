@@ -39,9 +39,9 @@ data class BottomSheetConfig(
     val bottomHeight: Dp = peekHeight?:0.dp
 ){
     @Composable
-    fun rememberDerivedBottomSheetState(): BottomSheetState {
+    fun rememberDerivedBottomSheetState(initialDetent: SheetDetent = detents.first()): BottomSheetState {
         return rememberBottomSheetState(
-            initialDetent = detents.first(),
+            initialDetent = initialDetent,
             detents = detents
         )
     }
