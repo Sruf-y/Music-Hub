@@ -31,7 +31,7 @@ class DataObserverViewModel<T>(
     }
 ): ViewModel() {
 
-    var trackJob:Job? = null
+    private var trackJob:Job? = null
 
     private val _progress = MutableStateFlow<T>(initialValue)
     val progress: StateFlow<T> = _progress.asStateFlow()

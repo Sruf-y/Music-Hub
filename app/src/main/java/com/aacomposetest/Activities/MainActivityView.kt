@@ -115,7 +115,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.map
 import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
-import ui.components.BottomSheets.SongPlayingBottomSheet
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -131,6 +130,7 @@ import androidx.navigation.toRoute
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Functions.map
 import kotlinx.coroutines.withContext
+import ui.components.BottomSheets.ResponsivePlayerBS
 import ui.components.Pages.AddSongsToPlaylistPage
 import kotlin.collections.map
 
@@ -765,26 +765,17 @@ fun MainContent(activity: ComponentActivity, drawerState: ViewDrawerState,refres
 
 
 
-
-
-
         /**
          * Bottom sheet can be "Enabled" or "Disabled" by controlling this value, which is also attached to its alpha for propper animation
          * */
-        if (songBS_Config.alpha.value > 0f) {
-            SongPlayingBottomSheet(
-                modifier = Modifier
-                    .alpha(songBS_Config.alpha.value)
-                    .fillMaxWidth()
-                    .height(songBS_Config.expandedHeight),
-                sheetstate = songPlayerBS_State,
-                backgroundColor = Theme.colorScheme().onBackground,
-                shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
-                expandedHeight = songBS_Config.expandedHeight,
-                peekHeight = songBS_Config.bottomHeight,
-                exoPlayerVM = exoPlayerVM,
 
-                )
+
+        if (songBS_Config.alpha.value > 0f) {
+
+            val curSong by myExoPlayer.currentlyPlayingSong.collectAsState()
+
+            ResponsivePlayerBS(state = songPlayerBS_State, currentSong = curSong)
+
 
 
         }

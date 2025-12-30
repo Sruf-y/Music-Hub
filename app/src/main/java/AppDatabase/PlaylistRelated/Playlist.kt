@@ -8,6 +8,9 @@ import com.aacomposetest.Functions
 import com.aacomposetest.MyApplication
 import java.io.File
 import com.aacomposetest.R
+import kotlin.random.Random
+import kotlin.random.nextInt
+import kotlin.random.nextLong
 
 /**
  * Mutable AND user governed playlist item
@@ -15,11 +18,13 @@ import com.aacomposetest.R
  * Songs can be moved around, added and removed at will.
  *
  * */
-data class Playlist(
-    var title: String,
-
+class Playlist(
+    var title: String
 ) {
-    // list of song IDs
+
+    /**
+     * List of song IDs
+     * */
     var songsIdList: ArrayList<Long> = ArrayList()
 
     var thumbNail: Int = Defaults.Thumbnail()
@@ -74,6 +79,8 @@ data class Playlist(
 
     }
 
+
+
     fun getNextId(curentId: Long):Long?{
         if(hasNext(curentId)) {
             val curIndex = songsIdList.indexOf(curentId)
@@ -96,6 +103,9 @@ data class Playlist(
     }
 
     fun getPreviousId(curentId:Long):Long?{
+
+
+
         if(hasPrevious(curentId)) {
             val curIndex = songsIdList.indexOf(curentId)
             return songsIdList.get(curIndex-1)
@@ -126,6 +136,14 @@ data class Playlist(
     }
 
 
+    fun copy(title:String = this.title, idList: ArrayList<Long> = this.songsIdList, thumbnail:Int = this.thumbNail): Playlist{
+        val aux = this.copy(title = title)
+        aux.songsIdList = idList
+        aux.thumbNail = thumbnail
+
+        return aux
+    }
+
     companion object {
 
         object Defaults{
@@ -137,6 +155,7 @@ data class Playlist(
         }
 
         val PLAYLISTS_DIR = "Playlists"
+        val SHUFFLE_DIR = "Shuffled_Playlist"
 
         fun getFolder(context: Context): File {
             val folder = File(context.filesDir, PLAYLISTS_DIR)
@@ -144,6 +163,26 @@ data class Playlist(
                 folder.mkdir()
             }
             return folder
+        }
+
+        fun getShuffleFLoder(context:Context):File{
+            val folder = File(context.filesDir, SHUFFLE_DIR)
+
+            if(!folder.exists()){
+                folder.mkdir()
+            }
+            return folder
+        }
+
+        fun getShufflePlaylistFile(context:Context):File{
+
+            val folder = getShuffleFLoder(context)
+
+            val file = File(folder,"Shuffle.json")
+            if(!file.exists()){
+                file.createNewFile()
+            }
+            return file
         }
 
         fun getPlaylist(context: Context, title:String?): Playlist?{

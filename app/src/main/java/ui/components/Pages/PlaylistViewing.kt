@@ -50,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.aacomposetest.Functions.mapAfterOrderOf
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
@@ -97,16 +98,8 @@ fun PlaylistViewing(
     val const_PlaylistSongs by remember {
         derivedStateOf {
 
+            allSongs.mapAfterOrderOf(playlist?.songsIdList ?: emptyList()) { it.id }
 
-
-
-            val unOrderedList = allSongs.filter {
-                playlist?.songsIdList?.contains(it.id) == true
-            }
-
-            playlist?.songsIdList?.map { id->
-                unOrderedList.first { it.id == id }
-            }?:emptyList()
         }
     }
 

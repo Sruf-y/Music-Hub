@@ -12,6 +12,7 @@ import android.os.FileObserver.MOVE_SELF
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.ViewModel
@@ -21,13 +22,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import kotlin.random.Random
 
 object Functions {
 
@@ -43,7 +44,57 @@ object Functions {
         return stringBuilder.toString()
     }
 
+    /**
+     * Example:
+     *
+     *         val myOrder = listOf(1,5,3,2,4)
+     *
+     *         val myItems = listOf(
+     *             Item(id = 1, name = "One"),
+     *             Item(id = 2, name = "Two"),
+     *             Item(id = 3, name = "Three"),
+     *             Item(id = 4, name = "Four"),
+     *             Item(id = 5, name = "Five")
+     *         )
+     *
+     *         val orderedItemsList = myItems.mapToOrderOf(myOrder,{item-> item.id })
+     *
+     * */
 
+    inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
+
+
+        // Create a lookup map first
+        val itemsMap = this.associateBy {
+            selector(it)
+        }
+
+        // Then map in order
+        val sortedItems = orderList.mapNotNull { id -> itemsMap[id] }
+        return sortedItems
+    }
+
+    fun List<Long>.getRandomId(exceptID:Long? = null): Long?{
+
+        if(this.isEmpty()) return null
+
+        if(this.size ==1 && indexOf(exceptID) != -1) return null
+
+        val exception = indexOf(exceptID)
+
+        var result = Random.nextInt(0,this.size)
+
+        while (result == exception){
+            result = Random.nextInt(0,this.size)
+        }
+
+
+        return this[result]
+    }
+
+    fun MutableState<Boolean>.invert(){
+        this.value = !this.value
+    }
 
     object Images{
 

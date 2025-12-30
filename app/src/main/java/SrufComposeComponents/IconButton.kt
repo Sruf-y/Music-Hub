@@ -1,22 +1,27 @@
 package SrufComposeComponents
 
 
-import android.health.connect.datatypes.units.Percentage
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -24,6 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.aacomposetest.Log
+import com.aacomposetest.ui.theme.MyColor
 
 @Composable
 fun IconButton(
@@ -32,6 +39,7 @@ fun IconButton(
     /**Float scalar. Must be between 0f and 1f*/
     iconSize:Size = IconButtonDefaults.iconSize,
     iconTint:Color = IconButtonDefaults.iconTint(),
+    enabled: Boolean = true,
     onclick:(()->Unit)? = null
 ) {
 
@@ -41,7 +49,9 @@ fun IconButton(
     ) {
         Button(
             onClick = {
-                onclick?.invoke()
+                if(enabled) {
+                    onclick?.invoke()
+                }
             },
             colors = ButtonColors(
                 containerColor = Color.Transparent,
@@ -75,28 +85,29 @@ fun IconButton(
     /**Float scalar. Must be between 0f and 1f*/
     iconSize:Size = IconButtonDefaults.iconSize,
     iconTint:Color = IconButtonDefaults.iconTint(),
+    ripple:Indication? = ripple(bounded = false),
+    enabled:Boolean = true,
     onclick:(()->Unit)? = null
 ) {
 
+
     Box(
-        modifier = modifier,
+        modifier = modifier
+            .run{
+                if (enabled) {
+                    clickable(
+                        onClick = {
+                            onclick?.invoke()
+                        },
+                        indication = ripple, // This adds the ripple effect
+                        interactionSource = remember { MutableInteractionSource() }
+                    )
+                } else {
+                    this
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
-        Button(
-            onClick = {
-                onclick?.invoke()
-            },
-            colors = ButtonColors(
-                containerColor = Color.Transparent,
-                contentColor = Color.White,
-                disabledContentColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent
-            ),
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxSize()
-        ) {}
-
         Icon(
             imageVector = imageVector,
             contentDescription = null,
@@ -107,8 +118,6 @@ fun IconButton(
             tint = iconTint
         )
     }
-
-
 }
 
 object IconButtonDefaults{

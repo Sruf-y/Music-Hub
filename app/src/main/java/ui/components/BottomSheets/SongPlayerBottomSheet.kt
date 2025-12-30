@@ -1,11 +1,12 @@
 package ui.components.BottomSheets
 
-import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
+import ExoPlayer.myExoPlayer
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.text.format.DateUtils
+import android.view.View
 import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.compose.foundation.Image
@@ -25,42 +26,48 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.aacomposetest.Classes.MyPrefs
+import com.aacomposetest.Functions.invert
+import com.aacomposetest.Log
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.ComposeTestTheme
 import com.aacomposetest.ui.theme.MyColor
@@ -68,299 +75,17 @@ import com.aacomposetest.ui.theme.Theme
 import com.composables.core.BottomSheet
 import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
-import com.composables.core.rememberBottomSheetState
+import kotlinx.coroutines.delay
+import okhttp3.internal.wait
 import ui.components.MarqueeText
-import ui.components.ProgressBar
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SongPlayerBottomSheetFrame(
-    modifier: Modifier,
-    exoPlayerVM: ExoPlayerViewModel,
-    peekHeight: Dp= 60.dp,
-    expandedHeight: Dp= 250.dp,
-    content: @Composable (Modifier) -> Unit = {}
-) {
-
-    Box(modifier = modifier
-    ) {
-
-        /**
-         * Scaffold content
-         * */
-
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-
-            val Peek = SheetDetent("Peek") { containerHeight, sheetHeight ->
-                //containerHeight*0.2f
-
-                peekHeight
-            }
-            val sheetstate = rememberBottomSheetState(
-                initialDetent = Peek,
-                detents = listOf(Peek, SheetDetent.FullyExpanded)
-            )
-
-            content.invoke(Modifier.padding(bottom = peekHeight))
-
-
-            val shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp)
-            SongPlayingBottomSheet(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(expandedHeight),
-                sheetstate = sheetstate,
-                backgroundColor = Theme.colorScheme().onBackground,
-                shape = shape,
-                expandedHeight = expandedHeight,
-                peekHeight = peekHeight,
-                exoPlayerVM = exoPlayerVM,
-
-                )
-
-        }
-
-
-    }
-}
-
-@Composable
-fun SongPlayingBottomSheet(
-    sheetstate: BottomSheetState,
-    backgroundColor:Color = Color.Unspecified,
-    shape:Shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
-    modifier:Modifier,
-    expandedHeight: Dp= 250.dp,
-    peekHeight:Dp= 60.dp,
-    exoPlayerVM: ExoPlayerViewModel,
-    centerPictureToMiddle:Boolean = false,
-    goToCurrentSong:()-> Unit = {} // I will use this for the "Go to the currently playing song" feature
-){
-    val contextRef = LocalContext.current
-
-    val pres = remember { MyPrefs.getPrefs(contextRef) }
-
-
-
-    BottomSheet(state = sheetstate,
-        backgroundColor = backgroundColor,
-        shape = shape,
-        modifier = modifier
-    ) {
-
-
-
-        Box(modifier = Modifier.fillMaxSize()) {
-
-            val currentSong:Song? by exoPlayerVM.currentSong.collectAsState()
-            val currentPosition by exoPlayerVM.currentProgress.collectAsState()
-
-            val isPlaying by exoPlayerVM.isPlaying.collectAsState()
-
-            val calculatedSliderPos by remember {
-                derivedStateOf {
-                    currentPosition.toFloat()/(currentSong?.duration?:1L)
-                }
-            }
-
-            val sliderPosition = remember {
-                mutableFloatStateOf(
-                    calculatedSliderPos
-                )
-            }
-
-
-
-            val scaleFactor =
-                if (sheetstate.targetDetent == SheetDetent.FullyExpanded)
-                    sheetstate.progress // Peek fades in
-                else
-                    1f - sheetstate.progress
-
-
-
-            val difference by remember { mutableFloatStateOf((expandedHeight.value/2-peekHeight.value/(if(centerPictureToMiddle)2 else 1))) }
-            // middle would be if both members of the equation were divided by 2, but the middle does create some flickers.
-
-
-            val isUserDragging = remember { mutableStateOf(false) }
-
-            // Keep slider following playback only if user is not dragging
-            LaunchedEffect(currentPosition, isUserDragging,currentPosition) {
-                if (!isUserDragging.value && (currentSong?.duration?:0) > 0) {
-                    sliderPosition.floatValue = calculatedSliderPos
-                }
-            }
-
-            ScalingBackground(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    //.height(currentHeightPx.dp/3),
-                    .fillMaxHeight()
-                    .offset(y = ((1f - scaleFactor) * (-difference)).dp),
-                song = currentSong
-            )
-
-            ExpandedPlayer(exoPlayerVM = exoPlayerVM,
-                modifier = Modifier
-                    .alpha(scaleFactor),
-                currentSong = currentSong,
-                sliderPosition = sliderPosition,
-                disabled = scaleFactor<1f,
-                isPlaying = isPlaying,
-                isUserDragging = isUserDragging,
-                duration = currentSong?.duration?:1L
-            )
-
-            PeekPlayer(
-                modifier = Modifier
-                    .height(peekHeight)
-                    .fillMaxWidth()
-                    .alpha(1f - scaleFactor),
-                sliderPosition = sliderPosition,
-                isPlaying = isPlaying,
-                exoPlayerVM = exoPlayerVM
-            )
-        }
-    }
-}
-
-@Composable
-private fun ExpandedPlayer(
-    disabled:Boolean = false,
-    modifier: Modifier,
-    exoPlayerVM: ExoPlayerViewModel?= null,
-    currentSong: Song?,
-    isPlaying:Boolean,
-    sliderPosition: MutableState<Float>,
-    isUserDragging: MutableState<Boolean>,
-    duration: Long
-){
-
-    val iconsSize = 100.dp
-
-    val myTitle = currentSong?.title?:"<missing title>"
-
-
-
-
-    Box(modifier = modifier.pointerInteropFilter { disabled }){
-        Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = myTitle,modifier = Modifier.weight(1f), color = Color.White)
-            Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.Center) {
-
-
-                Image(
-                    painter = painterResource(R.drawable.ic_previous),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(iconsSize)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
-                            indication = null, onClick = {
-                                ExoPlayerViewModel.playPrevious(true)
-                            }
-                        )
-                )
-
-                // PAUSE/PLAY BUTTON
-                PlayPauseButton(
-                    modifier = Modifier.size(iconsSize),
-                    isPlaying = isPlaying
-                )
-
-                Image(
-                    painter = painterResource(R.drawable.ic_next),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(iconsSize)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
-                            indication = null, onClick = {
-                                ExoPlayerViewModel.playNext(true)
-                            }
-                        )
-                )
-
-            }
-
-            SongSeekBar(modifier = Modifier.weight(1f),
-                exoPlayerVM = exoPlayerVM,
-                sliderPosition = sliderPosition,
-                isUserDragging = isUserDragging,
-                duration = duration
-            )
-
-
-
-        }
-    }
-
-
-}
-
 
 
 @Composable
-private fun PeekPlayer(
-    modifier: Modifier,
+private fun PlayPauseButton(
+    modifier: Modifier = Modifier,
     isPlaying: Boolean,
-    exoPlayerVM: ExoPlayerViewModel?=null,
-    sliderPosition: MutableState<Float>
-){
-
-    val barHeight = 6.dp
-    val iconsSize = 40.dp
-
-
-
-    Box(modifier = modifier.clipToBounds()){
-
-        Column(modifier = Modifier.fillMaxSize()){
-
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
-            ) {
-
-
-                PlayPauseButton(
-                    modifier = Modifier
-                        .size(iconsSize),
-                    isPlaying = isPlaying
-                )
-
-                IconButton(imageVector = Icons.Default.LocationOn,
-                    modifier = Modifier.size(iconsSize),
-                    onclick = {
-                        // locate currently playing song by playlist. If curPlaylist == null, look in the first page of the pager, in global songs list
-                    }
-                )
-
-            }
-
-
-            SongProgressBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(barHeight),
-                sliderPosition = sliderPosition,
-                barBackground = MyColor.SemiTransparentBackground
-            )
-        }
-
-    }
-
-
-}
-
-@Composable
-private fun PlayPauseButton(modifier: Modifier = Modifier,isPlaying:Boolean){
+    enabled: Boolean = true,
+) {
 
 
     AndroidView(
@@ -368,16 +93,34 @@ private fun PlayPauseButton(modifier: Modifier = Modifier,isPlaying:Boolean){
             AppCompatImageView(context).apply {
                 setImageResource(R.drawable.indian_music_button_toggle)
                 isActivated = true
+                isContextClickable = false
+                isClickable = false
+                isEnabled = false
             }
-        }, modifier = modifier
-            .clickable(interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
-                indication = null,
-                onClick = {
-                    ExoPlayerViewModel?.toggle()
-                }), update = { view ->
-            // runs everytime isPlaying changes
-            view.isActivated =
-                isPlaying
+                  },
+        modifier = modifier
+            .run{
+                if(enabled){
+                    clickable(
+                        interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
+                        indication = null,
+                        onClick = {
+                            ExoPlayerViewModel.toggle()
+                        }
+                    )
+                }else{
+                    this
+                }
+            },
+        update = { view ->
+            // runs everytime a parameter of this composable changes.
+            view.isActivated = isPlaying
+
+
+
+            // I haven't found any other way
+            view.visibility = if(enabled) View.VISIBLE else View.GONE
+
         }
     )
 }
@@ -387,151 +130,58 @@ private fun PlayPauseButton(modifier: Modifier = Modifier,isPlaying:Boolean){
 private fun ScalingBackground(
     modifier: Modifier = Modifier.fillMaxSize(),
     song: Song?,
-    @DrawableRes errorDrawable: Int? = R.drawable.exclamation_sign
-
+    @DrawableRes errorDrawable: Int? = R.drawable.exclamation_sign,
+    defaultBackground:Color = Color.Black
 ){
-    AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(song?.thumbnailPath)
-            .allowHardware(true)
-            .memoryCacheKey(song?.thumbnailPath)
-            .placeholderMemoryCacheKey(song?.thumbnailPath)
-            .let {
-                if(errorDrawable!=null){
-                    it.error(errorDrawable)
+
+
+
+    Box(modifier = modifier){
+
+        // Default background
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(defaultBackground))
+
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(song?.thumbnailPath)
+                .allowHardware(true)
+                .memoryCacheKey(song?.thumbnailPath)
+                .placeholderMemoryCacheKey(song?.thumbnailPath)
+                .let {
+                    if(errorDrawable!=null){
+                        it.error(errorDrawable)
+                    }
+                    else
+                        it
                 }
-                else
-                    it
-            }
-            .build(),
-        contentDescription = "Song thumbnail scaled",
-        modifier = modifier
-            .blur((0.5f).dp),
-        contentScale = ContentScale.Crop // CenterCrop
-    )
-
-    // Why is this here??? I forgot
-    Box(modifier = modifier.background(color = Color(0x54000000)))
-}
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SongSeekBar(
-    modifier:Modifier,
-    exoPlayerVM: ExoPlayerViewModel?= null,
-    /**
-     *Value is to be between 0f and 1f
-     * */
-    sliderPosition: MutableState<Float>,
-    isUserDragging: MutableState<Boolean>,
-    duration: Long
-) {
-
-
-
-
-
-    Row(
-        modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-
-        Text(text = DateUtils.formatElapsedTime(((sliderPosition.value*duration)/1000).toLong()), color = Color.White)
-
-        Slider(modifier = Modifier
-            .weight(1f)
-            .padding(5.dp),
-            value = sliderPosition.value,
-            onValueChange = { newValue ->
-
-                exoPlayerVM?.progressVM?.stopUpdates()
-                isUserDragging.value = true
-
-                sliderPosition.value = newValue
-            },
-            onValueChangeFinished = {
-
-                val seekPosition = (sliderPosition.value * duration).toLong()
-
-                isUserDragging.value = false
-
-
-                ExoPlayerViewModel.seekTo(pos = seekPosition, onFinish = {
-                    // value was up to 250ms too slow, due to progressVM post times
-                    exoPlayerVM?.progressVM?.forceValue(seekPosition)
-                    exoPlayerVM?.progressVM?.startUpdates()
-                })
-
-            },
-            valueRange = 0f..1f,
-            thumb = {
-                Box(
-                    Modifier
-                        .size(20.dp)
-                        .background(Color.White, CircleShape)
-                )
-            },
-            track = {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(100.dp))
-                        .background(Color.Gray)
-                ){
-                    Box(modifier = Modifier
-                        .fillMaxWidth(sliderPosition.value)
-                        .fillMaxHeight()
-                        .background(color = Color.Blue))
-                }
-            }
+                .build(),
+            contentDescription = "Song thumbnail scaled",
+            modifier = Modifier
+                .fillMaxSize()
+                .blur((0.5f).dp),
+            contentScale = ContentScale.Crop // CenterCrop
         )
 
-        Text(text = DateUtils.formatElapsedTime(duration/1000), color = Color.White)
+        // Darkening effect over the picture
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color(0x54000000)))
     }
 
 
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SongProgressBar(
-    modifier: Modifier,
-    sliderPosition: MutableState<Float>,
-    barBackground: Color = Color.Gray,
-    barProgress: Color = Color.Blue,
+private fun ButtonsRow(
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    isPlaying: Boolean,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
+    iconSize: Dp = 90.dp,
+    isEnabled: Boolean = true,
 ) {
-
-
-    ProgressBar(
-        modifier = modifier,
-        value = sliderPosition.value,
-        thumb = {},
-        track = {
-            Box(
-                modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .background(barBackground)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(sliderPosition.value)
-                        .fillMaxHeight()
-                        .background(color = barProgress)
-                )
-            }
-        }
-    )
-
-
-}
-
-
-@Composable
-private fun ButtonsRow(modifier: Modifier = Modifier.fillMaxWidth(), horizontalArrangement: Arrangement.Horizontal = Arrangement.Center, iconSize:Dp = 90.dp) {
 
     Row(
         modifier = modifier,
@@ -546,13 +196,14 @@ private fun ButtonsRow(modifier: Modifier = Modifier.fillMaxWidth(), horizontalA
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                     indication = null, onClick = {
-                        ExoPlayerViewModel.playPrevious(true)
-                    }
-                )
+                        if (isEnabled) {
+                            ExoPlayerViewModel.playPrevious(true)
+                        }
+                    })
         )
 
 
-        PlayPauseButton(modifier = Modifier.size(iconSize),isPlaying = false)
+        PlayPauseButton(modifier = Modifier.size(iconSize),isPlaying = isPlaying,enabled = isEnabled)
 
         Image(
             painter = painterResource(R.drawable.ic_next),
@@ -562,11 +213,42 @@ private fun ButtonsRow(modifier: Modifier = Modifier.fillMaxWidth(), horizontalA
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                     indication = null, onClick = {
-                        ExoPlayerViewModel.playNext(true)
-                    }
-                )
+                        if (isEnabled) {
+                            ExoPlayerViewModel.playNext(true)
+                        }
+                    })
         )
     }
+}
+
+
+@Composable
+private fun RespProgressBar(
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .height(10.dp),
+    value: Float,
+    shape: Shape = RectangleShape,
+    filledCollor: Color = MyColor.Green,
+    backgroundColor: Color = MyColor.SeparatorGray,
+) {
+
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(backgroundColor)
+
+    ){
+        Box(modifier = Modifier
+            .fillMaxHeight()
+            .fillMaxWidth(value)
+            .background(filledCollor))
+    }
+}
+
+@Composable
+private fun MinimizedPlayer(buttonsEnabled: Boolean){
+    
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -574,18 +256,23 @@ private fun ButtonsRow(modifier: Modifier = Modifier.fillMaxWidth(), horizontalA
 fun ResponsivePlayerBS(
     modifier:Modifier = Modifier,
     state: BottomSheetState,
-    config: BottomSheetConfig,
     shape:Shape = RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp),
     expandedHeight: Dp= 250.dp,
     peekHeight:Dp= 60.dp,
     currentSong: Song?,
     centerPictureToMiddle:Boolean = false,
     swapControls:Boolean = false,
-    gotoSong: (Song, Playlist?) -> Unit = {currentSong,playlist->  },
-    shufleFromCurrentPlaylist:(Playlist)-> Unit = {
+    gotoSong: () -> Unit = {
 
+    },
+    onShuffle:()->Unit = {
+        myExoPlayer.playerSettings.isShuffling.invert()
     }
 ) {
+
+    val isPlaying by myExoPlayer.isPlaying.collectAsState(false)
+    //val curPos by myExoPlayer.getCurrentPositionAsFlow().progress.collectAsState()
+    val duration = remember(currentSong) { currentSong?.duration?:1L }
 
     // middle would be if both members of the equation were divided by 2, but the middle does create some flickers.
     /**
@@ -599,7 +286,7 @@ fun ResponsivePlayerBS(
     val progressScalar by remember {
         derivedStateOf {
 
-            if (state.targetDetent == config.detents.last())
+            if (state.targetDetent == SheetDetent.FullyExpanded)
                 state.progress // Peek fades in
             else
                 1f - state.progress
@@ -634,65 +321,124 @@ fun ResponsivePlayerBS(
             modifier = Modifier
                 .fillMaxSize()
                 .offset(y = backgroundYoffset.dp),
-            song = currentSong
+            song = currentSong,
+            defaultBackground = Theme.colorScheme().onBackground
         )
 
-        val range by remember {
+        val range by remember(currentSong) {
             derivedStateOf {
-                0f..(currentSong?.duration?.toFloat()?:1f)
+
+                (0f..(currentSong?.duration?.toFloat()?:1f)).apply {
+                    Log(this.endInclusive.toString())
+                }
             }
         }
-        val sliderPosition = remember { mutableFloatStateOf(1f) }
+
+        val sliderPosition = remember { mutableFloatStateOf(0f) }
         val isUserDragging = remember { mutableStateOf(false) }
+        val curPos by myExoPlayer.getCurrentPositionAsFlow().progress.collectAsState()
+
+        var userDragConcluded by remember { mutableStateOf(false) }
+
+        val realSliderPosition by remember {
+            derivedStateOf {
+                if(!isUserDragging.value && userDragConcluded == false){
+                    curPos.toFloat()
+                }else{
+                    sliderPosition.floatValue
+                }
+            }
+        }
+
+        LaunchedEffect(userDragConcluded) {
+            if(userDragConcluded){
+                delay(50)
+                userDragConcluded = false
+            }
+        }
+
 
         // Expanded
-        if(progressScalar >0f) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(progressScalar),
-                verticalArrangement = Arrangement.SpaceEvenly,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+        val isExpandedEnabled by remember {
+            derivedStateOf {
+                progressScalar != 0f
+            }
+        }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(progressScalar),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            reverseLayout = swapControls
+        ) {
+            val isShuffling by myExoPlayer.playerSettings.isShuffling
+            // Text area
+            if (!swapControls) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(0.9f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        MarqueeText(currentSong?.title ?: "<unknown>")
 
-                // Text area
-                Box(
-                    modifier = Modifier.fillMaxWidth(0.9f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    MarqueeText(currentSong?.title ?: "<unknown>")
+                        IconButton(
+                            imageVector = if(isShuffling) Icons.Default.Settings else Icons.Default.Close,
+                            modifier = Modifier
+                                .size(60.dp)
+                                .align(Alignment.TopEnd),
+                            iconSize = Size(0.7f,0.7f),
+                            iconTint = MyColor.White,
+                            enabled = isExpandedEnabled,
+                            onclick = {
+                                onShuffle.invoke()
+                            }
+                        )
+                    }
                 }
+            }
 
-                if (swapControls == false) {
+
+
+            item {
+                val shape = remember { RoundedCornerShape(100) }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 5.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
                     Slider(
                         modifier = Modifier
-                            .fillMaxWidth(0.9f),
-                        value = sliderPosition.floatValue,
+                            .padding(horizontal = 20.dp),
+                        value = realSliderPosition,
                         onValueChange = { newValue ->
-
 
                             isUserDragging.value = true
 
-                            sliderPosition.floatValue = newValue.coerceIn(range)
+                            sliderPosition.floatValue = newValue
                         },
                         onValueChangeFinished = {
 
-                            // TODO -- myExoplayer.seekTo()
+                            myExoPlayer.seekTo(sliderPosition.floatValue.toLong())
 
                             isUserDragging.value = false
+
+                            userDragConcluded = true
 
                         },
                         valueRange = range,
                         thumb = {
                             Box(
                                 Modifier
-                                    .size(20.dp)
+                                    .size(16.dp)
                                     .background(Color.White, CircleShape)
                             )
                         },
                         track = {
-                            val shape = remember { RoundedCornerShape(10.dp) }
+
 
                             val borderColor: Color? = remember { MyColor.Black }
 
@@ -718,109 +464,156 @@ fun ResponsivePlayerBS(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth(sliderPosition.floatValue / range.endInclusive)
+                                        .fillMaxWidth(realSliderPosition / range.endInclusive)
                                         .fillMaxHeight()
                                         .background(color = MyColor.Blue)
                                 )
                             }
-                        }
+                        },
+                        enabled = isExpandedEnabled
                     )
-                    ButtonsRow(iconSize = 90.dp,
-                        modifier = Modifier.shadow(
-                            5.dp,
-                            RoundedCornerShape(100),
-                            ambientColor = Color(0x25000000),
-                            spotColor = MyColor.SemiTransparentBackground
+
+                    // Time text
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 7.dp)
+                    ){
+                        Text(
+                            if(duration<5*1000) realSliderPosition.toLong().toString().padStart(4, '0')
+                            else
+                                DateUtils.formatElapsedTime((realSliderPosition/1000).toLong()),
+                            color = Color.White,
+                            modifier = Modifier.align(Alignment.CenterStart)
                         )
-                    )
-                } else
-                {
-                    ButtonsRow(iconSize = 90.dp)
-
-                    Slider(
-                        modifier = Modifier
-                            .fillMaxWidth(0.9f),
-                        value = sliderPosition.floatValue,
-                        onValueChange = { newValue ->
 
 
-                            isUserDragging.value = true
 
-                            sliderPosition.floatValue = newValue.coerceIn(range)
-                        },
-                        onValueChangeFinished = {
-
-                            // TODO -- myExoplayer.seekTo()
-
-                            isUserDragging.value = false
-
-                        },
-                        valueRange = range,
-                        thumb = {
-                            Box(
-                                Modifier
-                                    .size(20.dp)
-                                    .background(Color.White, CircleShape)
-                            )
-                        },
-                        track = {
-                            val shape = remember { RoundedCornerShape(10.dp) }
-
-                            val borderColor: Color? = remember { MyColor.Black }
-
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                                    .clip(shape)
-                                    .background(MyColor.SeparatorGray)
-                                    .let {
-                                        if (borderColor != null) {
-                                            it.border(
-                                                width = Dp.Hairline,
-                                                color = borderColor,
-                                                shape = shape
-                                            )
-                                        } else {
-                                            it
-                                        }
-                                    }
-
-
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(sliderPosition.floatValue / range.endInclusive)
-                                        .fillMaxHeight()
-                                        .background(color = MyColor.Blue)
-                                )
-                            }
-                        }
-                    )
+                        Text(
+                            if(duration<5*1000) range.endInclusive.toLong().toString().padStart(4, '0')
+                            else
+                                DateUtils.formatElapsedTime((range.endInclusive/1000).toLong()),
+                            color = Color.White,
+                            modifier = Modifier.align(Alignment.CenterEnd)
+                        )
+                    }
                 }
 
             }
+
+            item {
+                ButtonsRow(
+                    iconSize = 75.dp,
+                    isPlaying = isPlaying,
+                    modifier = Modifier.shadow(
+                        5.dp,
+                        RoundedCornerShape(100),
+                        ambientColor = Color(0x25000000),
+                        spotColor = MyColor.SemiTransparentBackground
+                    ),
+                    isEnabled = isExpandedEnabled
+                )
+            }
+
+            if (swapControls) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(0.9f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        MarqueeText(currentSong?.title ?: "<unknown>")
+
+                        IconButton(
+                            imageVector = if(isShuffling) Icons.Default.Settings else Icons.Default.Close,
+                            modifier = Modifier
+                                .size(60.dp)
+                                .align(Alignment.TopEnd),
+                            iconSize = Size(0.7f,0.7f),
+                            iconTint = MyColor.White,
+                            enabled = isExpandedEnabled,
+                            onclick = {
+                                onShuffle.invoke()
+                            }
+                        )
+                    }
+                }
+
+            }
+
+
         }
 
 
         // Minimized
-        if(progressScalar<1f){
+        val minimizedIconSize = remember { 40.dp }
+        val isMinimizedEnabled by remember {
+            derivedStateOf {
+                progressScalar != 1f
+            }
+        }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(peekHeight)
+                .alpha(invertedProgressScalar)
+        ) {
+
+            RespProgressBar(
+                value = realSliderPosition / range.endInclusive,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .align(Alignment.BottomStart)
+            )
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(peekHeight)
-                    .alpha(invertedProgressScalar)
-                    .background(MyColor.Green),
-                horizontalArrangement = Arrangement.End
+                    .fillMaxHeight(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // TODO buttons and text
+                MarqueeText(
+                    currentSong?.title ?: "<unknown>",
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                    fontSize = 18.sp
+                )
+
+                Row {
+
+                    PlayPauseButton(
+                        modifier = Modifier.size(minimizedIconSize),
+                        isPlaying = isPlaying,
+                        enabled = isMinimizedEnabled
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    IconButton(
+                        imageVector = Icons.Default.LocationOn,
+                        modifier = Modifier.size(minimizedIconSize),
+                        onclick = {
+                            currentSong?.let {
+                                gotoSong.invoke()
+                            }
+                        },
+                        iconSize = Size(0.8f, 0.8f),
+                        iconTint = MyColor.White,
+                        enabled = isMinimizedEnabled
+                    )
+                }
+
+
             }
         }
 
 
     }
+
+
 }
+
 
 
 
@@ -833,22 +626,7 @@ fun ResponsivePlayerPreview(){
                 .fillMaxSize()
                 .background(MyColor.White)){
 
-                val config = rememberBottomSheetConfig()
-                val state = config.rememberDerivedBottomSheetState(config.detents[1])
 
-                //val currentSong by myExoPlayer.currentlyPlayingSong.collectAsState()
-
-                Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(Modifier.height(50.dp))
-
-
-                }
-
-                ResponsivePlayerBS(
-                    state = state,
-                    config = config,
-                    currentSong = null
-                )
 
             }
         }

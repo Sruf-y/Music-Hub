@@ -6,11 +6,14 @@ import MyViewModels.DataObserverViewModel
 import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistWatcher
 import MyViewModels.SongsViewModel
+import Settings.PlayerSettings
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
@@ -22,6 +25,7 @@ import androidx.media3.exoplayer.ExoPlayer as External_ExoPlayer
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.MyPrefs.putCursorValue
+import com.aacomposetest.Functions.getRandomId
 import com.aacomposetest.Log
 import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
@@ -41,6 +45,14 @@ object myExoPlayer {
     private var playScope = CoroutineScope(Dispatchers.Main)
 
     private val prefs: SharedPreferences? = MyPrefs.getPrefs(MyApplication.instance)
+
+    val playerSettings: PlayerSettings =
+        PlayerSettings(shuffle = false)
+
+
+
+
+
 
 
     private val progressVM = DataObserverViewModel<Long>(
@@ -67,8 +79,9 @@ object myExoPlayer {
     )
 
 
-
-
+    /**
+     * If when automatically playing, the songs can loop around or not.
+     * */
     var isLoopAllowed:Boolean = false
 
     private var songsVM : SongsViewModel? = null
@@ -85,7 +98,6 @@ object myExoPlayer {
     val curPlaylistVM = PlaylistWatcher(
         context = MyApplication.instance
     )
-
 
 
     fun setCurrentPlaylist(title:String?,context: Context = MyApplication.instance){
@@ -330,7 +342,16 @@ object myExoPlayer {
 
             if(curIndex == -1){
                 onError.invoke()
-            }else if(curIndex == 0 && allowWrapAround){
+            }
+
+            else if(playerSettings.isShuffling.value){
+                playRandom()
+            }
+
+            /**
+             * If is at first index and is allowed to loop around to the last.
+             * */
+            else if(curIndex == 0 && allowWrapAround){
                 playScope.launch {
 
                     val song = try {
@@ -344,10 +365,15 @@ object myExoPlayer {
                         playlistTitle =  curPlaylistVM.playlist.value?.title
                     )
                 }
-            }else if(curIndex <= curList.size && curIndex>0 ){
+            }
+            /**
+             * General behaviour.
+             * */
+            else if(curIndex <= curList.size && curIndex>0 ){
                 playScope.launch {
 
                     val song = try {
+
                         songsVM?.getSongById(curList[curIndex-1])
                     }catch (ex: Exception){
                         null
@@ -363,6 +389,60 @@ object myExoPlayer {
 
 
     }
+
+    private fun playRandom() {
+
+        currentlyPlayingSong.value?.let { currentSong ->
+
+            val curList = curPlaylistVM.playlist.value?.songsIdList ?: allSongs.value.map { it.id }
+
+            val randomId = curList.getRandomId(currentlyPlayingSong.value?.id)
+
+            playScope.launch {
+
+                if (randomId != null) {
+
+                    val song = try {
+                        songsVM?.getSongById(randomId)
+                    } catch (ex: Exception) {
+                        null
+                    }
+
+                    setSong(
+                        song = song,
+                        playlistTitle = curPlaylistVM.playlist.value?.title
+                    )
+
+                } else {
+                    playFirst(curList)
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Doesn't get the list by itself because it's meant to be used by functions that already get the list.
+     * */
+    private fun playFirst(curList:List<Long>){
+        playScope.launch {
+
+
+
+            val song = try {
+                songsVM?.getSongById(curList[0])
+            } catch (ex: Exception) {
+                null
+            }
+
+
+            setSong(
+                song = song,
+                playlistTitle = curPlaylistVM.playlist.value?.title
+            )
+        }
+    }
+
 
     /**
      * Plays the next song in the current playlist.
@@ -383,25 +463,19 @@ object myExoPlayer {
             val curIndex = curList.indexOf(currentSong.id)
 
 
-
             if(curIndex == -1) {
                 onError.invoke()
-            }else if(curIndex == curList.size && allowLoop){
-                playScope.launch {
+            }
 
+            else if(playerSettings.isShuffling.value){
+                playRandom()
+            }
 
-                    val song = try {
-                        songsVM?.getSongById(curList[0])
-                    } catch (ex: Exception) {
-                        null
-                    }
+            else if(curIndex == curList.lastIndex && allowLoop){
+                playFirst(curList)
+            }
 
-                    setSong(
-                        song = song,
-                        playlistTitle = curPlaylistVM.playlist.value?.title
-                    )
-                }
-            }else if( curIndex <= curList.size-1 && curIndex>=0 ){
+            else if( curIndex <= curList.size-1 && curIndex>=0 ){
                 playScope.launch {
                     val song = try {
                         songsVM?.getSongById(curList[curIndex+1])
@@ -415,11 +489,7 @@ object myExoPlayer {
                 }
             }
         }
-
-
     }
-
-
 
 
 
