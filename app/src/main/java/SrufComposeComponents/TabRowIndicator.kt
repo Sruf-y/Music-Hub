@@ -29,6 +29,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.aacomposetest.ui.theme.MyColor
 
 @Composable
 fun TabRowIndicator(tabPositions:List<TabPosition>, pagerState: PagerState, separatorHeight: Dp){
@@ -70,8 +71,8 @@ fun TabRowIndicator(tabPositions:List<TabPosition>, pagerState: PagerState, sepa
             rect = it.boundsInParent()
         }
         .padding(horizontal = 30.dp)
-        .background(color = Storeables.Colors.Blue.color, shape = RoundedCornerShape(50))
-        .border(width = 1.dp,color = Storeables.Colors.Pink.color, shape = RoundedCornerShape(50))
+        .background(color = MyColor.Blue, shape = RoundedCornerShape(50))
+        .border(width = 1.dp,color = MyColor.Pink40, shape = RoundedCornerShape(50))
         .zIndex(-1f)
     )
 }
