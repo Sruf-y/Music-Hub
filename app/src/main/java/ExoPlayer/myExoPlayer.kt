@@ -12,8 +12,6 @@ import android.content.SharedPreferences
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
@@ -25,8 +23,7 @@ import androidx.media3.exoplayer.ExoPlayer as External_ExoPlayer
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.MyPrefs.putCursorValue
-import com.aacomposetest.Functions.getRandomId
-import com.aacomposetest.Log
+import com.aacomposetest.Functions.getRandom
 import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
 import kotlinx.coroutines.CoroutineScope
@@ -396,7 +393,7 @@ object myExoPlayer {
 
             val curList = curPlaylistVM.playlist.value?.songsIdList ?: allSongs.value.map { it.id }
 
-            val randomId = curList.getRandomId(currentlyPlayingSong.value?.id)
+            val randomId = curList.getRandom(currentlyPlayingSong.value?.id)
 
             playScope.launch {
 

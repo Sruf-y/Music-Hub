@@ -45,24 +45,31 @@ object Functions {
     }
 
     /**
-     * Example:
+     * @sample mapAfterOrderOfExample
      *
-     *         val myOrder = listOf(1,5,3,2,4)
      *
-     *         val myItems = listOf(
-     *             Item(id = 1, name = "One"),
-     *             Item(id = 2, name = "Two"),
-     *             Item(id = 3, name = "Three"),
-     *             Item(id = 4, name = "Four"),
-     *             Item(id = 5, name = "Five")
-     *         )
-     *
-     *         val orderedItemsList = myItems.mapToOrderOf(myOrder,{item-> item.id })
      *
      * */
 
-    inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
+    private fun mapAfterOrderOfExample() {
+        class Item(val id: Int, val name: String)
 
+        val myOrder = listOf(1, 5, 3, 2, 4)
+
+        val myItems = listOf(
+            Item(id = 1, name = "One"),
+            Item(id = 2, name = "Two"),
+            Item(id = 3, name = "Three"),
+            Item(id = 4, name = "Four"),
+            Item(id = 5, name = "Five")
+        )
+
+        val orderedItemsList = myItems.mapAfterOrderOf(
+            orderList = myOrder,
+            selector = { it.id }
+        )
+    }
+    inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
 
         // Create a lookup map first
         val itemsMap = this.associateBy {
@@ -74,13 +81,13 @@ object Functions {
         return sortedItems
     }
 
-    fun List<Long>.getRandomId(exceptID:Long? = null): Long?{
+    fun <T> List<T>.getRandom(except:T? = null): T?{
 
         if(this.isEmpty()) return null
 
-        if(this.size ==1 && indexOf(exceptID) != -1) return null
+        if(this.size ==1 && indexOf(except) != -1) return null
 
-        val exception = indexOf(exceptID)
+        val exception = indexOf(except)
 
         var result = Random.nextInt(0,this.size)
 
@@ -91,6 +98,16 @@ object Functions {
 
         return this[result]
     }
+
+    /**
+     * @return [T] at the index specified. Index is wrapped around if over the list's [size] or if it is negative
+     * */
+    inline fun <T> List<T>.cyclicalGet(index:Int):T{
+
+        val i = Math.floorMod(index,size)
+        return this.get(i)
+    }
+
 
     fun MutableState<Boolean>.invert(){
         this.value = !this.value

@@ -1,6 +1,5 @@
 package ui.components.BottomSheets.Content
 
-import AppDatabase.SongRelated.Song
 import SrufComposeComponents.Text
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,8 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aacomposetest.ui.theme.ComposeTestTheme
-import com.aacomposetest.ui.theme.MyColor
+import com.aacomposetest.ui.theme.SrufTheme
 import ui.components.CancelConfirm
 
 @Composable
@@ -106,7 +104,7 @@ private fun Preview(){
     val sortTypeOptions = listOf<String>("Title","Author","Length")
     val sortDirectionOptions = listOf<String>("Descending","Ascending")
 
-    ComposeTestTheme {
+    SrufTheme {
         Surface {
             Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom ){
                 SongsSort_Content(sortTypeOptions.first(),sortDirectionOptions.first(),sortTypeOptions,sortDirectionOptions)

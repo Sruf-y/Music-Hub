@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aacomposetest.MyApplication
 import com.aacomposetest.R
-import com.aacomposetest.ui.theme.ComposeTestTheme
+import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
@@ -194,7 +194,7 @@ private fun TopBar(
 @Preview(showBackground = true,uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable()
 private fun PDeletePreview(){
-    ComposeTestTheme(forceDarkMode = true) {
+    SrufTheme(forceDarkMode = true) {
         Surface(){
             PlaylistDelete_Content(playlist = Playlist("My playlist"),null)
         }

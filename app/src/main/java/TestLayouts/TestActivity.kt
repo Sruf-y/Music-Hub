@@ -29,17 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.aacomposetest.ui.theme.ComposeTestTheme
+import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.launch
 import SrufComposeComponents.NestedScrollingFront
-import android.view.View
-import android.widget.FrameLayout
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.drawerlayout.widget.DrawerLayout
 
 
 class TestActivity : ComponentActivity() {
@@ -52,7 +47,7 @@ class TestActivity : ComponentActivity() {
 
 
         setContent {
-            ComposeTestTheme {
+            SrufTheme {
 
                 Surface(modifier = Modifier
                     .fillMaxSize()

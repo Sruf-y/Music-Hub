@@ -69,19 +69,18 @@ import coil.request.ImageRequest
 import com.aacomposetest.Functions.invert
 import com.aacomposetest.Log
 import com.aacomposetest.R
-import com.aacomposetest.ui.theme.ComposeTestTheme
+import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.BottomSheet
 import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import kotlinx.coroutines.delay
-import okhttp3.internal.wait
 import ui.components.MarqueeText
 
 
 @Composable
-private fun PlayPauseButton(
+fun PlayPauseButton(
     modifier: Modifier = Modifier,
     isPlaying: Boolean,
     enabled: Boolean = true,
@@ -127,7 +126,7 @@ private fun PlayPauseButton(
 
 
 @Composable
-private fun ScalingBackground(
+fun ScalingBackground(
     modifier: Modifier = Modifier.fillMaxSize(),
     song: Song?,
     @DrawableRes errorDrawable: Int? = R.drawable.exclamation_sign,
@@ -620,7 +619,7 @@ fun ResponsivePlayerBS(
 @Preview(showBackground = true)
 @Composable
 fun ResponsivePlayerPreview(){
-    ComposeTestTheme {
+    SrufTheme {
         Surface {
             Box(modifier = Modifier
                 .fillMaxSize()

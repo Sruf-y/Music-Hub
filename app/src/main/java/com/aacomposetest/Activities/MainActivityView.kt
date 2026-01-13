@@ -90,7 +90,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.aacomposetest.ui.theme.ComposeTestTheme
+import com.aacomposetest.ui.theme.SrufTheme
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
 import kotlinx.coroutines.flow.collectLatest
@@ -109,7 +109,6 @@ import com.aacomposetest.Logs
 import com.aacomposetest.R
 import com.aacomposetest.Services.MusicService
 import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.map
@@ -183,7 +182,7 @@ class MainActivityView : ComponentActivity() {
 
 
         setContent {
-            ComposeTestTheme {
+            SrufTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
 
                     MainView()

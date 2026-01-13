@@ -1,5 +1,6 @@
 package Presentation.FullscreenPlayer
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -19,7 +20,7 @@ fun FullscreenPlayerPage(modifier: Modifier = Modifier,initialPage:Int = 0){
     ) {
         when(it){
             0->{// Fullscreen player
-                // TODO FullscreenSong()
+                FullscreenSong(modifier = Modifier.fillMaxSize())
             }
             1->{// Lyrics page
                 // TODO LyricsPage()

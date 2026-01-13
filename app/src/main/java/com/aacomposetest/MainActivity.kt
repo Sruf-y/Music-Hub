@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewModelScope
 import com.aacomposetest.Activities.MainActivityView
-import com.aacomposetest.ui.theme.ComposeTestTheme
+import com.aacomposetest.ui.theme.SrufTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -113,7 +113,7 @@ fun MainScreen(viewModel: SongsViewModel?=null) {
 
 
 
-    ComposeTestTheme {
+    SrufTheme {
 
         val context = LocalContext.current
 
