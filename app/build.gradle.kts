@@ -7,7 +7,7 @@ plugins {
 
     id("com.google.devtools.ksp")
     //id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0" // or match your Kotlin version
-    kotlin("plugin.serialization") version "2.3.0"
+    kotlin("plugin.serialization") version "2.2.0"
 }
 
 android {

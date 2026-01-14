@@ -331,9 +331,7 @@ fun ResponsivePlayerBS(
         val range by remember(currentSong) {
             derivedStateOf {
 
-                (0f..(currentSong?.duration?.toFloat()?:1f)).apply {
-                    Log(this.endInclusive.toString())
-                }
+                0f..(currentSong?.duration?.toFloat()?:1f)
             }
         }
 
