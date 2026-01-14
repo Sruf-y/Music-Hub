@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 import com.aacomposetest.ui.theme.Theme
 
 @Composable
-fun MarqueeText(
+fun LoopingText(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = Theme. colorScheme().inverseSurface,

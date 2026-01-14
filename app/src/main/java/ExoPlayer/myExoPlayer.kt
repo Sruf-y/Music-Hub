@@ -147,8 +147,18 @@ object myExoPlayer {
                             if(isPlaying){
                                 progressVM.startUpdates()
                             }else{
+                                progressVM.forceValue(exoPlayer!!.currentPosition)
                                 progressVM.stopUpdates()
                             }
+                        }
+
+                        override fun onPositionDiscontinuity(
+                            oldPosition: Player.PositionInfo,
+                            newPosition: Player.PositionInfo,
+                            reason: Int
+                        ) {
+                            super.onPositionDiscontinuity(oldPosition, newPosition, reason)
+                            progressVM.forceValue(newPosition.positionMs)
                         }
                     })
                 }

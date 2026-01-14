@@ -1,6 +1,5 @@
 package Presentation.Navigation
 
-import Presentation.Navigation.Destinations.MainPage
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -11,14 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import io.ktor.http.content.OutgoingContent
 
 @Composable
-fun MainNavigation(navController: NavHostController,content: NavGraphBuilder.()-> Unit){
+fun MyNavigation(startDestination:Any, navController: NavHostController, content: NavGraphBuilder.()-> Unit){
     NavHost(
         modifier = Modifier.fillMaxSize(),
         navController = navController,
-        startDestination = MainPage,
+        startDestination = startDestination,
         enterTransition = {
 
             slideIntoContainer(

@@ -8,6 +8,7 @@ import SrufComposeComponents.Text
 import android.text.format.DateUtils
 import android.view.View
 import androidx.annotation.DrawableRes
+import androidx.annotation.FloatRange
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,6 +40,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -66,6 +68,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.aacomposetest.Functions.clickableNoRipple
 import com.aacomposetest.Functions.invert
 import com.aacomposetest.Log
 import com.aacomposetest.R
@@ -76,7 +79,7 @@ import com.composables.core.BottomSheet
 import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import kotlinx.coroutines.delay
-import ui.components.MarqueeText
+import ui.components.LoopingText
 
 
 @Composable
@@ -226,7 +229,7 @@ private fun RespProgressBar(
     modifier: Modifier = Modifier
         .fillMaxWidth()
         .height(10.dp),
-    value: Float,
+    @FloatRange(0.0,1.0) value: Float,
     shape: Shape = RectangleShape,
     filledCollor: Color = MyColor.Green,
     backgroundColor: Color = MyColor.SeparatorGray,
@@ -266,12 +269,12 @@ fun ResponsivePlayerBS(
     },
     onShuffle:()->Unit = {
         myExoPlayer.playerSettings.isShuffling.invert()
-    }
+    },
+    onBackgroundClick:()->Unit = {}
 ) {
 
     val isPlaying by myExoPlayer.isPlaying.collectAsState(false)
-    //val curPos by myExoPlayer.getCurrentPositionAsFlow().progress.collectAsState()
-    val duration = remember(currentSong) { currentSong?.duration?:1L }
+
 
     // middle would be if both members of the equation were divided by 2, but the middle does create some flickers.
     /**
@@ -311,7 +314,8 @@ fun ResponsivePlayerBS(
 
 
     BottomSheet(
-        modifier = modifier.height(expandedHeight),
+        modifier = modifier
+            .height(expandedHeight),
         state = state,
         shape = shape
     ) {
@@ -351,7 +355,7 @@ fun ResponsivePlayerBS(
 
         LaunchedEffect(userDragConcluded) {
             if(userDragConcluded){
-                delay(50)
+                delay(200)
                 userDragConcluded = false
             }
         }
@@ -380,7 +384,7 @@ fun ResponsivePlayerBS(
                         modifier = Modifier.fillMaxWidth(0.9f),
                         contentAlignment = Alignment.Center
                     ) {
-                        MarqueeText(currentSong?.title ?: "<unknown>")
+                        LoopingText(currentSong?.title ?: "<unknown>")
 
                         IconButton(
                             imageVector = if(isShuffling) Icons.Default.Settings else Icons.Default.Close,
@@ -401,101 +405,7 @@ fun ResponsivePlayerBS(
 
 
             item {
-                val shape = remember { RoundedCornerShape(100) }
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ){
-                    Slider(
-                        modifier = Modifier
-                            .padding(horizontal = 20.dp),
-                        value = realSliderPosition,
-                        onValueChange = { newValue ->
-
-                            isUserDragging.value = true
-
-                            sliderPosition.floatValue = newValue
-                        },
-                        onValueChangeFinished = {
-
-                            myExoPlayer.seekTo(sliderPosition.floatValue.toLong())
-
-                            isUserDragging.value = false
-
-                            userDragConcluded = true
-
-                        },
-                        valueRange = range,
-                        thumb = {
-                            Box(
-                                Modifier
-                                    .size(16.dp)
-                                    .background(Color.White, CircleShape)
-                            )
-                        },
-                        track = {
-
-
-                            val borderColor: Color? = remember { MyColor.Black }
-
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp).shadow(elevation = 3.dp)
-                                    .clip(shape)
-                                    .background(MyColor.SeparatorGray)
-                                    .let {
-                                        if (borderColor != null) {
-                                            it.border(
-                                                width = Dp.Hairline,
-                                                color = borderColor,
-                                                shape = shape
-                                            )
-                                        } else {
-                                            it
-                                        }
-                                    }
-
-
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(realSliderPosition / range.endInclusive)
-                                        .fillMaxHeight()
-                                        .background(color = MyColor.Blue)
-                                )
-                            }
-                        },
-                        enabled = isExpandedEnabled
-                    )
-
-                    // Time text
-                    Box(modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 7.dp)
-                    ){
-                        Text(
-                            if(duration<5*1000) realSliderPosition.toLong().toString().padStart(4, '0')
-                            else
-                                DateUtils.formatElapsedTime((realSliderPosition/1000).toLong()),
-                            color = Color.White,
-                            modifier = Modifier.align(Alignment.CenterStart)
-                        )
-
-
-
-                        Text(
-                            if(duration<5*1000) range.endInclusive.toLong().toString().padStart(4, '0')
-                            else
-                                DateUtils.formatElapsedTime((range.endInclusive/1000).toLong()),
-                            color = Color.White,
-                            modifier = Modifier.align(Alignment.CenterEnd)
-                        )
-                    }
-                }
+               ResponsiveSlider(sliderPosition,isExpandedEnabled)
 
             }
 
@@ -519,7 +429,7 @@ fun ResponsivePlayerBS(
                         modifier = Modifier.fillMaxWidth(0.9f),
                         contentAlignment = Alignment.Center
                     ) {
-                        MarqueeText(currentSong?.title ?: "<unknown>")
+                        LoopingText(currentSong?.title ?: "<unknown>")
 
                         IconButton(
                             imageVector = if(isShuffling) Icons.Default.Settings else Icons.Default.Close,
@@ -554,6 +464,9 @@ fun ResponsivePlayerBS(
                 .fillMaxWidth()
                 .height(peekHeight)
                 .alpha(invertedProgressScalar)
+                .clickableNoRipple{
+                    onBackgroundClick.invoke()
+                }
         ) {
 
             RespProgressBar(
@@ -571,7 +484,7 @@ fun ResponsivePlayerBS(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                MarqueeText(
+                LoopingText(
                     currentSong?.title ?: "<unknown>",
                     modifier = Modifier
                         .weight(1f)
@@ -614,7 +527,144 @@ fun ResponsivePlayerBS(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ResponsiveSlider(sliderPosition: MutableFloatState, enabled: Boolean = true){
 
+    val currentSong by myExoPlayer.currentlyPlayingSong.collectAsState()
+
+    val isPlaying by myExoPlayer.isPlaying.collectAsState(false)
+    //val curPos by myExoPlayer.getCurrentPositionAsFlow().progress.collectAsState()
+    val duration = remember(currentSong) { currentSong?.duration?:1L }
+
+
+    val range by remember(currentSong) {
+        derivedStateOf {
+
+            (0f..(currentSong?.duration?.toFloat()?:1f)).apply {
+                Log(this.endInclusive.toString())
+            }
+        }
+    }
+
+    val isUserDragging = remember { mutableStateOf(false) }
+    val curPos by myExoPlayer.getCurrentPositionAsFlow().progress.collectAsState()
+
+    var userDragConcluded by remember { mutableStateOf(false) }
+
+    val realSliderPosition by remember {
+        derivedStateOf {
+            if(!isUserDragging.value && userDragConcluded == false){
+                curPos.toFloat()
+            }else{
+                sliderPosition.floatValue
+            }
+        }
+    }
+
+    LaunchedEffect(userDragConcluded) {
+        if(userDragConcluded){
+            delay(200)
+            userDragConcluded = false
+        }
+    }
+
+    val shape = remember { RoundedCornerShape(100) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        Slider(
+            modifier = Modifier
+                .padding(horizontal = 13.dp),
+            value = realSliderPosition,
+            onValueChange = { newValue ->
+
+                isUserDragging.value = true
+
+                sliderPosition.floatValue = newValue
+            },
+            onValueChangeFinished = {
+
+                myExoPlayer.seekTo(sliderPosition.floatValue.toLong())
+
+                isUserDragging.value = false
+
+                userDragConcluded = true
+
+            },
+            valueRange = range,
+            thumb = {
+                Box(
+                    Modifier
+                        .size(16.dp)
+                        .background(Color.White, CircleShape)
+                )
+            },
+            track = {
+
+
+                val borderColor: Color? = remember { MyColor.Black }
+
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(8.dp).shadow(elevation = 3.dp)
+                        .clip(shape)
+                        .background(MyColor.SeparatorGray)
+                        .let {
+                            if (borderColor != null) {
+                                it.border(
+                                    width = Dp.Hairline,
+                                    color = borderColor,
+                                    shape = shape
+                                )
+                            } else {
+                                it
+                            }
+                        }
+
+
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(realSliderPosition / range.endInclusive)
+                            .fillMaxHeight()
+                            .background(color = MyColor.Blue)
+                    )
+                }
+            },
+            enabled = enabled
+        )
+
+        // Time text
+        Box(modifier = Modifier
+            .fillMaxWidth()
+        ){
+            Text(
+                if(duration<5*1000) realSliderPosition.toLong().toString().padStart(4, '0')
+                else
+                    DateUtils.formatElapsedTime((realSliderPosition/1000).toLong()),
+                color = Color.White,
+                modifier = Modifier.align(Alignment.CenterStart)
+            )
+
+
+
+            Text(
+                if(duration<5*1000) range.endInclusive.toLong().toString().padStart(4, '0')
+                else
+                    DateUtils.formatElapsedTime((range.endInclusive/1000).toLong()),
+                color = Color.White,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
+        }
+    }
+
+}
 
 @Preview(showBackground = true)
 @Composable

@@ -21,7 +21,7 @@ object MyColor{
     @Stable private val BackgroundLight = Color(0xFFE5E5E5)
     @Stable private val BackgroundDark = Color(0xFF2B2B2B)
 
-
+    @Stable val Yellow = Color(0xFFFFFB00)
     @Stable val Orange = Color(0xFFFF9900)
     @Stable val Red = Color(0xFFFF0000)
     @Stable val ConfirmBlue = Color(0xFF0088FF)

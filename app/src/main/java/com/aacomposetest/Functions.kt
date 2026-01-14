@@ -10,9 +10,14 @@ import android.os.FileObserver
 import android.os.FileObserver.CLOSE_WRITE
 import android.os.FileObserver.MOVE_SELF
 import android.util.Log
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.ViewModel
@@ -46,8 +51,6 @@ object Functions {
 
     /**
      * @sample mapAfterOrderOfExample
-     *
-     *
      *
      * */
 
@@ -98,6 +101,10 @@ object Functions {
 
         return this[result]
     }
+
+    @Composable
+    fun Modifier.clickableNoRipple(enabled:Boolean = true, role: Role? = null, onClick:()-> Unit)
+    = this.clickable(enabled = enabled,role = role,interactionSource = remember { MutableInteractionSource() }, indication = null,onClick = onClick)
 
     /**
      * @return [T] at the index specified. Index is wrapped around if over the list's [size] or if it is negative

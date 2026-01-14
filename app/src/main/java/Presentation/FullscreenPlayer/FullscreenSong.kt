@@ -1,19 +1,25 @@
 package Presentation.FullscreenPlayer
 
 import AppDatabase.SongRelated.Song
+import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import androidx.annotation.DrawableRes
 import androidx.annotation.FloatRange
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -21,6 +27,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.blur
@@ -28,15 +36,20 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.room.util.TableInfo
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.aacomposetest.Classes.MyIcons
+import com.aacomposetest.Functions.clickableNoRipple
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.SrufTheme
 import ui.components.BottomSheets.PlayPauseButton
+import ui.components.BottomSheets.ResponsiveSlider
+import ui.components.LoopingText
 
 @Preview
 @Composable
@@ -52,7 +65,7 @@ private fun Preview(){
 
 }
 @Composable
-fun FullscreenSong(modifier: Modifier = Modifier) {
+internal fun FullscreenSong(modifier: Modifier = Modifier) {
 
     val currentSong: Song? by myExoPlayer.currentlyPlayingSong.collectAsState()
 
@@ -108,16 +121,6 @@ private fun SongImage(
     modifier:Modifier = Modifier.fillMaxSize(),
     @DrawableRes errorDrawable: Int? = R.drawable.exclamation_sign
 ){
-    if(song == null)
-        AsyncImage(model = ImageRequest.Builder(LocalContext.current)
-            .data(R.drawable.exclamation_sign)
-            .allowHardware(true)
-            .build(),
-            contentDescription = null,
-            modifier = modifier,
-            contentScale = ContentScale.Crop // CenterCrop
-        )
-    else
     AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
             .data(song?.thumbnailPath)
@@ -138,8 +141,13 @@ private fun SongImage(
 
 @Composable
 private fun _TextSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()){
-    Box(modifier = modifier){
-
+    Box(modifier = modifier) {
+        LoopingText(
+            text = song?.title ?: Song.defaultTitle,
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -150,14 +158,46 @@ private fun _ButtonsSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()
 
     val isPlaying by myExoPlayer.isPlaying.collectAsState()
 
-    Box(modifier = Modifier){
+    val sliderPosition = remember { mutableFloatStateOf(0f) }
+
+    Column(modifier = modifier){
+
+        ResponsiveSlider(sliderPosition)
+
+        // TODO: Other buttons like shuffle, favorite etc. instead of this spacer
+        Spacer(modifier = Modifier.weight(1f))
 
         Row(
             horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp)
         ) {
 
-            PlayPauseButton(modifier = Modifier.size(iconSize).background(MyColor.Black),isPlaying = isPlaying)
+            Image(
+                painter = painterResource(R.drawable.ic_previous),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(iconSize)
+                    .clickableNoRipple {
+                        ExoPlayerViewModel.playPrevious(true)
+                    }
+            )
+
+            PlayPauseButton(modifier = Modifier
+                .size(iconSize),
+                isPlaying = isPlaying
+            )
+
+            Image(
+                painter = painterResource(R.drawable.ic_next),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(iconSize)
+                    .clickableNoRipple {
+                        ExoPlayerViewModel.playNext(true)
+                    }
+            )
+
         }
     }
 }

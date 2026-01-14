@@ -87,7 +87,9 @@ data class Song (
     companion object{
         val SONGS_THUMBNAIL_DIRECTORY = "Song Thumbnails"
 
-        fun emptySong(id: Long = 0,title:String = "<unknown title>"):Song{
+        val defaultTitle = "<unknown>"
+
+        fun emptySong(id: Long = 0,title:String =defaultTitle):Song{
             return Song(
                 id = id,
                 songUri = "",
