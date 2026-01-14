@@ -54,6 +54,7 @@ import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.aacomposetest.Classes.rememberNavigationGuard
 import kotlinx.coroutines.withContext
 import ui.components.BottomSheets.rememberBottomSheetConfig
 
@@ -316,6 +317,8 @@ private fun ParentContainer(
             detents = songBS_Config.detents
         )
 
+        val navigationGuard = rememberNavigationGuard()
+
         MyNavigation(
             startDestination = DrawerMainPage,
             navController = globalNavigationController
@@ -328,7 +331,10 @@ private fun ParentContainer(
                     refreshState = refreshState,
                     songPlayerBS_State = songPlayerBS_State, songBS_Config = songBS_Config,
                     openFullscreenSong = {
-                        globalNavigationController.navigate(FullscreenPlayer)
+                        navigationGuard.use{
+                            globalNavigationController.navigate(FullscreenPlayer)
+                        }
+
                     }
                 )
             }

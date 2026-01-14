@@ -55,6 +55,7 @@ import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import androidx.compose.ui.res.stringResource
 
 @Serializable
 object MainPager {
@@ -219,7 +220,7 @@ private fun SearchTopBar(){
 
         if(!isFocused) {
             Text(
-                text = LocalContext.current.getString(R.string.app_name),
+                text = stringResource(R.string.app_name),
                 fontSize = 25.sp,
                 modifier = Modifier
                     .align(Alignment.CenterStart)

@@ -371,7 +371,10 @@ fun ResponsivePlayerBS(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .alpha(progressScalar),
+                .alpha(progressScalar)
+                .clickableNoRipple(enabled = state.isIdle && progressScalar >0f){
+                    onBackgroundClick.invoke()
+                },
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally,
             reverseLayout = swapControls
@@ -464,9 +467,7 @@ fun ResponsivePlayerBS(
                 .fillMaxWidth()
                 .height(peekHeight)
                 .alpha(invertedProgressScalar)
-                .clickableNoRipple{
-                    onBackgroundClick.invoke()
-                }
+
         ) {
 
             RespProgressBar(

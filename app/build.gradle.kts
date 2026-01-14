@@ -1,12 +1,13 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
-    id("kotlin-kapt")
-
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0" // or match your Kotlin version
-
+    id("com.google.devtools.ksp")
+    //id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0" // or match your Kotlin version
+    kotlin("plugin.serialization") version "2.3.0"
 }
 
 android {
@@ -41,14 +42,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
     }
 
 
+}
+kotlin{
+    compilerOptions{
+        jvmTarget = JvmTarget.JVM_11
+        freeCompilerArgs.add("-Xcontext-parameters")
+    }
 }
 
 
@@ -67,12 +71,14 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
+    implementation(libs.androidx.compose.material.icons.extended)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
 
     implementation("com.composables:core:1.33.0")
     debugImplementation(libs.ui.tooling)
@@ -87,7 +93,7 @@ dependencies {
 
     implementation("androidx.room:room-paging:$room_version")
 
-    kapt("androidx.room:room-compiler:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
 
 
     //Coil
