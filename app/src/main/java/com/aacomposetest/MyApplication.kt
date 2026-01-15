@@ -4,24 +4,28 @@ import android.Manifest
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
+import android.app.PendingIntent
+import android.os.Environment
 import android.os.Process
 import android.util.Log
-import androidx.core.app.ActivityCompat
+import androidx.annotation.RequiresPermission
+import androidx.core.app.PendingIntentCompat
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
-import coil.util.DebugLogger
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
 import com.aacomposetest.Services.MusicService
+import java.io.File
 
 class MyApplication: Application(), ImageLoaderFactory {
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onCreate() {
         super.onCreate()
 
+        instance = this
 
         val channel = NotificationChannel(
             id,
@@ -34,7 +38,17 @@ class MyApplication: Application(), ImageLoaderFactory {
 
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
 
-        instance = this
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            // Log the crash
+            crashLogger.writeCrashToFile(throwable,this)
+            allertPoster.postNotification(
+                title = "Error encountered",
+                message = "Stacktrace was written to ${crashLogger.folder}",
+                context = this
+            )
+        }
+
+
     }
 
     override fun newImageLoader(): ImageLoader {
@@ -61,6 +75,21 @@ class MyApplication: Application(), ImageLoaderFactory {
     companion object{
         lateinit var instance: Application
             private set
+
+        val allertPoster by lazy {
+            NotificationPoster(
+                context = instance,
+                channelId = "53453345432",
+                channelName = "AllertPoster",
+                //pendingIntent = PendingIntentCompat.
+            ).apply {
+                setGroup("Allerts","543885823")
+            }
+        }
+
+
+
+        val crashLogger by lazy { CrashReporter(foldername = "CrashLogs_${instance.getString(R.string.app_name)}") }
 
 
         private var _serviceInstance: MusicService? = null
