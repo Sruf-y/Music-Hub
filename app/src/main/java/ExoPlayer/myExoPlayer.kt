@@ -129,14 +129,20 @@ object myExoPlayer {
                     addListener(object : Player.Listener {
                         override fun onPlaybackStateChanged(state: Int) {
                             when (state) {
-                                Player.STATE_READY -> isPrepared = true
+                                Player.STATE_READY -> {
+                                    com.aacomposetest.Log("Ready")
+                                    isPrepared = true
+                                }
                                 Player.STATE_ENDED -> {
+                                    com.aacomposetest.Log("Ended")
                                      playNextInPlaylist(allowLoop = isLoopAllowed)
                                 }
-
-                                Player.STATE_IDLE -> isPrepared = false
+                                Player.STATE_IDLE -> {
+                                    com.aacomposetest.Log("Idle")
+                                    isPrepared = false
+                                }
                                 Player.STATE_BUFFERING -> {
-
+                                    com.aacomposetest.Log("Buffering")
                                 }
                             }
                         }
@@ -209,9 +215,13 @@ object myExoPlayer {
 
     }
 
-    fun rewind() {
+    fun rewind(autoStart:Boolean = true) {
         currentlyPlayingSong.value?.let {
             seekTo(0)
+            if(autoStart){
+                start()
+            }
+            
         }
     }
 
@@ -473,16 +483,20 @@ object myExoPlayer {
             if(curIndex == -1) {
                 onError.invoke()
             }
-
+            // if shuffling
             else if(playerSettings.isShuffling.value){
                 playRandom()
             }
-
+            // if allowloop
             else if(curIndex == curList.lastIndex && allowLoop){
                 playFirst(curList)
             }
-
-            else if( curIndex <= curList.size-1 && curIndex>=0 ){
+            // if at the end of a playlist and auto-loop is DISABLED
+            else if(curIndex == curList.lastIndex && !allowLoop){
+                // NO OP
+            }
+            // normal, in-playlist behaviour. Excludes last item as it is handled above
+            else if( curIndex < curList.lastIndex && curIndex>=0 ){
                 playScope.launch {
                     val song = try {
                         songsVM?.getSongById(curList[curIndex+1])
@@ -495,6 +509,7 @@ object myExoPlayer {
                     )
                 }
             }
+            
         }
     }
 
@@ -505,7 +520,12 @@ object myExoPlayer {
      * */
     fun start(){
         if(exoPlayer!= null && !isPlaying.value) {
-            exoPlayer?.play()
+            
+            if (exoPlayer!!.currentPosition >= currentlyPlayingSong.value!!.duration) {
+                rewind()
+            } else {
+                exoPlayer?.play()
+            }
         }
     }
 

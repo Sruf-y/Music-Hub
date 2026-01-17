@@ -158,11 +158,9 @@ private fun _ButtonsSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()
 
     val isPlaying by myExoPlayer.isPlaying.collectAsState()
 
-    val sliderPosition = remember { mutableFloatStateOf(0f) }
-
     Column(modifier = modifier){
 
-        ResponsiveSlider(sliderPosition)
+        ResponsiveSlider()
 
         // TODO: Other buttons like shuffle, favorite etc. instead of this spacer
         Spacer(modifier = Modifier.weight(1f))

@@ -6,20 +6,27 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aacomposetest.ui.theme.Theme
-
+import com.composeunstyled.LocalTextStyle
+/**
+ * @param fontWeight the typeface thickness to use when painting the text (e.g., [FontWeight.Bold]).
+ * */
 @Composable
 fun LoopingText(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = Theme. colorScheme().inverseSurface,
     textAlign: TextAlign? = TextAlign.Unspecified,
-    fontSize: TextUnit = 16.sp
+    fontSize: TextUnit = 16.sp,
+    style: TextStyle = LocalTextStyle.current,
+    fontWeight: FontWeight? = null
 ) {
     Text(
         text = text,
@@ -32,6 +39,7 @@ fun LoopingText(
         overflow = TextOverflow.Ellipsis,
         color = color,
         textAlign = textAlign,
-        fontSize = fontSize
+        fontSize = fontSize,
+        style = style, fontWeight = fontWeight
     )
 }
