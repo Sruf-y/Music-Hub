@@ -1,17 +1,14 @@
 package com.aacomposetest
 
 import android.content.ContentResolver
-import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.net.Uri
-import android.os.Environment
 import android.os.FileObserver
 import android.os.FileObserver.CLOSE_WRITE
 import android.os.FileObserver.MOVE_SELF
-import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -392,7 +389,7 @@ object Functions {
     }
 
 
-
+    
     class FileWatcher(
         private val dir:File,
         onChangeListeners:List<FileWatchListener> = emptyList()
@@ -434,7 +431,9 @@ object Functions {
 
             observer = object : FileObserver(dir, CREATE or DELETE_SELF or DELETE or MODIFY or MOVED_TO or MOVED_FROM or CLOSE_WRITE) {
                 override fun onEvent(event: Int, path: String?) {
-                    // Only trigger if our specific file changed
+                    /**
+                     * For playlist "Favorites", path will look like "Favorites.json"
+                     * */
 
                     val eventType = when (event) {
                         CREATE -> "CREATE"
@@ -449,7 +448,7 @@ object Functions {
                     }
 
                     onChangeListenerList.forEach {
-
+                        
                         it.onEvent.invoke(this,event,path)
                     }
 
@@ -475,7 +474,13 @@ object Functions {
             private val instances:List<Pair<Int, String>> = emptyList()
             internal class DuplicateWatchingException(): Exception("This folder is already being watched! Two instances watching the same folder will butt heads!")
 
-            data class FileWatchListener(val key: Any,val onEvent:FileObserver.(event: Int, name: String?)-> Unit)
+            /**
+             * @param onEvent gives the FileObserver event ID and the file name as inputs for the lambda. The filename for "Favorites" will be "Favorites.json"
+             * */
+            data class FileWatchListener(
+                val key: Any,
+                val onEvent:FileObserver.(event: Int, fileName: String?)-> Unit
+            )
 
         }
     }

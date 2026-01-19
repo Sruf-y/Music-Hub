@@ -6,7 +6,9 @@ import android.os.FileObserver.CLOSE_WRITE
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.aacomposetest.Functions
 import com.aacomposetest.Functions.FileWatcher.Companion.FileWatchListener
+import com.aacomposetest.MyApplication
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.io.File
@@ -15,9 +17,16 @@ import kotlin.random.Random
 /**
  * Strictly persists a playlist as a state. That is this class' one and ONLY purpose.
  * */
-class PlaylistWatcher(context: Context): ViewModel(){
-
-
+class PlaylistWatcher(context: Context,fileWatcher: Functions.FileWatcher): ViewModel(){
+    
+    /**
+     * Save onInstanceCleared callback on initialization to use later, as after initialization, the constructor parameter is no longer accesible.
+     *
+     * WARNING! Making the constructor value a stored variable [val] or [var] might duplicate instances leading to circular dependency.
+     * */
+    private val onClear:()-> Unit = {
+        fileWatcher.removeOnChangeListener(listenerKey)
+    }
 
     var file:MutableState<File?> = mutableStateOf(null)
         private set
@@ -25,8 +34,8 @@ class PlaylistWatcher(context: Context): ViewModel(){
     val playlist = _curPlaylist.asStateFlow()
 
     val listenerKey = Random.nextInt(200)
-
-
+    
+    
 
 
     private fun onChangeNoticed(context: Context,title:String? = playlist.value?.title) {
@@ -60,15 +69,17 @@ class PlaylistWatcher(context: Context): ViewModel(){
 
         }
     )
+    
+    
 
     init {
-        ListFeedingVM.playlistFolderWatcher.addOnChangeListener(listener)
+        fileWatcher.addOnChangeListener(listener)
     }
 
     override fun onCleared() {
         super.onCleared()
-
-        ListFeedingVM.playlistFolderWatcher.removeOnChangeListener(listenerKey)
+        
+        onClear.invoke()
     }
 
 }

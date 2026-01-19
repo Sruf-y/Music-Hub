@@ -1,24 +1,22 @@
 package com.aacomposetest
 
+import AppDatabase.PlaylistRelated.Playlist
 import android.Manifest
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
-import android.os.Environment
 import android.os.Process
 import android.util.Log
 import androidx.annotation.RequiresPermission
-import androidx.core.app.PendingIntentCompat
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import com.aacomposetest.Functions.FileWatcher
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
 import com.aacomposetest.Services.MusicService
-import java.io.File
 
 class MyApplication: Application(), ImageLoaderFactory {
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -27,7 +25,7 @@ class MyApplication: Application(), ImageLoaderFactory {
 
         instance = this
 
-        val channel = NotificationChannel(
+        val musicNotificationChannel = NotificationChannel(
             id,
             name,
             NotificationManager.IMPORTANCE_DEFAULT
@@ -36,7 +34,7 @@ class MyApplication: Application(), ImageLoaderFactory {
 
         Log.i(Logs.RUNNING_INFO.name,"Notification channel created.")
 
-        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        getSystemService(NotificationManager::class.java).createNotificationChannel(musicNotificationChannel)
 
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             // Log the crash
@@ -86,8 +84,12 @@ class MyApplication: Application(), ImageLoaderFactory {
                 setGroup("Allerts","543885823")
             }
         }
-
-
+        
+        val playlistFolderWatcher:FileWatcher by lazy { FileWatcher(
+            Playlist.getFolder(MyApplication.instance)
+        ).apply {
+            startWatching()
+        } }
 
         val crashLogger by lazy { CrashReporter(foldername = "CrashLogs_${instance.getString(R.string.app_name)}") }
 

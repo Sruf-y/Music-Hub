@@ -371,7 +371,7 @@ class MusicService: LifecycleService() {
             }
         }
 
-
+        // Checks if the task is still in the tray
         fun isAppTaskStillExists(): Boolean {
             val activityManager = getSystemService(MyApplication.instance, ActivityManager::class.java) as ActivityManager
             val appTasks = activityManager.appTasks

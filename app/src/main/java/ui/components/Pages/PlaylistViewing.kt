@@ -51,6 +51,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aacomposetest.Functions.mapAfterOrderOf
+import com.aacomposetest.MyApplication
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
@@ -88,7 +89,12 @@ fun PlaylistViewing(
 
 
     /** Holds the playlist that is shown on this screen. */
-    val onScreenPlaylistVM = remember { PlaylistWatcher(contextRef) }
+    val onScreenPlaylistVM = remember {
+        PlaylistWatcher(
+            context = contextRef,
+            fileWatcher = MyApplication.playlistFolderWatcher
+        )
+    }
 
     val playlist by onScreenPlaylistVM.playlist.collectAsState()
 
@@ -289,7 +295,7 @@ fun PlaylistViewing(
                                 .background(if (isDragging) MyColor.SemiTransparentDark else MyColor.Transparent)
                                 .clickable(
                                     onClick = {
-
+                                        
                                         ExoPlayerViewModel.setSong(
                                             song = song,
                                             startOnPrepared = true,

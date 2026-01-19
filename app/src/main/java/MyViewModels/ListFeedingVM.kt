@@ -43,30 +43,23 @@ object ListFeedingVM {
     private val playlistHolder = PlaylistLISTHolder(IOscope)
     val allPlaylists = playlistHolder.allPlaylists // pass refference to the stateflow
 
-
-    val playlistFolderWatcher:FileWatcher = FileWatcher(
-    Playlist.getFolder(MyApplication.instance)
-    )
-
-
-
+    
 
 
     init {
 
 
-        // watch the folder itself
-        playlistFolderWatcher.addOnChangeListener(
+        // Add listener for the whole folder without filtering by the filename
+        MyApplication.playlistFolderWatcher.addOnChangeListener(
             FileWatchListener(
                 "folderWatcher",
-                { event,path ->
+                { event,filename ->
                     playlistHolder.updateList(MyApplication.instance)
                 }
             )
         )
         playlistHolder.updateList(MyApplication.instance)
-
-        playlistFolderWatcher.startWatching()
+        
     }
 
 

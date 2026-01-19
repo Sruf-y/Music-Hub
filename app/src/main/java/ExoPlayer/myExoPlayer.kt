@@ -56,8 +56,8 @@ object myExoPlayer {
         delayMillis = 250,
         initialValue = prefs?.getCursorValue(MyPrefs._prefs_LastSongPosition, 0) ?: 0,
         observingFunction = {
-            val currentPos = myExoPlayer.getCurrentPosition()
-            val duration = myExoPlayer.currentlyPlayingSong.value?.duration ?: 0
+            val currentPos = getCurrentPosition()
+            val duration = currentlyPlayingSong.value?.duration ?: 0
 
 
             val progress = if (duration > 0) {
@@ -93,7 +93,8 @@ object myExoPlayer {
     private val allSongs = ListFeedingVM.SortedSongs.sortedSongsFlow
 
     val curPlaylistVM = PlaylistWatcher(
-        context = MyApplication.instance
+       context = MyApplication.instance,
+       fileWatcher = MyApplication.playlistFolderWatcher
     )
 
 
