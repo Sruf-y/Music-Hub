@@ -186,7 +186,8 @@ private fun ButtonsRow(
    modifier: Modifier = Modifier.fillMaxWidth(),
    isPlaying: Boolean,
    horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
-   iconSize: Dp = 90.dp,
+   playIconSize: Dp = 90.dp,
+   sideIconSize:Dp = 70.dp,
    isEnabled: Boolean = true,
 ) {
    
@@ -199,7 +200,7 @@ private fun ButtonsRow(
          painter = painterResource(R.drawable.ic_previous),
          contentDescription = null,
          modifier = Modifier
-            .size(iconSize)
+            .size(sideIconSize)
             .clickable(
                interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                indication = null, onClick = {
@@ -210,13 +211,13 @@ private fun ButtonsRow(
       )
       
       
-      PlayPauseButton(modifier = Modifier.size(iconSize),isPlaying = isPlaying,enabled = isEnabled)
+      PlayPauseButton(modifier = Modifier.size(playIconSize),isPlaying = isPlaying,enabled = isEnabled)
       
       Image(
          painter = painterResource(R.drawable.ic_next),
          contentDescription = null,
          modifier = Modifier
-            .size(iconSize)
+            .size(sideIconSize)
             .clickable(
                interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                indication = null, onClick = {
@@ -688,7 +689,7 @@ private fun BigPlayer(
       
       item {
          ButtonsRow(
-            iconSize = 75.dp,
+            playIconSize = 75.dp,
             isPlaying = isPlaying,
             modifier = Modifier.shadow(
                5.dp,

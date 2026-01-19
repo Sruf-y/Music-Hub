@@ -1,6 +1,7 @@
 package com.aacomposetest
 
 import AppDatabase.PlaylistRelated.Playlist
+import Presentation.FullscreenPlayer.Lyrics
 import android.Manifest
 import android.app.Application
 import android.app.NotificationChannel
@@ -86,7 +87,13 @@ class MyApplication: Application(), ImageLoaderFactory {
         }
         
         val playlistFolderWatcher:FileWatcher by lazy { FileWatcher(
-            Playlist.getFolder(MyApplication.instance)
+            Playlist.getFolder(instance)
+        ).apply {
+            startWatching()
+        } }
+        
+        val lyricsFolderWatcher:FileWatcher by lazy { FileWatcher(
+            Lyrics.getFolder(instance)
         ).apply {
             startWatching()
         } }

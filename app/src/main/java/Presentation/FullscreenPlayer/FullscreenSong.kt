@@ -7,8 +7,6 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.FloatRange
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -21,28 +19,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.room.util.TableInfo
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.aacomposetest.Classes.MyIcons
 import com.aacomposetest.Functions.clickableNoRipple
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
@@ -154,11 +144,16 @@ private fun _TextSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()){
 @Composable
 private fun _ButtonsSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()){
 
-    val iconSize = remember { 90.dp }
+    val playIconSize = remember { 90.dp }
 
+    val sideIconsSize = remember { 70.dp }
+    
     val isPlaying by myExoPlayer.isPlaying.collectAsState()
 
-    Column(modifier = modifier){
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
 
         ResponsiveSlider()
 
@@ -166,23 +161,22 @@ private fun _ButtonsSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()
         Spacer(modifier = Modifier.weight(1f))
 
         Row(
-            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp)
+            modifier = Modifier.padding(bottom = 40.dp)
         ) {
 
             Image(
                 painter = painterResource(R.drawable.ic_previous),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(iconSize)
+                    .size(sideIconsSize)
                     .clickableNoRipple {
                         ExoPlayerViewModel.playPrevious(true)
                     }
             )
 
             PlayPauseButton(modifier = Modifier
-                .size(iconSize),
+                .size(playIconSize),
                 isPlaying = isPlaying
             )
 
@@ -190,7 +184,7 @@ private fun _ButtonsSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()
                 painter = painterResource(R.drawable.ic_next),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(iconSize)
+                    .size(sideIconsSize)
                     .clickableNoRipple {
                         ExoPlayerViewModel.playNext(true)
                     }
