@@ -42,12 +42,11 @@ class MusicService: LifecycleService() {
     override fun onBind(intent: Intent): IBinder? {
         return super.onBind(intent)
     }
-
-    var startId:Int = 0
+    
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        this.startId = startId
+        
         Log.i(Logs.SERVICE.name,"Called onStartCommand.")
 
         when(intent?.action){
