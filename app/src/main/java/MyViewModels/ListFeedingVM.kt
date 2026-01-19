@@ -49,7 +49,7 @@ object ListFeedingVM {
     init {
 
 
-        // Add listener for the whole folder without filtering by the filename
+        // Add listener listening to any folder changes.
         MyApplication.playlistFolderWatcher.addOnChangeListener(
             FileWatchListener(
                 "folderWatcher",
