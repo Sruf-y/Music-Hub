@@ -1,5 +1,6 @@
 package MyViewModels
 
+import android.content.Context
 import android.os.FileObserver
 import android.os.FileObserver.CLOSE_WRITE
 import android.os.FileObserver.CREATE
@@ -13,6 +14,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aacomposetest.Logs
+import com.aacomposetest.MyApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -87,13 +89,24 @@ class FileWatcher(
             
          }
       
-      observer?.startWatching()
+      try {
+         observer?.startWatching()
+      }catch (ex: Exception){
+         observer = null
+         MyApplication.crashLogger.writeCrashToFile(ex, MyApplication.instance, headerDetails = "Filewatcher crashed during observer.startWatching()")
+      }
+      
    }
    
    
    
    fun stopWatching() {
-      observer?.stopWatching()
+      try {
+         observer?.stopWatching()
+      }catch (ex: Exception){
+         MyApplication.crashLogger.writeCrashToFile(ex, MyApplication.instance, headerDetails = "Filewatcher crashed during observer.stopWatching()")
+      }
+      
    }
    
    override fun onCleared() {
