@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
+import com.aacomposetest.TryTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -93,7 +94,9 @@ class FileWatcher(
          observer?.startWatching()
       }catch (ex: Exception){
          observer = null
+         
          MyApplication.crashLogger.writeCrashToFile(ex, MyApplication.instance, headerDetails = "Filewatcher crashed during observer.startWatching()")
+         
       }
       
    }
@@ -104,7 +107,9 @@ class FileWatcher(
       try {
          observer?.stopWatching()
       }catch (ex: Exception){
+         
          MyApplication.crashLogger.writeCrashToFile(ex, MyApplication.instance, headerDetails = "Filewatcher crashed during observer.stopWatching()")
+         
       }
       
    }

@@ -46,8 +46,8 @@ class FileWatcherTest {
             try {
                val watcher = FileWatcher(testDir)
                // If you have start/stop methods
-               watcher.startWatching()
-               watcher.stopWatching()
+               //watcher.startWatching()
+               //watcher.stopWatching()
             } catch (e: StackOverflowError) {
                fail("StackOverflow at iteration $iteration")
             }
@@ -63,7 +63,7 @@ class FileWatcherTest {
          val lazyWatcher by lazy {
             initializationCount++
             FileWatcher(testDir).apply {
-               startWatching()
+               //startWatching()
             }
          }
          

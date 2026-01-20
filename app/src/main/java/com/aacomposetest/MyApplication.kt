@@ -138,3 +138,9 @@ fun Log(message:String,type:String = "i"){
     }
 
 }
+
+fun TryTo(action:()->Unit){
+    try {
+       action.invoke()
+    }catch (ex: Exception){}
+}
