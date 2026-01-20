@@ -4,12 +4,11 @@ import AppDatabase.MyDatabaseProvider
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
 import AppDatabase.SongRelated.SongRepository
+import MyViewModels.FileWatcher.Companion.FileWatchListener
 import android.content.Context
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.Setting
-import com.aacomposetest.Functions.FileWatcher
-import com.aacomposetest.Functions.FileWatcher.Companion.FileWatchListener
 import com.aacomposetest.MyApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,8 +51,8 @@ object ListFeedingVM {
         // Add listener listening to any folder changes.
         MyApplication.playlistFolderWatcher.addOnChangeListener(
             FileWatchListener(
-                "folderWatcher",
-                { event,filename ->
+                key = "folderWatcher",
+                onEvent = { event,filename ->
                     playlistHolder.updateList(MyApplication.instance)
                 }
             )

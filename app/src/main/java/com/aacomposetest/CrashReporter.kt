@@ -23,10 +23,14 @@ class CrashReporter(val foldername:String? = null) {
         File(Environment.DIRECTORY_DOWNLOADS)
     }
 
-    fun writeCrashToFile(throwable: Throwable,context: Context, folderName: String? = foldername) {
+    fun writeCrashToFile(throwable: Throwable,context: Context, folderName: String? = foldername,headerDetails:String? = null) {
         val crashText = """
         ===== CRASH REPORT =====
         Time: ${System.currentTimeMillis()}
+        
+        ===== PRIORITY DETAILS =====
+        
+        ${headerDetails}
         
         Exception: ${throwable.javaClass.name}
         Message: ${throwable.message ?: "No message"}

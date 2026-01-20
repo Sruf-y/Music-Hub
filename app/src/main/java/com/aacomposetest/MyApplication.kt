@@ -1,6 +1,7 @@
 package com.aacomposetest
 
 import AppDatabase.PlaylistRelated.Playlist
+import MyViewModels.FileWatcher
 import Presentation.FullscreenPlayer.Lyrics
 import android.Manifest
 import android.app.Application
@@ -14,10 +15,10 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
-import com.aacomposetest.Functions.FileWatcher
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
 import com.aacomposetest.Services.MusicService
+import java.io.File
 
 class MyApplication: Application(), ImageLoaderFactory {
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)

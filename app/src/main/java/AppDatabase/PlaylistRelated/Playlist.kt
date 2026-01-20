@@ -187,7 +187,6 @@ class Playlist(
 
         fun getPlaylist(context: Context, title:String?): Playlist?{
 
-
             return if(title!=null)Functions.JsonOp.syncLoadFromJson(context,title,getFolder(context)) else null
         }
 

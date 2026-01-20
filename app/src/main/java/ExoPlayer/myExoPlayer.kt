@@ -24,6 +24,7 @@ import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.MyPrefs.putCursorValue
 import com.aacomposetest.Functions.getRandom
+import com.aacomposetest.Log
 import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
 import kotlinx.coroutines.CoroutineScope
@@ -65,9 +66,11 @@ object myExoPlayer {
             } else {
                 0
             }
-
+            
             progress
-        }, onValueChange = {
+        },
+        onValueChange = {
+            
             prefs?.edit(){
                 Log.i(Logs.SHARED_PREFFERENCES.name,"PUT current song position")
                 putCursorValue(MyPrefs._prefs_LastSongPosition,it)
@@ -93,7 +96,6 @@ object myExoPlayer {
     private val allSongs = ListFeedingVM.SortedSongs.sortedSongsFlow
 
     val curPlaylistVM = PlaylistWatcher(
-       context = MyApplication.instance,
        fileWatcher = MyApplication.playlistFolderWatcher
     )
 
@@ -131,19 +133,16 @@ object myExoPlayer {
                         override fun onPlaybackStateChanged(state: Int) {
                             when (state) {
                                 Player.STATE_READY -> {
-                                    com.aacomposetest.Log("Ready")
                                     isPrepared = true
                                 }
                                 Player.STATE_ENDED -> {
-                                    com.aacomposetest.Log("Ended")
                                      playNextInPlaylist(allowLoop = isLoopAllowed)
                                 }
                                 Player.STATE_IDLE -> {
-                                    com.aacomposetest.Log("Idle")
                                     isPrepared = false
                                 }
                                 Player.STATE_BUFFERING -> {
-                                    com.aacomposetest.Log("Buffering")
+                                
                                 }
                             }
                         }
@@ -152,6 +151,7 @@ object myExoPlayer {
                             _isPlaying.value = isPlaying
 
                             if(isPlaying){
+                                Log("Started yodates")
                                 progressVM.startUpdates()
                             }else{
                                 progressVM.forceValue(exoPlayer!!.currentPosition)
@@ -168,6 +168,34 @@ object myExoPlayer {
                             progressVM.forceValue(newPosition.positionMs)
                         }
                     })
+                    
+                    // Logging for audio states
+                    if(false)
+                    addListener(object : Player.Listener {
+                        override fun onPlaybackStateChanged(state: Int) {
+                            when (state) {
+                                Player.STATE_READY -> {
+                                    com.aacomposetest.Log("Ready")
+                                }
+                                
+                                Player.STATE_ENDED -> {
+                                    com.aacomposetest.Log("Ended")
+                                    playNextInPlaylist(allowLoop = isLoopAllowed)
+                                }
+                                
+                                Player.STATE_IDLE -> {
+                                    com.aacomposetest.Log("Idle")
+                                }
+                                
+                                Player.STATE_BUFFERING -> {
+                                    com.aacomposetest.Log("Buffering")
+                                }
+                            }
+                        }
+                        
+                        
+                    }
+                    )
                 }
 
 

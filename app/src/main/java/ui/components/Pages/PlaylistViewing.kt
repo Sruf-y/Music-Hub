@@ -91,7 +91,6 @@ fun PlaylistViewing(
     /** Holds the playlist that is shown on this screen. */
     val onScreenPlaylistVM = remember {
         PlaylistWatcher(
-            context = contextRef,
             fileWatcher = MyApplication.playlistFolderWatcher
         )
     }
