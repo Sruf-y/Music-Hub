@@ -25,14 +25,14 @@ import androidx.transition.Transition
 
 @Composable
 fun MyNavigation(startDestination:Any, navController: NavHostController, content: NavGraphBuilder.()-> Unit){
-    var isTransitioning by remember() { mutableStateOf(false) }
+    
     
     NavHost(
         modifier = Modifier.fillMaxSize(),
         navController = navController,
         startDestination = startDestination,
         enterTransition = {
-            isTransitioning = true
+            
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Left,
                 animationSpec = tween(300)
