@@ -112,16 +112,15 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
 
     //Animation
-    implementation("androidx.compose.animation:animation-graphics:1.9.1")
-
+    implementation("androidx.compose.animation:animation-graphics:1.10.1")
+    implementation("androidx.compose.animation:animation-core:1.10.1")
+    implementation("androidx.transition:transition-ktx:1.7.0")
+    
     //Navigation
     implementation("androidx.navigation:navigation-compose:2.9.5")
 
     //Service
     implementation("androidx.lifecycle:lifecycle-service:2.9.4")
-
-    //Animation
-    implementation("androidx.compose.animation:animation-core:1.9.3")
 
     //Reordering
     implementation(libs.reorderable)

@@ -14,11 +14,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aacomposetest.Logs
-import com.aacomposetest.MyApplication
-import com.aacomposetest.TryTo
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -90,28 +85,15 @@ class FileWatcher(
             
          }
       
-      try {
-         observer?.startWatching()
-      }catch (ex: Exception){
-         observer = null
-         
-         MyApplication.crashLogger.writeCrashToFile(ex, MyApplication.instance, headerDetails = "Filewatcher crashed during observer.startWatching()")
-         
-      }
+      
+      observer?.startWatching()
       
    }
    
    
    
    fun stopWatching() {
-      try {
-         observer?.stopWatching()
-      }catch (ex: Exception){
-         
-         MyApplication.crashLogger.writeCrashToFile(ex, MyApplication.instance, headerDetails = "Filewatcher crashed during observer.stopWatching()")
-         
-      }
-      
+      observer?.stopWatching()
    }
    
    override fun onCleared() {

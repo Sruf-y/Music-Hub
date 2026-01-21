@@ -31,7 +31,7 @@ import com.aacomposetest.Activities.MainActivityView
 import com.aacomposetest.ui.theme.SrufTheme
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class TestEnviromentActivity_OLD : ComponentActivity() {
 
     private  var mediastoreObserver: ContentObserver? = null
 

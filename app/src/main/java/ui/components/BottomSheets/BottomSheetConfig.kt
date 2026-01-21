@@ -1,7 +1,9 @@
 package ui.components.BottomSheets
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.Dp
@@ -38,6 +40,23 @@ data class BottomSheetConfig(
     }.toList(),
     val bottomHeight: Dp = peekHeight?:0.dp
 ){
+    
+    suspend fun animateVisibilityTo(
+        targetValue: Float,
+        animationSpec: AnimationSpec<Float> = tween(500),
+    ) {
+        alpha.animateTo(
+            targetValue = targetValue,
+            animationSpec = animationSpec
+        )
+    }
+    
+    suspend fun snapVisibilityTo(targetValue:Float){
+        alpha.snapTo(
+            targetValue = targetValue
+        )
+    }
+    
     @Composable
     fun rememberDerivedBottomSheetState(initialDetent: SheetDetent = detents.first()): BottomSheetState {
         return rememberBottomSheetState(

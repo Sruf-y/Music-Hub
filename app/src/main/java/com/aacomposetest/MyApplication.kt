@@ -1,14 +1,17 @@
 package com.aacomposetest
 
 import AppDatabase.PlaylistRelated.Playlist
+import ExoPlayer.myExoPlayer
 import MyViewModels.FileWatcher
 import Presentation.FullscreenPlayer.Lyrics
 import android.Manifest
+import android.app.Activity
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Process
 import android.util.Log
+import android.view.WindowManager
 import androidx.annotation.RequiresPermission
 import coil.ImageLoader
 import coil.ImageLoaderFactory
@@ -26,6 +29,7 @@ class MyApplication: Application(), ImageLoaderFactory {
         super.onCreate()
 
         instance = this
+        myExoPlayer.initializePlayer(this)
 
         val musicNotificationChannel = NotificationChannel(
             id,
@@ -117,6 +121,37 @@ class MyApplication: Application(), ImageLoaderFactory {
 
         fun unregisterServiceInstance() {
             _serviceInstance = null
+        }
+        
+        fun showSystemAlert(
+            activity: Activity,  // Any Activity, not just AppCompatActivity
+            title: String,
+            message: String,
+            onOk: () -> Unit = {},
+            onCancel:()->Unit = {}
+        ) {
+            android.app.AlertDialog.Builder(
+                activity,
+                android.R.style.Theme_DeviceDefault_Dialog_Alert
+            )
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    dialog.dismiss()
+                    onOk()
+                }
+                .setNegativeButton(android.R.string.cancel) { dialog,_->
+                    dialog.dismiss()
+                    onCancel()
+                }
+                .setCancelable(false)
+                .create()
+                .apply {
+                    // System dialog styling
+                    window?.attributes?.width = WindowManager.LayoutParams.MATCH_PARENT
+                }
+                .show()
+            
         }
     }
 
