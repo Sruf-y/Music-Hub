@@ -8,7 +8,7 @@ class ExoPlayerViewModel() : ViewModel() {
 
 
 
-    val progressVM = myExoPlayer.getCurrentPositionAsFlow()
+    val progressVM = myExoPlayer.currentPositionVM()
 
     val currentProgress: StateFlow<Long> = progressVM.progress
 

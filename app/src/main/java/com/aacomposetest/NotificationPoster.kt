@@ -4,29 +4,36 @@ import android.Manifest
 import android.R
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.Intent.ACTION_VIEW
+import android.content.pm.ResolveInfo
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.DocumentsContract
+import android.provider.MediaStore
+import android.provider.Settings
+import android.widget.Toast
 import androidx.annotation.DrawableRes
-import androidx.annotation.IdRes
 import androidx.annotation.RequiresPermission
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationChannelGroupCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.media3.common.util.NotificationUtil
-import com.aacomposetest.ui.theme.MyColor
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.FileProvider
+import java.io.File
 import kotlin.random.Random
-import kotlin.random.nextInt
+import androidx.core.net.toUri
 
 class NotificationPoster(
-    context: Context,
-    private val channelId: String,
-    private val channelName: String,
-    private val importance: Int = NotificationManagerCompat.IMPORTANCE_DEFAULT,
-    private val pendingIntent: PendingIntent? = null
+   context: Context,
+   private val channelId: String,
+   private val channelName: String,
+   private val importance: Int = NotificationManagerCompat.IMPORTANCE_DEFAULT,
+   private val pendingIntent: PendingIntent? = null,
 ) {
     private val manager = NotificationManagerCompat.from(context)
 
@@ -68,13 +75,14 @@ class NotificationPoster(
      * */
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     fun postNotification(
-        id: Int? = null,
-        title: String,
-        message: String,
-        context:Context,
-        @DrawableRes icon: Int = R.drawable.ic_dialog_info,
-        color: Color = Color.Blue,
-        showAsGroup: Boolean = true
+       id: Int? = null,
+       title: String,
+       message: String,
+       pendingIntent: PendingIntent? = null,
+       context: Context,
+       @DrawableRes icon: Int = R.drawable.ic_dialog_info,
+       color: Color = Color.Blue,
+       showAsGroup: Boolean = true,
     ) {
         // Ensure channel exists
         if (channel == null) {
@@ -94,7 +102,7 @@ class NotificationPoster(
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setContentTitle(title)
             .setContentText(message)
-
+            .setContentIntent(pendingIntent)
             .setSmallIcon(icon)
             .setColor(color.toArgb())
             .setAutoCancel(true)
@@ -121,11 +129,11 @@ class NotificationPoster(
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     fun postGroupSummary(
-        summaryId: Int,
-        summaryTitle:String,
-        summaryText: String,
-        context: Context,
-        @DrawableRes icon: Int = R.drawable.ic_dialog_info
+       summaryId: Int,
+       summaryTitle: String,
+       summaryText: String,
+       context: Context,
+       @DrawableRes icon: Int = R.drawable.ic_dialog_info,
     ) {
         if (group == null) return
 
@@ -148,5 +156,49 @@ class NotificationPoster(
 
     fun clearAllNotifications() {
         manager.cancelAll()
+    }
+    
+    
+    companion object{
+        
+        fun openMediaStoreUriPendingIntent(context: Context, mediaStoreUri: String): PendingIntent {
+            // Convert string to Uri
+            val uri = mediaStoreUri.toUri()
+            
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                // Use the MediaStore URI directly
+                data = uri
+                
+                // For MediaStore URIs, you often need to set the MIME type
+                // Try to extract it from the MediaStore
+                val mimeType = getMimeTypeFromUri(context, uri)
+                if (mimeType != null) {
+                    type = mimeType
+                } else {
+                    type = "*/*"  // Fallback
+                }
+                
+                addFlags(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                       Intent.FLAG_ACTIVITY_NEW_TASK
+                )
+            }
+            
+            val chooser = Intent.createChooser(intent, "Open file")
+            
+            return PendingIntent.getActivity(
+                context,
+                mediaStoreUri.hashCode(),
+                chooser,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+        
+        private fun getMimeTypeFromUri(context: Context, uri: Uri): String? {
+            return context.contentResolver.getType(uri)
+        }
+        
+        
+        
     }
 }

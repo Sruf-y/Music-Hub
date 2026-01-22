@@ -19,7 +19,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat.getSystemService
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.aacomposetest.MyApplication
@@ -29,14 +28,13 @@ import com.aacomposetest.Activities.MainActivityView
 import com.aacomposetest.Classes.AutoStateFlow
 import com.aacomposetest.Functions
 import com.aacomposetest.Logs
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class MusicService: LifecycleService() {
 
     lateinit var mediaSession: MediaSessionCompat
 
-    val exoPlalayerVM = ExoPlayerViewModel()
+    
 
 
     override fun onBind(intent: Intent): IBinder? {
@@ -86,8 +84,7 @@ class MusicService: LifecycleService() {
                            myExoPlayer.destroy()
 
                            // when its paused, it becomes a background service. StopForeground will not work on a background service. I need to manually cancel the notification.
-                           val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                           notificationManager.cancel(notification_id)
+                           removeNotification()
 
                            stopSelf()
                            MyApplication.killProccess()
@@ -142,10 +139,10 @@ class MusicService: LifecycleService() {
         lifecycleScope.launch {
 
             Log.i(Logs.SERVICE.name, "Launched an observer for exoplayer.isPlaying.")
-
-
-
-            exoPlalayerVM.isPlaying.collect {
+            
+            
+            
+            myExoPlayer.isPlaying.collect {
 
                 Log.i(Logs.SERVICE.name, "isPlaying value is ${it}")
 
@@ -164,11 +161,17 @@ class MusicService: LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        exoPlalayerVM.progressVM.stopUpdates()
+        removeNotification()
 
         notificationState.setValue(NotificationState.Dead)
 
         MyApplication.unregisterServiceInstance()
+        
+    }
+    
+    fun removeNotification(){
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(notification_id)
     }
 
 
@@ -213,15 +216,15 @@ class MusicService: LifecycleService() {
         val mediaSessionMetadata = MediaMetadataCompat.Builder()
             .putString(
                 MediaMetadataCompat.METADATA_KEY_TITLE,
-                exoPlalayerVM.currentSong.value?.title ?: "<unknown>"
+                myExoPlayer.currentlyPlayingSong.value?.title ?: "<unknown>"
             )
             .putString(
                 MediaMetadataCompat.METADATA_KEY_ARTIST,
-                exoPlalayerVM.currentSong.value?.artistName ?: "<unknown>"
+                myExoPlayer.currentlyPlayingSong.value?.artistName ?: "<unknown>"
             )
             .putLong(
                 MediaMetadataCompat.METADATA_KEY_DURATION,
-                exoPlalayerVM.currentSong.value?.duration ?: 0
+                myExoPlayer.currentlyPlayingSong.value?.duration ?: 0
             )
             .putBitmap(
                 MediaMetadataCompat.METADATA_KEY_ART,
@@ -232,7 +235,7 @@ class MusicService: LifecycleService() {
         mediaSession.setPlaybackState(
             PlaybackStateCompat.Builder()
                 .setState(
-                    if (exoPlalayerVM.isPlaying.value) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED,
+                    if (myExoPlayer.isPlaying.value) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED,
                     myExoPlayer.getCurrentPosition(),
                     1.0f
                 )
@@ -308,7 +311,7 @@ class MusicService: LifecycleService() {
 
 
 
-        if(!exoPlalayerVM.isPlaying.value)
+        if(!myExoPlayer.isPlaying.value)
             sendToBackground()
 
     }

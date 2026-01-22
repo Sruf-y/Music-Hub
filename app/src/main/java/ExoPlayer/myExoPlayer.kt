@@ -585,7 +585,7 @@ object myExoPlayer {
 
 
     fun getCurrentPosition() = exoPlayer?.currentPosition?:0
-    fun getCurrentPositionAsFlow() = progressVM
+    fun currentPositionVM() = progressVM
 
 
     /**

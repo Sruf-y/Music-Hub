@@ -70,7 +70,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.aacomposetest.Functions.clickableNoRipple
 import com.aacomposetest.Functions.invert
-import com.aacomposetest.Log
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
@@ -339,7 +338,7 @@ fun ResponsivePlayerBS(
             0f..(currentSong?.duration?.toFloat()?:1f)
          }
       }
-      val curPos by myExoPlayer.getCurrentPositionAsFlow().progress.collectAsState()
+      val curPos by myExoPlayer.currentPositionVM().progress.collectAsState()
       
       
       
@@ -398,7 +397,7 @@ fun ResponsiveSlider(
 ) {
    
    val currentSong by myExoPlayer.currentlyPlayingSong.collectAsState()
-   val curPos by myExoPlayer.getCurrentPositionAsFlow().progress.collectAsState()
+   val curPos by myExoPlayer.currentPositionVM().progress.collectAsState()
    
    val range by remember(currentSong) {
       derivedStateOf {

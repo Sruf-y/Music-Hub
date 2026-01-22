@@ -63,7 +63,6 @@ import ui.components.SongItem
 fun PlaylistViewing(
     modifier:Modifier = Modifier.fillMaxSize(),
     lazyListState: LazyListState,
-    exoPlayerVM: ExoPlayerViewModel,
     playlistTitle: String,
     onBack:(()-> Unit)? = null,
     bottomPadding: Dp = 0.dp,
@@ -97,7 +96,7 @@ fun PlaylistViewing(
 
     val playlist by onScreenPlaylistVM.playlist.collectAsState()
 
-    val currentlyPlayingSong by exoPlayerVM.currentSong.collectAsState()
+    val currentlyPlayingSong by myExoPlayer.currentlyPlayingSong.collectAsState()
 
 
     val const_PlaylistSongs by remember {
@@ -177,7 +176,7 @@ fun PlaylistViewing(
 
                         it
                     }
-                if (exoPlayerVM.currentSong.value?.id == song.id) {
+                if (myExoPlayer.currentlyPlayingSong.value?.id == song.id) {
                     myExoPlayer.setCurrentPlaylist(null)
                 }
                 playlist?.songsIdList?.clear()

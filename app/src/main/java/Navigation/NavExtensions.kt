@@ -2,13 +2,14 @@ package Navigation
 
 import Navigation.Destinations.BS_PlayerHolder
 import androidx.navigation.NavHostController
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
 
 object NavExtensions {
    
-   @OptIn(InternalSerializationApi::class)
+   @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
    /***
     * Only navigates to the given destination if the destination isn't the top of the navigation stack.
     */
@@ -17,8 +18,8 @@ object NavExtensions {
    ) {
       val doNavigate = {
          this.navigate(route) {
-            //launchSingleTop = allowRenavigation
-            //restoreState = alloRestoreState
+            launchSingleTop = true
+            restoreState = true
          }
       }
       

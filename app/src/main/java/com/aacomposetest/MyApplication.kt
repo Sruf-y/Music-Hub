@@ -20,6 +20,7 @@ import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
+import com.aacomposetest.NotificationPoster.Companion.openMediaStoreUriPendingIntent
 import com.aacomposetest.Services.MusicService
 import java.io.File
 
@@ -44,11 +45,14 @@ class MyApplication: Application(), ImageLoaderFactory {
 
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             // Log the crash
-            crashLogger.writeCrashToFile(throwable,this)
+            Log(crashLogger.folder.name)
+            
+            val uri = crashLogger.writeCrashToFile(throwable,this)
             allertPoster.postNotification(
                 title = "Error encountered",
-                message = "Stacktrace was written to ${crashLogger.folder}",
-                context = this
+                message = "Stacktrace was written to ${crashLogger.folder.path}",
+                context = this,
+                pendingIntent = openMediaStoreUriPendingIntent(this,uri)
             )
         }
 
@@ -128,7 +132,7 @@ class MyApplication: Application(), ImageLoaderFactory {
             title: String,
             message: String,
             onOk: () -> Unit = {},
-            onCancel:()->Unit = {}
+            onCancel:(()->Unit)? = null
         ) {
             android.app.AlertDialog.Builder(
                 activity,
@@ -139,10 +143,15 @@ class MyApplication: Application(), ImageLoaderFactory {
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
                     dialog.dismiss()
                     onOk()
-                }
-                .setNegativeButton(android.R.string.cancel) { dialog,_->
-                    dialog.dismiss()
-                    onCancel()
+                }.let {
+                    if(onCancel!=null){
+                        it.setNegativeButton(android.R.string.cancel) { dialog,_->
+                            dialog.dismiss()
+                            onCancel()
+                        }
+                    }else{
+                        it
+                    }
                 }
                 .setCancelable(false)
                 .create()

@@ -18,12 +18,12 @@ import java.io.IOException
 class CrashReporter(val foldername:String? = null) {
 
     val folder = if(foldername!=null){
-        File(Environment.DIRECTORY_DOWNLOADS,foldername).path
+        File(Environment.DIRECTORY_DOWNLOADS,foldername)
     }else{
         File(Environment.DIRECTORY_DOWNLOADS)
     }
 
-    fun writeCrashToFile(throwable: Throwable,context: Context, folderName: String? = foldername,headerDetails:String? = null) {
+    fun writeCrashToFile(throwable: Throwable,context: Context, folderName: String? = foldername,headerDetails:String? = null): String {
         val crashText = """
         ===== CRASH REPORT =====
         Time: ${System.currentTimeMillis()}
@@ -48,12 +48,12 @@ class CrashReporter(val foldername:String? = null) {
         ${getDeviceInfo()}
     """.trimIndent()
 
-        writeToDownloads(
+        return writeToDownloads(
             text = crashText,
             context = context,
             folderName = folderName,
             baseFilename = throwable::class.simpleName.toString()
-        ).getOrNull()?.path
+        ).getOrNull()?.path.toString()
     }
 
     private fun getCauseChain(throwable: Throwable): String {

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- For /storage/emulated/0/Download -->
+    <external-path
+        name="external_downloads"
+        path="Download/" />
+
+    <!-- For any folder under Download -->
+    <external-path
+        name="downloads_root"
+        path="." />
+
+    <!-- For /storage/emulated/0 -->
+    <external-path
+        name="external_storage"
+        path="." />
+
+    <!-- For absolute paths (Android 7+ needs this) -->
+    <root-path
+        name="root"
+        path="." />
+
+    <!-- For accessing cache directory -->
+    <cache-path
+        name="cache"
+        path="." />
+</paths>

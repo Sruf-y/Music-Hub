@@ -19,23 +19,20 @@ import Presentation.SongsPage.MainSongsColumn
 import SrufComposeComponents.MyModalBottomSheet
 import SrufComposeComponents.Text
 import android.Manifest
-import android.app.Activity
-import android.content.Context
+import android.app.PendingIntent
+import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AlertDialogLayout
+import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseInOutElastic
@@ -55,22 +52,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -83,7 +78,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
 import androidx.navigation.compose.rememberNavController
 import com.aacomposetest.ui.theme.SrufTheme
@@ -99,24 +93,24 @@ import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination
-import androidx.navigation.Navigator
-import androidx.navigation.NavigatorProvider
-import androidx.navigation.compose.DialogNavigator
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import androidx.savedstate.SavedState
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.MyPrefs.putCursorValue
+import com.aacomposetest.CrashReporter
 import com.aacomposetest.Functions.map
-import com.aacomposetest.R
+import com.aacomposetest.MyApplication
+import com.aacomposetest.MyApplication.Companion.allertPoster
+import com.aacomposetest.MyApplication.Companion.crashLogger
+import com.aacomposetest.NotificationPoster
+import com.aacomposetest.NotificationPoster.Companion.openMediaStoreUriPendingIntent
 import com.aacomposetest.TryTo
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.serializer
 import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.BottomSheets.ResponsivePlayerBS
@@ -356,7 +350,7 @@ class MainActivityView : ComponentActivity() {
    
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
 @Composable
 private fun ParentContainer(
    activity: ComponentActivity,
@@ -418,12 +412,7 @@ private fun ParentContainer(
       ) {
          val scope = rememberCoroutineScope()
          
-         val songBS_Config = rememberBottomSheetConfig()
          
-         val songPlayerBS_State = rememberBottomSheetState(
-            initialDetent = songBS_Config.peekDetent?: SheetDetent.Hidden,
-            detents = songBS_Config.detents
-         )
          
          
          Box(modifier = Modifier
@@ -433,38 +422,10 @@ private fun ParentContainer(
             .systemBarsPadding()
          ) {
             
-            val allPlaylists by ListFeedingVM.SortedPlaylists.filteredPlaylists.collectAsState(
-               emptyList()
-            )
-            
             val prefs by lazy {
                MyPrefs.getPrefs(activity)
             }
             
-            val songsListState = rememberSaveable(saver = LazyListState.Saver) {
-               LazyListState(
-                  firstVisibleItemIndex = prefs.getInt(
-                     MyPrefs._prefs_songListstate_FirstItem.name,
-                     0
-                  ),
-                  firstVisibleItemScrollOffset = prefs.getInt(
-                     MyPrefs._prefs_songListState_Offset.name,
-                     0
-                  )
-               )
-            }
-            val playlistsListState = rememberSaveable(saver = LazyListState.Saver) {
-               LazyListState(
-                  firstVisibleItemIndex = prefs.getInt(
-                     MyPrefs._prefs_playlistsListState_FirstItem.name,
-                     0
-                  ),
-                  firstVisibleItemScrollOffset = prefs.getInt(
-                     MyPrefs._prefs_playlistsListState_Offset.name,
-                     0
-                  )
-               )
-            }
             
             Box(
                modifier = Modifier
@@ -485,41 +446,6 @@ private fun ParentContainer(
             ) {
                
                
-               
-               // Save scroll position for the [All Songs] page
-               LaunchedEffect(songsListState) {
-                  snapshotFlow {
-                     songsListState.firstVisibleItemIndex to songsListState.firstVisibleItemScrollOffset
-                  }
-                     .debounce(500L)
-                     .collectLatest { (firstItem, offset) ->
-                        prefs.edit {
-                           putCursorValue(
-                              MyPrefs._prefs_songListstate_FirstItem,
-                              firstItem
-                           )
-                           putCursorValue(MyPrefs._prefs_songListState_Offset, offset)
-                        }
-                     }
-               }
-               // Save scroll position for the [All Playlists] page
-               LaunchedEffect(playlistsListState) {
-                  snapshotFlow {
-                     playlistsListState.firstVisibleItemIndex to playlistsListState.firstVisibleItemScrollOffset
-                  }
-                     .debounce(500L)
-                     .collectLatest { (firstItem, offset) ->
-                        prefs.edit {
-                           putInt(
-                              MyPrefs._prefs_playlistsListState_FirstItem.name,
-                              firstItem
-                           )
-                           putInt(MyPrefs._prefs_playlistsListState_Offset.name, offset)
-                        }
-                     }
-               }
-               
-               
                val refreshBoxState = rememberPullToRefreshState()
                
                
@@ -529,174 +455,72 @@ private fun ParentContainer(
                 * Manages navigation inside the [Main Pager] container.
                 * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
                 * */
+               
+               
+               
+               
+               val contextRef = LocalContext.current
                MyNavigation(
-                  startDestination = MainPager,
+                  startDestination = {
+                     BS_PlayerHolder.BSHolder
+                  }.invoke(),
                   navController = navController
                ) {
                   
                   
-                     composable<MainPager> {
-                        val initialPage =
-                           remember { prefs.getCursorValue(MyPrefs._prefs_PagerPosition, 0) }
-                        MainPager.invoke(initialPage) { newPage ->
-                           when (newPage) {
-                              
-                              // Main songs page
-                              0 -> {
-                                 
-                                 
-                                 PullToRefreshBox(
-                                    state = refreshBoxState,
-                                    modifier = Modifier
-                                       .fillMaxSize()
-                                       .padding(bottom = songBS_Config.bottomHeight),
-                                    isRefreshing = refreshState.state,
-                                    onRefresh = {
-                                       refreshState.state = true
-                                       refreshState.onRefresh.invoke()
-                                    }
-                                 ) {
-                                    
-                                    
-                                    MainSongsColumn(
-                                       modifier = Modifier.fillMaxSize(),
-                                       settingsBottomSheetVM = globalBottomSheetVM,
-                                       state = songsListState
-                                    )
-                                 }
-                              }
-                              
-                              // Playlists page
-                              1 -> {
-                                 // State yet unused for the playlist viewing dropdown menu.
-                                 val playlistsPageMoreMenuState by remember {
-                                    mutableStateOf(
-                                       false
-                                    )
-                                 }
-                                 
-                                 PlaylistsPage(
-                                    playlists = allPlaylists,
-                                    state = playlistsListState,
-                                    onPlaylistClick = {
-                                       navController.navigate(PlaylistViewPage(it.title)) {
-                                          launchSingleTop = true
-                                          restoreState = true
-                                       }
-                                    },
-                                    onPlusClick = {
-                                       globalBottomSheetVM
-                                          .show { isFocusHeld ->
-                                             PlaylistAddOrEdit_Content(
-                                                allPlaylists,
-                                                bottomSheetVM = globalBottomSheetVM,
-                                                isFocusHeld = isFocusHeld
-                                             )
-                                          }
-                                    },
-                                    onPlaylistOptionsClick = { playlist, menuIsOpen ->
-                                       DropdownMenu(
-                                          expanded = menuIsOpen.value,
-                                          onDismissRequest = {
-                                             menuIsOpen.value = false
-                                          }
-                                       ) {
-                                          
-                                          
-                                          DropdownMenuItem(
-                                             text = { Text("Delete") },
-                                             onClick = {
-                                                
-                                                globalBottomSheetVM
-                                                   .show {
-                                                      PlaylistDelete_Content(
-                                                         playlist = playlist,
-                                                         bottomSheetVM = globalBottomSheetVM
-                                                      )
-                                                   }
-                                                
-                                                menuIsOpen.value = false
-                                             }
-                                          )
-                                          
-                                       }
-                                       
-                                    }
-                                 )
-                              }
-                           }
-                           
-                           
-                        }
-                        
-                     }
+                  composable<BS_PlayerHolder.BSHolder> {
                      
-                     composable<PlaylistViewPage> {
-                        val args = it.toRoute<PlaylistViewPage>()
-                        
-                        val playlistViewingLazyListState =
-                           rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
-                        
-                        
-                        
-                        PlaylistViewing(
-                           playlistTitle = args.title,
-                           lazyListState = playlistViewingLazyListState,
-                           exoPlayerVM = exoPlayerVM,
-                           onBack = {
-                              navController.popBackStack()
-                           },
-                           bottomPadding = songBS_Config.bottomHeight,
-                           plusButtonClick = {
-                              navController.navigate(PlaylistAddSongsPage(args.title)) {
-                                 launchSingleTop = true
-                                 restoreState = true
-                              }
-                           },
+                     BS_PlayerHolder.BSHolder.invoke(
+                        startDestination = MainPager,
+                        prefs = prefs,
+                        globalNavController = navController,
+                        refreshBoxState = refreshBoxState,
+                        refreshState = refreshState,
+                        globalBottomSheetVM = globalBottomSheetVM,
+                        onClickAddPlaylist = { args ->
+                           navController.safeNavigate(PlaylistAddSongsPage(args.title))
+                        },
+                        onBottomSheetClick = {
+                           
+                           TryTo {
+                              navController.safeNavigate(FullscreenPlayer)
+                           }
+                        }
+                     )
+                  }
+                  
+                  
+                  
+                  composable<FullscreenPlayer>(
+                     enterTransition = {
+                        val duration = 250
+                        slideIntoContainer(
+                           AnimatedContentTransitionScope.SlideDirection.Up,
+                           animationSpec = tween(duration, easing = EaseInOut)
+                        )
+                     },
+                     popExitTransition = {
+                        val duration = 250
+                        slideOutOfContainer(
+                           AnimatedContentTransitionScope.SlideDirection.Down,
+                           animationSpec = tween(duration, easing = EaseInOut)
                         )
                      }
-                     
-                  
-                  
-                  
-                  
-                     composable<FullscreenPlayer>(
-                        enterTransition = {
-                           val duration = 250
-                           scope.launch {
-                              songBS_Config.animateVisibilityTo(0f,tween(duration))
-                           }
-                           
-                           slideIntoContainer(
-                              AnimatedContentTransitionScope.SlideDirection.Up,
-                              animationSpec = tween(duration, easing = EaseInOut)
-                           )
-                        },
-                        exitTransition = {
-                           val duration = 250
-                           scope.launch {
-                              songBS_Config.animateVisibilityTo(1f,tween(duration))
-                           }
-                           
-                           slideOutOfContainer(
-                              AnimatedContentTransitionScope.SlideDirection.Down,
-                              animationSpec = tween(duration)
-                           )
-                        }
-                     ) {
-                        Box(modifier = Modifier
+                  ) {
+                     Box(
+                        modifier = Modifier
                            .fillMaxSize()
                            .safeDrawingPadding()
-                        ){
-                           FullscreenPlayer.invoke()
-                        }
+                     ) {
+                        FullscreenPlayer.invoke()
                      }
+                  }
                   
                   
                   composable<PlaylistAddSongsPage>(
                      enterTransition = {
                         scope.launch(Dispatchers.Main) {
-                           songBS_Config.animateVisibilityTo(0f,tween(250))
+                           //songBS_Config.animateVisibilityTo(0f,tween(250))
                         }
                         
                         slideIntoContainer(
@@ -706,7 +530,7 @@ private fun ParentContainer(
                      },// page is navigated TO normally
                      popExitTransition = {
                         scope.launch(Dispatchers.Main) {
-                           songBS_Config.animateVisibilityTo(1f,tween(250))
+                           //songBS_Config.animateVisibilityTo(1f,tween(250))
                         }
                         
                         slideOutOfContainer(
@@ -719,12 +543,6 @@ private fun ParentContainer(
                      
                      val playlistTitle = args.title
                      
-                     LaunchedEffect(Unit) {
-                        scope.launch {
-                           songBS_Config.animateVisibilityTo(0f,tween(5000))
-                        }
-                     }
-                     
                      val addsongstoplaylistState =
                         rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
                      
@@ -736,28 +554,6 @@ private fun ParentContainer(
                         }
                      )
                   }
-                  
-               }
-               
-               
-               /**
-                * Bottom sheet can be "Enabled" or "Disabled" by controlling this value, which is also attached to its alpha for propper animation
-                * */
-               if (songBS_Config.alpha.value > 0f) {
-                  val curSong by myExoPlayer.currentlyPlayingSong.collectAsState()
-                  ResponsivePlayerBS(
-                     modifier = Modifier.alpha(songBS_Config.alpha.value),
-                     state = songPlayerBS_State,
-                     currentSong = curSong,
-                     onBackgroundClick = {
-                        TryTo {
-                           
-                           navController.safeNavigate(FullscreenPlayer)
-                        }
-                        
-                     }
-                  )
-                  
                   
                }
                

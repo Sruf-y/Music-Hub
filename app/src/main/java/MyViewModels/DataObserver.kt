@@ -35,8 +35,11 @@ class DataObserverViewModel<T>(
    private fun startUpdater(){
       if(updaterJob == null){
          updaterJob = viewModelScope.launch {
-            updateProgress()
-            delay(delayMillis)
+            while(true){
+               updateProgress()
+               delay(delayMillis)
+            }
+            
          }
       }
    }
