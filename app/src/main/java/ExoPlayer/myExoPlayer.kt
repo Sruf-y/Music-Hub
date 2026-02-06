@@ -27,6 +27,7 @@ import com.aacomposetest.Functions.getRandom
 import com.aacomposetest.Log
 import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
+import com.aacomposetest.tryTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 
 object myExoPlayer {
 
@@ -361,9 +363,40 @@ object myExoPlayer {
             putCursorValue(MyPrefs._prefs_LastPlaylistTitle,playlistTitle?:"")
         }
     }
-
-
-
+    
+    
+    private fun playActionLogError(){
+        tryTo {
+            MyApplication.crashLogger.writeTextToFIle(
+                text = """
+                        During Play action, current song was not found in current playlist:
+                        Current Song:
+                        ${
+                    if(currentlyPlayingSong.value!=null){
+                        Json.encodeToString(Song.serializer(),currentlyPlayingSong.value!!)
+                    }else{
+                        "NULL"
+                    }
+                    
+                }
+                        
+                        Current Playlist:
+                        ${
+                    if(curPlaylistVM.playlist.value!=null){
+                        Json.encodeToString(Playlist.serializer(),curPlaylistVM.playlist.value!!)
+                    }
+                    else "NULL"
+                }
+                        
+                        Song exists in playlist:
+                        ${curPlaylistVM.playlist.value?.songsIdList?.contains(currentlyPlayingSong.value?.id)}
+                    """.trimIndent(),
+                filename = "PlayerIssue",
+                context = MyApplication.instance
+            )
+        }
+    }
+    
     /**
      * Plays previous song in playlist.
      *
@@ -373,6 +406,8 @@ object myExoPlayer {
         allowWrapAround: Boolean = false,
         onError: () -> Unit = {
             Toast.makeText(MyApplication.instance, "CurSong not found", Toast.LENGTH_SHORT).show()
+            
+            playActionLogError()
         }
     ) {
 
@@ -489,7 +524,6 @@ object myExoPlayer {
         }
     }
 
-
     /**
      * Plays the next song in the current playlist.
      *
@@ -499,6 +533,7 @@ object myExoPlayer {
         allowLoop: Boolean = true,
         onError: () -> Unit = {
             Toast.makeText(MyApplication.instance, "CurSong not found", Toast.LENGTH_SHORT).show()
+            playActionLogError()
         },
     ) {
 

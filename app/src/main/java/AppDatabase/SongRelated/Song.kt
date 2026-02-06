@@ -6,8 +6,9 @@ import android.net.Uri
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 import java.io.File
-
+@Serializable
 @Entity(tableName = "songs")
 data class Song (
     @PrimaryKey(autoGenerate = false)
@@ -89,7 +90,7 @@ data class Song (
 
         val defaultTitle = "<unknown>"
 
-        fun emptySong(id: Long = 0,title:String =defaultTitle):Song{
+        fun emptySong(id: Long = -1,title:String =defaultTitle):Song{
             return Song(
                 id = id,
                 songUri = "",

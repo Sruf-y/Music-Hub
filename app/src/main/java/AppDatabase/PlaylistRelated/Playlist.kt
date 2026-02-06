@@ -8,6 +8,7 @@ import com.aacomposetest.Functions
 import com.aacomposetest.MyApplication
 import java.io.File
 import com.aacomposetest.R
+import kotlinx.serialization.Serializable
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.random.nextLong
@@ -18,6 +19,7 @@ import kotlin.random.nextLong
  * Songs can be moved around, added and removed at will.
  *
  * */
+@Serializable
 class Playlist(
     var title: String
 ) {

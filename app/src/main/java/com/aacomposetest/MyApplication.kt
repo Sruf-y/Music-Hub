@@ -22,7 +22,6 @@ import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
 import com.aacomposetest.NotificationPoster.Companion.openMediaStoreUriPendingIntent
 import com.aacomposetest.Services.MusicService
-import java.io.File
 
 class MyApplication: Application(), ImageLoaderFactory {
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -183,7 +182,7 @@ fun Log(message:String,type:String = "i"){
 
 }
 
-fun TryTo(action:()->Unit){
+fun tryTo(action:()->Unit){
     try {
        action.invoke()
     }catch (ex: Exception){}

@@ -22,6 +22,14 @@ class CrashReporter(val foldername:String? = null) {
     }else{
         File(Environment.DIRECTORY_DOWNLOADS)
     }
+    fun writeTextToFIle(text:String, filename: String, context: Context, folderName: String? = foldername): String{
+        return writeToDownloads(
+            text = text,
+            context = context,
+            folderName = folderName,
+            baseFilename = filename
+        ).getOrNull()?.path.toString()
+    }
 
     fun writeCrashToFile(throwable: Throwable,context: Context, folderName: String? = foldername,headerDetails:String? = null): String {
         val crashText = """

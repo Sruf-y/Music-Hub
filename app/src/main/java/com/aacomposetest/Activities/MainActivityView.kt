@@ -8,19 +8,15 @@ import MyViewModels.SongsViewModel
 import MyViewModels.rememberRefreshState
 import Navigation.Destinations.BS_PlayerHolder
 import Navigation.Destinations.BS_PlayerHolder.MainPager
-import Navigation.Destinations.BS_PlayerHolder.PlaylistViewPage
 import Navigation.Destinations.StandaloneLocations.FullscreenPlayer
 import Navigation.Destinations.StandaloneLocations.PlaylistAddSongsPage
 import Navigation.NavExtensions.safeNavigate
 import Navigation.SafeDrawer
 import Presentation.Navigation.DrawerStandardLayout
 import Presentation.Navigation.MyNavigation
-import Presentation.SongsPage.MainSongsColumn
 import SrufComposeComponents.MyModalBottomSheet
 import SrufComposeComponents.Text
 import android.Manifest
-import android.app.PendingIntent
-import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.os.Bundle
 import android.os.Handler
@@ -32,7 +28,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseInOutElastic
@@ -52,11 +47,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,10 +57,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -78,7 +68,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
 import androidx.navigation.compose.rememberNavController
 import com.aacomposetest.ui.theme.SrufTheme
 import com.composables.core.SheetDetent
@@ -96,28 +85,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.aacomposetest.Classes.MyPrefs
-import com.aacomposetest.Classes.MyPrefs.getCursorValue
-import com.aacomposetest.Classes.MyPrefs.putCursorValue
-import com.aacomposetest.CrashReporter
 import com.aacomposetest.Functions.map
-import com.aacomposetest.MyApplication
-import com.aacomposetest.MyApplication.Companion.allertPoster
-import com.aacomposetest.MyApplication.Companion.crashLogger
-import com.aacomposetest.NotificationPoster
-import com.aacomposetest.NotificationPoster.Companion.openMediaStoreUriPendingIntent
-import com.aacomposetest.TryTo
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
+import com.aacomposetest.tryTo
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.serializer
-import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
-import ui.components.BottomSheets.Content.PlaylistDelete_Content
-import ui.components.BottomSheets.ResponsivePlayerBS
-import ui.components.BottomSheets.rememberBottomSheetConfig
 import ui.components.Pages.AddSongsToPlaylistPage
-import ui.components.Pages.PlaylistViewing
-import ui.components.Pages.PlaylistsPage
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
 
@@ -482,7 +454,7 @@ private fun ParentContainer(
                         },
                         onBottomSheetClick = {
                            
-                           TryTo {
+                           tryTo {
                               navController.safeNavigate(FullscreenPlayer)
                            }
                         }
