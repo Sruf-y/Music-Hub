@@ -3,7 +3,7 @@ package com.aacomposetest
 import AppDatabase.PlaylistRelated.Playlist
 import ExoPlayer.myExoPlayer
 import MyViewModels.FileWatcher
-import Presentation.FullscreenPlayer.Lyrics
+import MyViewModels.LyricsManager
 import android.Manifest
 import android.app.Activity
 import android.app.Application
@@ -102,7 +102,7 @@ class MyApplication: Application(), ImageLoaderFactory {
         } }
         
         val lyricsFolderWatcher:FileWatcher by lazy { FileWatcher(
-            Lyrics.getFolder(instance)
+            LyricsManager.getDir(instance)
         ).apply {
             startWatching()
         } }

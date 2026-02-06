@@ -39,42 +39,19 @@ fun IconButton(
     /**Float scalar. Must be between 0f and 1f*/
     iconSize:Size = IconButtonDefaults.iconSize,
     iconTint:Color = IconButtonDefaults.iconTint(),
-    enabled: Boolean = true,
-    onclick:(()->Unit)? = null
+    ripple:Indication? = ripple(bounded = false),
+    enabled:Boolean = true,
+    onclick:(()->Unit)
 ) {
-
-    Box(
+    _baseIconButton(
+        data = resId,
         modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Button(
-            onClick = {
-                if(enabled) {
-                    onclick?.invoke()
-                }
-            },
-            colors = ButtonColors(
-                containerColor = Color.Transparent,
-                contentColor = Color.White,
-                disabledContentColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent
-            ),
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxSize()
-        ) {}
-
-        Icon(
-            painter = painterResource(resId),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth(iconSize.width)
-                .fillMaxHeight(iconSize.height),
-            tint = iconTint
-        )
-    }
-
-
+        iconSize= iconSize,
+        iconTint = iconTint,
+        ripple = ripple,
+        enabled = enabled,
+        onclick = onclick
+    )
 }
 
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
@@ -87,36 +64,68 @@ fun IconButton(
     iconTint:Color = IconButtonDefaults.iconTint(),
     ripple:Indication? = ripple(bounded = false),
     enabled:Boolean = true,
-    onclick:(()->Unit)? = null
+    onclick:(()->Unit)
 ) {
+    _baseIconButton(
+        data = imageVector,
+        modifier = modifier,
+        iconSize= iconSize,
+        iconTint = iconTint,
+        ripple = ripple,
+        enabled = enabled,
+        onclick = onclick
+    )
+}
 
-
+@Composable
+private fun _baseIconButton(
+    data: Any,
+    modifier: Modifier,
+    /**Float scalar. Must be between 0f and 1f*/
+    iconSize: Size,
+    iconTint: Color,
+    ripple: Indication?,
+    enabled: Boolean,
+    onclick: (() -> Unit),
+) {
     Box(
-        modifier = modifier
-            .run{
+        modifier = modifier.run {
                 if (enabled) {
                     clickable(
                         onClick = {
-                            onclick?.invoke()
-                        },
-                        indication = ripple, // This adds the ripple effect
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
+                            onclick.invoke()
+                        }, indication = ripple, // This adds the ripple effect
+                        interactionSource = remember { MutableInteractionSource() })
                 } else {
                     this
                 }
-            },
-        contentAlignment = Alignment.Center
+            }, contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = imageVector,
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth(iconSize.width)
-                .fillMaxHeight(iconSize.height)
-                .align(Alignment.Center),
-            tint = iconTint
-        )
+        when {
+            data is ImageVector -> {
+                Icon(
+                    imageVector = data,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth(iconSize.width)
+                        .fillMaxHeight(iconSize.height)
+                        .align(Alignment.Center),
+                    tint = iconTint
+                )
+            }
+            
+            data is Int -> {
+                Icon(
+                    painter = painterResource(data),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth(iconSize.width)
+                        .fillMaxHeight(iconSize.height),
+                    tint = iconTint
+                )
+            }
+        }
+        
     }
 }
 

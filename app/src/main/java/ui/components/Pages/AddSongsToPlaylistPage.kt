@@ -144,7 +144,9 @@ fun AddSongsToPlaylistPage(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .size(40.dp)
-                    )
+                    ){
+                    
+                    }
 
                     DropdownMenu(expanded = menuShown, onDismissRequest = {
                         menuShown = false

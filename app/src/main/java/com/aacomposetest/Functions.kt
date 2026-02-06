@@ -281,7 +281,8 @@ object Functions {
         }
 
         fun saveAsJson(context: Context, filename:String, data:Any,parent:File=context.filesDir,onFinished:(suspend ()->Unit)? = null) {
-
+            val _filename = filename.replace(".json","")
+            
             CoroutineScope(Dispatchers.IO).launch {
                 jsonMutex.withLock {
                     if(!parent.exists()){
@@ -289,7 +290,7 @@ object Functions {
                     }
 
                     val json=Gson().toJson(data);
-                    val Filename= "$filename.json"
+                    val Filename= "$_filename.json"
 
                     File(parent,Filename).writeText(json)
 
@@ -317,19 +318,29 @@ object Functions {
                 Filename = "$filename.json"
 
             val file = File(parent, Filename)
-
-
-            return withContext(Dispatchers.IO) {
-                if (file.exists()) {
-                    val loadedFile = file.readText()
-                    val type = object : TypeToken<T>() {}.type
-                    val readData: T = Gson().fromJson(loadedFile, type)
-                    return@withContext readData
-                }
-                return@withContext null
-            }
+            
+            return loadFromJson(file)
         }
-
+        
+        suspend inline fun <reified T> loadFromJson(file: File?): T? {
+            
+            if(file!=null) {
+                return withContext(Dispatchers.IO) {
+                    if (file.exists()) {
+                        val loadedFile = file.readText()
+                        val type = object : TypeToken<T>() {}.type
+                        val readData: T = Gson().fromJson(loadedFile, type)
+                        return@withContext readData
+                    }
+                    return@withContext null
+                }
+            }
+            else {
+                return null
+            }
+            
+        }
+        
         inline fun <reified T> syncLoadFromJson(
             context: Context,
             filename: String,
@@ -353,24 +364,7 @@ object Functions {
             return null
 
         }
-
-        suspend inline fun <reified T> loadFromJson(file: File?): T? {
-
-            return withContext(Dispatchers.IO) {
-                file?.let {
-                    if (file.exists()) {
-                        val loadedFile = file.readText()
-                        val type = object : TypeToken<T>() {}.type
-                        val readData: T = Gson().fromJson(loadedFile, type)
-                        return@withContext readData
-                    }
-                    return@withContext null
-                }
-                return@withContext null
-
-            }
-        }
-
+        
         inline fun <reified T> syncLoadFromJson(file: File?): T? {
 
 
