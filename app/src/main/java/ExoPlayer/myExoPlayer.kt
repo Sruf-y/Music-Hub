@@ -27,6 +27,7 @@ import com.aacomposetest.Functions.getRandom
 import com.aacomposetest.Log
 import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
+import com.aacomposetest.MyApplication.Companion.JsonFormat
 import com.aacomposetest.tryTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -373,7 +374,7 @@ object myExoPlayer {
                         Current Song:
                         ${
                     if(currentlyPlayingSong.value!=null){
-                        Json.encodeToString(Song.serializer(),currentlyPlayingSong.value!!)
+                        JsonFormat.encodeToString(Song.serializer(),currentlyPlayingSong.value!!)
                     }else{
                         "NULL"
                     }
@@ -383,7 +384,7 @@ object myExoPlayer {
                         Current Playlist:
                         ${
                     if(curPlaylistVM.playlist.value!=null){
-                        Json.encodeToString(Playlist.serializer(),curPlaylistVM.playlist.value!!)
+                        JsonFormat.encodeToString(Playlist.serializer(),curPlaylistVM.playlist.value!!)
                     }
                     else "NULL"
                 }

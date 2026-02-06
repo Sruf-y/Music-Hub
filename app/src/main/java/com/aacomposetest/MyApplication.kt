@@ -22,6 +22,8 @@ import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
 import com.aacomposetest.NotificationPoster.Companion.openMediaStoreUriPendingIntent
 import com.aacomposetest.Services.MusicService
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
 
 class MyApplication: Application(), ImageLoaderFactory {
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -161,6 +163,12 @@ class MyApplication: Application(), ImageLoaderFactory {
                 .show()
             
         }
+        
+        @OptIn(ExperimentalSerializationApi::class)
+        val JsonFormat = Json {
+            prettyPrint = true
+            prettyPrintIndent = "   "
+        }
     }
 
     object MusicNotification{
@@ -168,6 +176,8 @@ class MyApplication: Application(), ImageLoaderFactory {
         const val name = "Music Player"
 
     }
+    
+    
 }
 
 fun Log(message:String,type:String = "i"){
