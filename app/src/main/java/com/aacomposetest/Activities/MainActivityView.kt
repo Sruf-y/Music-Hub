@@ -23,6 +23,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -107,6 +108,8 @@ class MainActivityView : ComponentActivity() {
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
       
+      // No adjustment for text
+      window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
       
       val contextRef = this
       songViewModel = SongsViewModel(this)
@@ -142,6 +145,7 @@ class MainActivityView : ComponentActivity() {
             Surface(modifier = Modifier.fillMaxSize()) {
                
                MainView()
+               //AltPreview()
             }
             
          }

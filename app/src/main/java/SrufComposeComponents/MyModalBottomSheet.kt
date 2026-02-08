@@ -188,7 +188,8 @@ fun MyModalBottomSheet(
             .statusBarsPadding()
             .displayCutoutPadding()
             .navigationBarsPadding()
-            .imePadding()){
+            .imePadding()
+        ){
             BottomSheet(
                 modifier = Modifier
                     .padding(PaddingValues())

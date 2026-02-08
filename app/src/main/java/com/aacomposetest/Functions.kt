@@ -10,6 +10,9 @@ import android.os.FileObserver
 import android.os.FileObserver.CLOSE_WRITE
 import android.os.FileObserver.MOVE_SELF
 import android.util.Log
+import android.view.View
+import android.view.ViewTreeObserver
+import android.widget.TextView
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
@@ -18,6 +21,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.ViewModel
@@ -381,10 +386,82 @@ object Functions {
 
         }
     }
-
-
     
     
+    
+    
+    /**
+     * Short wrapper for
+     *
+     *      with(density){calculation}
+     * */
+    fun Dp.toPx(density: Density):Float = with(density){
+        this@toPx.toPx()
+    }
+    
+    /**
+     * Will fill the max size of the calculation given.
+     * */
+    fun View.fillMaxSize(
+        parentWidth: () -> Int,
+        parentHeight: () -> Int,
+    ) {
+        viewTreeObserver.addOnGlobalLayoutListener(
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    
+                    this@fillMaxSize.minimumHeight = parentHeight.invoke()
+                    this@fillMaxSize.minimumWidth = parentWidth.invoke()
+                    
+                    requestLayout()
+                }
+            }
+        )
+    }
+    /**
+     * Will fill the max size of the calculation given.
+     * */
+    fun TextView.fillMaxSize(
+        parentWidth: () -> Int,
+        parentHeight: () -> Int,
+    ) {
+        viewTreeObserver.addOnGlobalLayoutListener(
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    
+                    this@fillMaxSize.minimumHeight = parentHeight.invoke()
+                    this@fillMaxSize.minimumWidth = parentWidth.invoke()
+                    
+                    requestLayout()
+                }
+            }
+        )
+    }
+    /**
+     * Will TRY to fill the max size of the TextView's parent.
+     *
+     * Catches errors it causes itself.
+     * */
+    fun TextView.fillMaxSize() {
+        viewTreeObserver.addOnGlobalLayoutListener(
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    
+                    try {
+                        this@fillMaxSize.minimumHeight = (parent as View).height
+                        this@fillMaxSize.minimumWidth = (parent as View).width
+                        requestLayout()
+                    }catch (ex: Exception){}
+                    
+                    
+                    
+                }
+            }
+        )
+    }
 
 
 

@@ -11,8 +11,13 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Process
 import android.util.Log
+import android.view.View
+import android.view.ViewTreeObserver
 import android.view.WindowManager
+import android.widget.TextView
 import androidx.annotation.RequiresPermission
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
@@ -197,3 +202,4 @@ fun tryTo(action:()->Unit){
        action.invoke()
     }catch (ex: Exception){}
 }
+
