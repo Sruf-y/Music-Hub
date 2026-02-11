@@ -6,6 +6,7 @@ import AppDatabase.SongRelated.Song
 import AppDatabase.SongRelated.SongRepository
 import MyViewModels.FileWatcher.Companion.FileWatchListener
 import android.content.Context
+import com.aacomposetest.Classes.AutoStateFlow
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.Setting
@@ -104,33 +105,32 @@ object ListFeedingVM {
             _searchWord.value = word
         }
 
-        private val _sortTypeFlow = MutableStateFlow(
+        
+        val sortTypeFlow = AutoStateFlow(
             prefs.getCursorValue(
                 MyPrefs._prefs_globalSongsSortType,
-            SongSortType.DateAdded.toString()
+                SongSortType.DateAdded.toString()
             )
         )
-        val sortTypeFlow: StateFlow<String> = _sortTypeFlow.asStateFlow()
         fun setSortType(type:String){
-            _sortTypeFlow.value = type
+            sortTypeFlow.setValue(type)
         }
 
-        private val _sortDirectionFlow = MutableStateFlow(
+        val sortDirectionFlow = AutoStateFlow(
             prefs.getCursorValue(
                 MyPrefs._prefs_globalSongsSortDirection,
                 SongSortDirection.Ascending.toString()
             )
         )
-        val sortDirectionFlow: StateFlow<String> = _sortDirectionFlow.asStateFlow()
         fun setSortDirection(direction:String){
-            _sortDirectionFlow.value = direction
+            sortDirectionFlow.setValue(direction)
         }
 
         val sortedSongsFlow: StateFlow<List<Song>> =
             combine(
                 allSongs,
-                sortTypeFlow,
-                sortDirectionFlow
+                sortTypeFlow.stateFlow,
+                sortDirectionFlow.stateFlow
             ) { songs,sortType,sortDirection->
                 when(SongSortType.valueOf(sortType)){
                     SongSortType.DateAdded -> songs.sortedBy { it.id }
@@ -171,7 +171,7 @@ object ListFeedingVM {
 
         // I have removed filtering for playlists because its simply annoying. I might re-add it later in some way.
 
-        val filteredPlaylists: Flow<List<Playlist>> = allPlaylists
+        val filterePlaylists: Flow<List<Playlist>> = allPlaylists
 
 //        val filteredPlaylists: Flow<List<Playlist>> =
 //            combine(

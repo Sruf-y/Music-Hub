@@ -3,8 +3,6 @@ package Navigation.Destinations
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
 import MyViewModels.RefreshState
-import Navigation.Destinations.StandaloneLocations.FullscreenPlayer
-import Navigation.Destinations.StandaloneLocations.PlaylistAddSongsPage
 import Navigation.NavExtensions.safeNavigate
 import Presentation.Navigation.MyNavigation
 import Presentation.SongsPage.MainSongsColumn
@@ -67,8 +65,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.edit
 import androidx.navigation.NavController
-import androidx.navigation.NavHost
-import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
@@ -93,10 +89,10 @@ import ui.components.Pages.PlaylistViewing
 import ui.components.Pages.PlaylistsPage
 
 @Serializable
-object BS_PlayerHolder {
+object MenuBottomSheet_Holder {
    
    @Serializable
-   object BSHolder{
+   object PlayerBottomSheet_Frame{
       
       @Composable
       fun invoke(
@@ -106,7 +102,7 @@ object BS_PlayerHolder {
          refreshBoxState: PullToRefreshState,
          refreshState: RefreshState,
          globalBottomSheetVM: MyModalBottomSheet.ModalVM,
-         onClickAddPlaylist:(BS_PlayerHolder.PlaylistViewPage)->Unit,
+         onClickAddPlaylist:(MenuBottomSheet_Holder.PlaylistViewPage)->Unit,
          onBottomSheetClick:()->Unit
       ){
          val songBS_Config = rememberBottomSheetConfig()

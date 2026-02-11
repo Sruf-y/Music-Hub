@@ -1,13 +1,11 @@
 package com.aacomposetest.Activities
 
-import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
-import MyViewModels.rememberRefreshState
-import Navigation.Destinations.BS_PlayerHolder
-import Navigation.Destinations.BS_PlayerHolder.MainPager
+import Navigation.Destinations.MenuBottomSheet_Holder
+import Navigation.Destinations.MenuBottomSheet_Holder.MainPager
 import Navigation.Destinations.StandaloneLocations.FullscreenPlayer
 import Navigation.Destinations.StandaloneLocations.PlaylistAddSongsPage
 import Navigation.NavExtensions.safeNavigate
@@ -20,7 +18,6 @@ import android.Manifest
 import android.database.ContentObserver
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -54,10 +51,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -73,7 +68,6 @@ import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewModelScope
-import com.aacomposetest.Logs
 import com.aacomposetest.Services.MusicService
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.Dispatchers
@@ -392,15 +386,15 @@ private fun ParentContainer(
                val contextRef = LocalContext.current
                MyNavigation(
                   startDestination = {
-                     BS_PlayerHolder.BSHolder
+                     MenuBottomSheet_Holder.PlayerBottomSheet_Frame
                   }.invoke(),
                   navController = navController
                ) {
                   
                   
-                  composable<BS_PlayerHolder.BSHolder> {
+                  composable<MenuBottomSheet_Holder.PlayerBottomSheet_Frame> {
                      
-                     BS_PlayerHolder.BSHolder.invoke(
+                     MenuBottomSheet_Holder.PlayerBottomSheet_Frame.invoke(
                         startDestination = MainPager,
                         prefs = prefs,
                         globalNavController = navController,

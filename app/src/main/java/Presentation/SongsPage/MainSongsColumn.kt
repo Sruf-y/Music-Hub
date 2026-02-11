@@ -55,8 +55,8 @@ fun MainSongsColumn(
 
     val currentlyPlayingSong by myExoPlayer.currentlyPlayingSong.collectAsState()
 
-    val curentSortType by ListFeedingVM.SortedSongs.sortTypeFlow.collectAsState()
-    val curentSortDirection by ListFeedingVM.SortedSongs.sortDirectionFlow.collectAsState()
+    val curentSortType by ListFeedingVM.SortedSongs.sortTypeFlow.stateFlow.collectAsState()
+    val curentSortDirection by ListFeedingVM.SortedSongs.sortDirectionFlow.stateFlow.collectAsState()
 
     val prefs = remember { MyPrefs.getPrefs(contextRef) }
 

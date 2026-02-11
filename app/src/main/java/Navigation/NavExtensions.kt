@@ -1,10 +1,8 @@
 package Navigation
 
-import Navigation.Destinations.BS_PlayerHolder
 import androidx.navigation.NavHostController
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
 
 object NavExtensions {
