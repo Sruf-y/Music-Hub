@@ -171,7 +171,7 @@ object ListFeedingVM {
 
         // I have removed filtering for playlists because its simply annoying. I might re-add it later in some way.
 
-        val filterePlaylists: Flow<List<Playlist>> = allPlaylists
+        val filteredPlaylists: Flow<List<Playlist>> = allPlaylists
 
 //        val filteredPlaylists: Flow<List<Playlist>> =
 //            combine(
