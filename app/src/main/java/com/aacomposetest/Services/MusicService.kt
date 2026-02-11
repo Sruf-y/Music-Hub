@@ -148,7 +148,7 @@ class MusicService: LifecycleService() {
 
                 Log.i(Logs.SERVICE.name, "isPlaying value is ${it}")
 
-                playPauseLogic(it, this@MusicService)
+                playPauseLogic(it)
 
 
 
@@ -311,7 +311,7 @@ class MusicService: LifecycleService() {
     
 
     
-    fun playPauseLogic(isPlaying:Boolean = myExoPlayer.isPlaying.value,context:Context = MyApplication.instance){
+    fun playPauseLogic(isPlaying:Boolean = myExoPlayer.isPlaying.value){
 
         if (isPlaying || isAppTaskStillExists()) {
             sendToForeground()

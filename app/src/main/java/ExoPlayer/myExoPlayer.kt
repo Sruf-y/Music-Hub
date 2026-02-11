@@ -609,7 +609,7 @@ object myExoPlayer {
     fun toggle(){
 
         exoPlayer?.let {
-            if( isPlaying.value){
+            if(isPlaying.value){
                 pause()
             }else{
                 start()

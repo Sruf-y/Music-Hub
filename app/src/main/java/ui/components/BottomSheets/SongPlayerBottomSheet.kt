@@ -28,14 +28,17 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -57,9 +60,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -275,8 +280,6 @@ fun ResponsivePlayerBS(
    onBackgroundClick:()->Unit = {}
 ) {
    
-   val isPlaying by myExoPlayer.isPlaying.collectAsState(false)
-   
    
    // middle would be if both members of the equation were divided by 2, but the middle does create some flickers.
    /**
@@ -393,6 +396,9 @@ fun ResponsivePlayerBS(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResponsiveSlider(
+   modifier:Modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = 12.dp),
    enabled: Boolean = true
 ) {
    
@@ -401,7 +407,6 @@ fun ResponsiveSlider(
    
    val range by remember(currentSong) {
       derivedStateOf {
-         
          0f..(currentSong?.duration?.toFloat()?:1f)
       }
    }
@@ -432,15 +437,44 @@ fun ResponsiveSlider(
    
    val shape = remember { RoundedCornerShape(100) }
    
-   Column(
-      modifier = Modifier
-         .fillMaxWidth()
-         .padding(horizontal = 12.dp),
-      horizontalAlignment = Alignment.CenterHorizontally
+   Box(
+      modifier = modifier
    ){
+      
+      // Time text
+      Box(modifier = Modifier
+         .fillMaxWidth()
+      ){
+         val duration = remember(currentSong) { currentSong?.duration?:1L }
+         
+         val fontSize = remember { 14.sp }
+         
+         Text(
+            if(duration<5*1000) calculatedSliderPosition.toLong().toString().padStart(4, '0')
+            else
+               DateUtils.formatElapsedTime((calculatedSliderPosition/1000).toLong()),
+            color = Color.White,
+            modifier = Modifier.align(Alignment.TopStart),
+            fontSize = fontSize
+         )
+         
+         
+         
+         Text(
+            if(duration<5*1000) range.endInclusive.toLong().toString().padStart(4, '0')
+            else
+               DateUtils.formatElapsedTime((range.endInclusive/1000).toLong()),
+            color = Color.White,
+            modifier = Modifier.align(Alignment.TopEnd),
+            fontSize = fontSize
+         )
+      }
+      
       Slider(
          modifier = Modifier
-            .padding(horizontal = 13.dp),
+            .padding(horizontal = 13.dp)
+            .padding(top = 20.dp)
+            .wrapContentHeight(),
          value = calculatedSliderPosition,
          onValueChange = { newValue ->
             
@@ -467,13 +501,13 @@ fun ResponsiveSlider(
          },
          track = {
             
-            
             val borderColor: Color? = remember { MyColor.Black }
             
             Box(
                Modifier
                   .fillMaxWidth()
-                  .height(8.dp).shadow(elevation = 3.dp)
+                  .height(8.dp)
+                  .shadow(elevation = 3.dp, shape = shape)
                   .clip(shape)
                   .background(MyColor.SeparatorGray)
                   .let {
@@ -488,7 +522,6 @@ fun ResponsiveSlider(
                      }
                   }
             
-            
             ) {
                Box(
                   modifier = Modifier
@@ -500,51 +533,11 @@ fun ResponsiveSlider(
          },
          enabled = enabled
       )
-      
-      // Time text
-      Box(modifier = Modifier
-         .fillMaxWidth()
-      ){
-         val duration = remember(currentSong) { currentSong?.duration?:1L }
-         
-         Text(
-            if(duration<5*1000) calculatedSliderPosition.toLong().toString().padStart(4, '0')
-            else
-               DateUtils.formatElapsedTime((calculatedSliderPosition/1000).toLong()),
-            color = Color.White,
-            modifier = Modifier.align(Alignment.CenterStart)
-         )
-         
-         
-         
-         Text(
-            if(duration<5*1000) range.endInclusive.toLong().toString().padStart(4, '0')
-            else
-               DateUtils.formatElapsedTime((range.endInclusive/1000).toLong()),
-            color = Color.White,
-            modifier = Modifier.align(Alignment.CenterEnd)
-         )
-      }
    }
    
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ResponsivePlayerPreview(){
-   SrufTheme {
-      Surface {
-         Box(modifier = Modifier
-            .fillMaxSize()
-            .background(MyColor.White)){
-            
-            
-            
-         }
-      }
-   }
-   
-}
+
 
 @Composable
 private fun SmallPlayer(
@@ -616,6 +609,7 @@ private fun SmallPlayer(
       }
    }
 }
+
 @Composable
 private fun BigPlayer(
    isExpandedEnabled: Boolean,
@@ -657,7 +651,7 @@ private fun BigPlayer(
                contentAlignment = Alignment.Center
             ) {
                headText.invoke()
-               
+               // TODO move this logic out of the bottom sheet entirely and in the fullScreen verion. Or make a "More" options button on the bottom sheet's bottom i guess.
                IconButton(
                   imageVector =
                      if(isShuffling)

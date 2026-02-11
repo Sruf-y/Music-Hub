@@ -1,10 +1,12 @@
 package SrufComposeComponents
 
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -19,11 +21,15 @@ import androidx.compose.material3.Text as OriginalText
 fun Text(
     text: String,
     modifier: Modifier = Modifier,
-    style: TextStyle = LocalTextStyle.current,
+    style: TextStyle = LocalTextStyle.current.copy(
+        platformStyle = PlatformTextStyle(
+            includeFontPadding = false // remove font padding
+        )
+    ),
     textAlign: TextAlign? = null,
-    lineHeight: TextUnit = TextUnit.Unspecified,
-    fontSize: TextUnit = TextUnit.Unspecified,
-    letterSpacing: TextUnit = TextUnit.Unspecified,
+    lineHeight: TextUnit = TextStyle.Default.lineHeight,
+    fontSize: TextUnit = TextStyle.Default.fontSize,
+    letterSpacing: TextUnit = TextStyle.Default.letterSpacing,
     fontWeight: FontWeight? = null,
     color: Color = Theme.colorScheme().inverseSurface, // text color
     singleLine: Boolean = false,
