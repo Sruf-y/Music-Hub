@@ -49,13 +49,11 @@ object myExoPlayer {
 
     val playerSettings: PlayerSettings =
         PlayerSettings(shuffle = false)
+    
 
 
 
-
-
-
-
+    // Handles song position saving.
     private val progressVM = DataObserverViewModel<Long>(
         delayMillis = 250,
         initialValue = prefs?.getCursorValue(MyPrefs._prefs_LastSongPosition, 0) ?: 0,

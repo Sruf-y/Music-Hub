@@ -19,8 +19,6 @@ import SrufComposeComponents.Text
 import android.Manifest
 import android.database.ContentObserver
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import android.view.WindowManager
@@ -74,9 +72,7 @@ import com.aacomposetest.ui.theme.SrufTheme
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
 import kotlinx.coroutines.launch
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import com.aacomposetest.Classes.MyPermissionLauncher
 import com.aacomposetest.Logs
 import com.aacomposetest.Services.MusicService
 import com.aacomposetest.ui.theme.MyColor
@@ -85,8 +81,11 @@ import kotlinx.coroutines.FlowPreview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.aacomposetest.Classes.ContentObserver_Impl
 import com.aacomposetest.Classes.MyPrefs
+import com.aacomposetest.Classes.createPermissionLauncher
 import com.aacomposetest.Functions.map
+import com.aacomposetest.MyApplication
 import com.aacomposetest.tryTo
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
@@ -98,9 +97,52 @@ class MainActivityView : ComponentActivity() {
    
    private  var mediastoreObserver: ContentObserver? = null
    
-   val exoPlayerVM = ExoPlayerViewModel().apply { progressVM.delayMillis = 250 }
+   val songViewModel: SongsViewModel = SongsViewModel(this)
    
-   lateinit var songViewModel: SongsViewModel
+   val refreshState = RefreshState()
+   
+   val hasNotificationPermission = mutableStateOf(false)
+   val notificationPermissionLauncher = createPermissionLauncher(
+      permission = Manifest.permission.POST_NOTIFICATIONS,
+      onFinish = {result->
+         
+         if(hasNotificationPermission.value != result) {
+            hasNotificationPermission.value = result
+         }
+         
+      }
+   )
+   
+   
+   val mediaPermissionLauncher = createPermissionLauncher(
+      permission = Manifest.permission.READ_MEDIA_AUDIO,
+      onGrant = {
+         songViewModel.viewModelScope.launch {
+            songViewModel.resyncALL_withMediaStore(
+               context = this@MainActivityView,
+               alsoPictures = true,
+               forceUpdate = true,
+               onFinish = {
+                  if (refreshState.state == true) {
+                     
+                     withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                           this@MainActivityView,
+                           "Update successful!",
+                           Toast.LENGTH_SHORT
+                        ).show()
+                     }
+                     
+                     refreshState.state = false
+                  }
+                  
+               }
+            )
+            
+         }
+      }
+   )
+   
    
    
    
@@ -111,8 +153,6 @@ class MainActivityView : ComponentActivity() {
       // No adjustment for text
       window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
       
-      val contextRef = this
-      songViewModel = SongsViewModel(this)
       
       
       val statusBarStyle = SystemBarStyle.auto(lightScrim = Color.Transparent.value.toInt(), darkScrim = Color.Transparent.value.toInt())
@@ -121,17 +161,20 @@ class MainActivityView : ComponentActivity() {
       /**
        * Hook database to MediaStore database
        */
-      mediastoreObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
-         override fun onChange(selfChange: Boolean) {
-            super.onChange(selfChange)
-            // Trigger a database update here
-            songViewModel.viewModelScope.launch {
-               songViewModel.resyncWithMediastore(contextRef, alsoPictures = true, forceUpdate = false)
+      mediastoreObserver = ContentObserver_Impl(
+         onAnyChange = { selfChange->
+            
+            with(songViewModel){
+               viewModelScope.launch {
+                  resyncALL_withMediaStore(MyApplication.instance, alsoPictures = true, forceUpdate = false)
+               }
             }
             
          }
-      }
-      mediastoreObserver?.apply {
+      ).apply {
+         /**
+          * Register the created implementation for updates from MediaStore
+          */
          contentResolver.registerContentObserver(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
             true, // notify for descendants
@@ -139,13 +182,20 @@ class MainActivityView : ComponentActivity() {
          )
       }
       
+      /**
+       * Remove cyclic refferencing by simply setting onRefresh later than the initialization of the state.
+       * */
+      refreshState.onRefresh = {
+         mediaPermissionLauncher.launch()
+      }
+      
+      
       
       setContent {
          SrufTheme {
             Surface(modifier = Modifier.fillMaxSize()) {
                
                MainView()
-               //AltPreview()
             }
             
          }
@@ -168,119 +218,31 @@ class MainActivityView : ComponentActivity() {
    @Composable
    private fun MainView(){
       
-      val globalBottomSheetVM :MyModalBottomSheet.ModalVM = viewModel()
+      val globalBottomSheetVM : MyModalBottomSheet.ModalVM = viewModel()
       val modalSettingsSheetState = rememberBottomSheetState(initialDetent = SheetDetent.Hidden)
       
       val contextRef = LocalContext.current
       
-      val refreshState = rememberRefreshState(false)
-      
-      val mediaPermLauncherAuto = MyPermissionLauncher.rememberLauncher(
-         onGrant = {
-            songViewModel.viewModelScope.launch {
-               songViewModel.resyncWithMediastore(
-                  context = contextRef,
-                  alsoPictures = true,
-                  forceUpdate = false,
-                  onFinish = {
-                     if (refreshState.state == true) {
-                        // Toast can only be done on Main thread
-                        withContext(Dispatchers.Main) {
-                           Toast.makeText(
-                              contextRef,
-                              "Update successful!",
-                              Toast.LENGTH_SHORT
-                           ).show()
-                        }
-                        
-                        refreshState.state = false
-                     }
-                  }
-               )
-               
-            }
-         },
-         onDeny = {
-            Toast.makeText(contextRef, "Media permission denied", Toast.LENGTH_SHORT)
-               .show()
-            
-            refreshState.state = false
-         }
-      )
-      
-      val mediaPermLauncherManual = MyPermissionLauncher.rememberLauncher(
-         onGrant = {
-            songViewModel.viewModelScope.launch {
-               songViewModel.resyncWithMediastore(
-                  context = contextRef,
-                  alsoPictures = true,
-                  forceUpdate = true,
-                  onFinish = {
-                     if (refreshState.state == true) {
-                        
-                        withContext(Dispatchers.Main) {
-                           Toast.makeText(
-                              contextRef,
-                              "Update successful!",
-                              Toast.LENGTH_SHORT
-                           ).show()
-                        }
-                        
-                        refreshState.state = false
-                     }
-                     
-                  }
-               )
-               
-            }
-         },
-         onDeny = {
-            Toast.makeText(contextRef, "Media permission denied", Toast.LENGTH_SHORT)
-               .show()
-            
-            refreshState.state = false
-         }
-      )
-      
-      var hasNotificationPermission by remember { mutableStateOf(false) }
-      val notificationPermissionLauncher = MyPermissionLauncher.rememberLauncher(
-         onFinish = {granted->
-            Log.i(Logs.PERMISSIONS.name,"Called notificationPermissionLauncher and received ${granted}")
-            // safety against recursive calling
-            if(hasNotificationPermission != granted) {
-               hasNotificationPermission = granted
-            }
-         }
-      )
-      
-      
-      val isPlaying by exoPlayerVM.isPlaying.collectAsStateWithLifecycle()
       
       
       /**
        * This is where the service is started.
        * */
-      LaunchedEffect(hasNotificationPermission, isPlaying) {
+      LaunchedEffect(hasNotificationPermission.value) {
          
-         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+         notificationPermissionLauncher.launch()
          
-         
-         if(hasNotificationPermission && myExoPlayer.isInitialized.value) {
+         if(hasNotificationPermission.value && myExoPlayer.isInitialized.value) {
             
             MusicService.handleOnAppStart(contextRef)
+            
          }
-      }
-      
-      // Requet permissions
-      LaunchedEffect(Unit) {
-         mediaPermLauncherAuto.launch(Manifest.permission.READ_MEDIA_AUDIO)
-         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
       }
       
       // Try running the query for the first time if i have the permissions
       LaunchedEffect(Unit) {
          try {
-            songViewModel.resyncWithMediastore(
+            songViewModel.resyncALL_withMediaStore(
                context = contextRef,
                alsoPictures = true,
                forceUpdate = false
@@ -298,15 +260,8 @@ class MainActivityView : ComponentActivity() {
       
       ParentContainer(
          activity = this@MainActivityView,
-         exoPlayerVM = exoPlayerVM,
          globalBottomSheetVM = globalBottomSheetVM,
-         refreshState = refreshState.apply {
-            onRefresh = {
-               mediaPermLauncherManual.launch(
-                  Manifest.permission.READ_MEDIA_AUDIO,
-               )
-            }
-         }
+         refreshState = refreshState
       )
       
       
@@ -330,7 +285,6 @@ class MainActivityView : ComponentActivity() {
 @Composable
 private fun ParentContainer(
    activity: ComponentActivity,
-   exoPlayerVM: ExoPlayerViewModel,
    globalBottomSheetVM: MyModalBottomSheet.ModalVM,
    refreshState: RefreshState
 ) {
@@ -342,9 +296,9 @@ private fun ParentContainer(
     * THIS EXCLUDES: Other Activities, Notifications, Widgets etc that are not inside the Main Activity View
     * */
    Surface(
-      modifier = Modifier.fillMaxSize(), color = tempBackgroundColor
+      modifier = Modifier.fillMaxSize(),
+      color = tempBackgroundColor
    ) {
-      
       
       val drawerState = rememberViewDrawerState(initialValue = ViewDrawerValue.Closed)
       val allSongs by ListFeedingVM.allSongs.collectAsState()

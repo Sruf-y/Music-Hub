@@ -113,13 +113,12 @@ object ListFeedingVM {
         val sortTypeFlow: StateFlow<String> = _sortTypeFlow.asStateFlow()
         fun setSortType(type:String){
             _sortTypeFlow.value = type
-
         }
 
         private val _sortDirectionFlow = MutableStateFlow(
             prefs.getCursorValue(
                 MyPrefs._prefs_globalSongsSortDirection,
-                SongSortDirection.Descending.toString()
+                SongSortDirection.Ascending.toString()
             )
         )
         val sortDirectionFlow: StateFlow<String> = _sortDirectionFlow.asStateFlow()
@@ -146,7 +145,7 @@ object ListFeedingVM {
                 }
             }.stateIn(
                 songsScope,
-                SharingStarted.Lazily,
+                SharingStarted.Eagerly,
                 emptyList()
             )
 

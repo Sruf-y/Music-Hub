@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
-class RefreshState(val rawState: MutableState<Boolean> = mutableStateOf(false), var onRefresh:()-> Unit = {}) {
+class RefreshState(rawState: MutableState<Boolean> = mutableStateOf(false), var onRefresh:()-> Unit = {}) {
 
     var state by rawState
 }
