@@ -9,10 +9,11 @@ import Presentation.SongsPage.MainSongsColumn
 import SrufComposeComponents.CustomPagerTab
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.KeyboardAwareBox
-import SrufComposeComponents.MyModalBottomSheet
 import SrufComposeComponents.NestedScrollingFront
+import SrufComposeComponents.SheetViewmodel
 import SrufComposeComponents.TabRowIndicator
 import SrufComposeComponents.Text
+import SrufComposeComponents.rememberBottomSheetInstance
 import android.content.SharedPreferences
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -101,7 +102,7 @@ object MenuBottomSheet_Holder {
          globalNavController: NavController,
          refreshBoxState: PullToRefreshState,
          refreshState: RefreshState,
-         globalBottomSheetVM: MyModalBottomSheet.ModalVM,
+         globalBottomSheetVM: SheetViewmodel,
          onClickAddPlaylist:(MenuBottomSheet_Holder.PlaylistViewPage)->Unit,
          onBottomSheetClick:()->Unit
       ){
@@ -218,6 +219,13 @@ object MenuBottomSheet_Holder {
                            )
                         }
                         
+                        val plusClickContent = rememberBottomSheetInstance {
+                           PlaylistAddOrEdit_Content(
+                              allPlaylists,
+                              bottomSheetVM = globalBottomSheetVM
+                           )
+                        }
+                        
                         PlaylistsPage(
                            playlists = allPlaylists,
                            state = playlistsListState,
@@ -226,13 +234,7 @@ object MenuBottomSheet_Holder {
                            },
                            onPlusClick = {
                               globalBottomSheetVM
-                                 .show { isFocusHeld ->
-                                    PlaylistAddOrEdit_Content(
-                                       allPlaylists,
-                                       bottomSheetVM = globalBottomSheetVM,
-                                       isFocusHeld = isFocusHeld
-                                    )
-                                 }
+                                 .addSheet(plusClickContent)
                            },
                            onPlaylistOptionsClick = { playlist, menuIsOpen ->
                               DropdownMenu(
@@ -242,18 +244,19 @@ object MenuBottomSheet_Holder {
                                  }
                               ) {
                                  
+                                 val deleteItemContent = rememberBottomSheetInstance {
+                                    PlaylistDelete_Content(
+                                       playlist = playlist,
+                                       bottomSheetVM = globalBottomSheetVM
+                                    )
+                                 }
                                  
                                  DropdownMenuItem(
                                     text = { Text("Delete") },
                                     onClick = {
                                        
                                        globalBottomSheetVM
-                                          .show {
-                                             PlaylistDelete_Content(
-                                                playlist = playlist,
-                                                bottomSheetVM = globalBottomSheetVM
-                                             )
-                                          }
+                                          .addSheet (deleteItemContent)
                                        
                                        menuIsOpen.value = false
                                     }

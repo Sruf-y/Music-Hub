@@ -4,7 +4,8 @@ import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
-import SrufComposeComponents.MyModalBottomSheet
+import SrufComposeComponents.SheetViewmodel
+import SrufComposeComponents.rememberBottomSheetInstance
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,12 +17,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.putCursorValue
 import com.aacomposetest.ui.theme.MyColor
+import kotlinx.coroutines.launch
 import ui.components.BottomSheets.Content.SongsSort_Content
 import ui.components.SongItem
 
@@ -46,8 +49,9 @@ fun MainSongsColumn(
             playlistTitle = null
             )
     },
-    settingsBottomSheetVM: MyModalBottomSheet.ModalVM? = null,
+    settingsBottomSheetVM: SheetViewmodel? = null,
 ) {
+    val scope = rememberCoroutineScope()
 
     val contextRef = LocalContext.current
 
@@ -59,6 +63,32 @@ fun MainSongsColumn(
     val curentSortDirection by ListFeedingVM.SortedSongs.sortDirectionFlow.stateFlow.collectAsState()
 
     val prefs = remember { MyPrefs.getPrefs(contextRef) }
+    
+    val songsSortContent = rememberBottomSheetInstance {
+        SongsSort_Content(
+            currentType = curentSortType,
+            currentDirection = curentSortDirection,
+            sortTypeOptions = ListFeedingVM.SongSortType.entries.map { it.name },
+            sortDirectionOptions = ListFeedingVM.SongSortDirection.entries.map { it.name },
+            onConfirm = { type, direction->
+                ListFeedingVM.SortedSongs.setSortType(type)
+                ListFeedingVM.SortedSongs.setSortDirection(direction)
+                
+                prefs.edit {
+                    putCursorValue(MyPrefs._prefs_globalSongsSortType,type)
+                    putCursorValue(MyPrefs._prefs_globalSongsSortDirection,direction)
+                }
+                
+                scope.launch {
+                    settingsBottomSheetVM?.dismissCurrent()
+                }
+            }, onCancel = {
+                scope.launch {
+                    settingsBottomSheetVM?.dismissCurrent()
+                }
+            }
+        )
+    }
 
     LazyColumn(
         modifier = modifier,
@@ -78,27 +108,7 @@ fun MainSongsColumn(
                 SortHeader(
                     songs = songs,
                     onFilterClick = {
-                        settingsBottomSheetVM?.show(){
-                            SongsSort_Content(
-                                currentType = curentSortType,
-                                currentDirection = curentSortDirection,
-                                sortTypeOptions = ListFeedingVM.SongSortType.entries.map { it.name },
-                                sortDirectionOptions = ListFeedingVM.SongSortDirection.entries.map { it.name },
-                                onConfirm = { type, direction->
-                                    ListFeedingVM.SortedSongs.setSortType(type)
-                                    ListFeedingVM.SortedSongs.setSortDirection(direction)
-
-                                    prefs.edit {
-                                        putCursorValue(MyPrefs._prefs_globalSongsSortType,type)
-                                        putCursorValue(MyPrefs._prefs_globalSongsSortDirection,direction)
-                                    }
-
-                                    settingsBottomSheetVM.dismissSheet()
-                                }, onCancel = {
-                                    settingsBottomSheetVM.dismissSheet()
-                                }
-                            )
-                        }
+                        settingsBottomSheetVM?.addSheet(songsSortContent)
                     }
                 )
             }

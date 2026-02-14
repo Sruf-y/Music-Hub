@@ -13,8 +13,11 @@ import Navigation.SafeDrawer
 import Presentation.Navigation.DrawerStandardLayout
 import Presentation.Navigation.MyNavigation
 import SrufComposeComponents.MyModalBottomSheet
+import SrufComposeComponents.SheetViewmodel
 import SrufComposeComponents.Text
 import android.Manifest
+import android.app.Activity
+import android.content.res.Configuration
 import android.database.ContentObserver
 import android.os.Bundle
 import android.provider.MediaStore
@@ -24,6 +27,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseInOutElastic
@@ -59,6 +63,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -80,6 +85,7 @@ import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.createPermissionLauncher
 import com.aacomposetest.Functions.map
 import com.aacomposetest.MyApplication
+import com.aacomposetest.buildSystemBarsStyle
 import com.aacomposetest.tryTo
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
@@ -147,10 +153,9 @@ class MainActivityView : ComponentActivity() {
       // No adjustment for text
       window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
       
-      
-      
-      val statusBarStyle = SystemBarStyle.auto(lightScrim = Color.Transparent.value.toInt(), darkScrim = Color.Transparent.value.toInt())
-      enableEdgeToEdge(statusBarStyle = statusBarStyle)
+      val statusBarStyle = buildSystemBarsStyle()
+      val navigationBarStyle = buildSystemBarsStyle(darkMode = MyColor.Black.toArgb())
+      enableEdgeToEdge(statusBarStyle = statusBarStyle, navigationBarStyle = navigationBarStyle)
       
       /**
        * Hook database to MediaStore database
@@ -189,7 +194,8 @@ class MainActivityView : ComponentActivity() {
          SrufTheme {
             Surface(modifier = Modifier.fillMaxSize()) {
                
-               MainView()
+               MainView2()
+               //Preview()
             }
             
          }
@@ -208,11 +214,76 @@ class MainActivityView : ComponentActivity() {
    
    
    
+//   @OptIn(FlowPreview::class)
+//   @Composable
+//   private fun MainView(){
+//
+//      val globalBottomSheetVM : MyModalBottomSheet.ModalVM = viewModel()
+//      val modalSettingsSheetState = rememberBottomSheetState(initialDetent = SheetDetent.Hidden)
+//
+//      val contextRef = LocalContext.current
+//
+//
+//
+//      /**
+//       * This is where the service is started.
+//       * */
+//      LaunchedEffect(hasNotificationPermission.value) {
+//
+//         notificationPermissionLauncher.launch()
+//
+//         if(hasNotificationPermission.value && myExoPlayer.isInitialized.value) {
+//
+//            MusicService.handleOnAppStart(contextRef)
+//
+//         }
+//      }
+//
+//      // Try running the query for the first time if i have the permissions
+//      LaunchedEffect(Unit) {
+//         try {
+//            songViewModel.resyncALL_withMediaStore(
+//               context = contextRef,
+//               alsoPictures = true,
+//               forceUpdate = false
+//            )
+//         }catch (ex: Exception){
+//            ex.printStackTrace()
+//         }
+//      }
+//
+//
+//
+//
+//
+//
+//
+//      ParentContainer(
+//         activity = this@MainActivityView,
+//         globalBottomSheetVM = globalBottomSheetVM,
+//         refreshState = refreshState
+//      )
+//
+//
+//
+//      /**
+//       * Global settings BottomSheet
+//       *
+//       * i HAVE to change this to a stack of bottom sheets moderated by the ViewModel later
+//       * */
+//      MyModalBottomSheet(
+//         viewModel = globalBottomSheetVM,
+//         sheetState = modalSettingsSheetState,
+//         bottomSheetContent = globalBottomSheetVM.content.value
+//      )
+//
+//   }
+   
    @OptIn(FlowPreview::class)
    @Composable
-   private fun MainView(){
+   private fun MainView2(){
       
-      val globalBottomSheetVM : MyModalBottomSheet.ModalVM = viewModel()
+      val globalBottomSheetVM : SheetViewmodel = viewModel()
       val modalSettingsSheetState = rememberBottomSheetState(initialDetent = SheetDetent.Hidden)
       
       val contextRef = LocalContext.current
@@ -248,38 +319,26 @@ class MainActivityView : ComponentActivity() {
       
       
       
+         
+            ParentContainer(
+               activity = this@MainActivityView,
+               globalBottomSheetVM = globalBottomSheetVM,
+               refreshState = refreshState
+            )
+         
+         
       
       
-      
-      
-      ParentContainer(
-         activity = this@MainActivityView,
-         globalBottomSheetVM = globalBottomSheetVM,
-         refreshState = refreshState
-      )
-      
-      
-      
-      /**
-       * Global settings BottomSheet
-       *
-       * i HAVE to change this to a stack of bottom sheets moderated by the ViewModel later
-       * */
-      MyModalBottomSheet(
-         viewModel = globalBottomSheetVM,
-         sheetState = modalSettingsSheetState,
-         bottomSheetContent = globalBottomSheetVM.content.value
-      )
+      MyModalBottomSheet(modifier = Modifier.fillMaxSize(),state = globalBottomSheetVM)
       
    }
-   
 }
 
 @OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
 @Composable
 private fun ParentContainer(
    activity: ComponentActivity,
-   globalBottomSheetVM: MyModalBottomSheet.ModalVM,
+   globalBottomSheetVM: SheetViewmodel,
    refreshState: RefreshState
 ) {
    

@@ -1,7 +1,9 @@
 package com.aacomposetest
 
+import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -13,6 +15,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.TextView
+import androidx.activity.SystemBarStyle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
@@ -20,12 +23,15 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.ViewModel
+import com.aacomposetest.ui.theme.MyColor
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
@@ -498,6 +504,20 @@ object Functions {
             Log.e("ERROR","File does not exist")
             return null
         }
+    }
+}
+
+fun Activity.isDarkMode() = when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+    Configuration.UI_MODE_NIGHT_YES -> true
+    else -> false
+}
+
+fun Activity.buildSystemBarsStyle(lightMode:Int = MyColor.SemiTransparentLight.toArgb(),darkMode:Int = MyColor.SemiTransparentDark.toArgb()): SystemBarStyle{
+    
+    return if (isDarkMode()) {
+        SystemBarStyle.dark(darkMode) // Dark mode = red
+    } else {
+        SystemBarStyle.light(lightMode, MyColor.Black.toArgb()) // Light mode
     }
 }
 

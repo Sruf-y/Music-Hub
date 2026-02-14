@@ -21,15 +21,19 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -37,6 +41,7 @@ import androidx.core.view.forEach
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.NestedScrollView
 import com.aacomposetest.Functions.fillMaxSize
+import com.aacomposetest.Log
 
 private class CustomEditText(context: Context): AppCompatEditText(context){
    
@@ -271,6 +276,13 @@ fun CustomTextField(
       }
    }
    
+   val keyboardController = LocalSoftwareKeyboardController.current
+   
+   DisposableEffect(Unit) {
+      onDispose {
+         keyboardController?.hide()
+      }
+   }
    
    Box(
       modifier = modifier
@@ -293,6 +305,12 @@ fun CustomTextField(
       AndroidView(
          factory = { context ->
             
+            // Focus change listener
+            editText.onFocusChangeListener = object : View.OnFocusChangeListener{
+               override fun onFocusChange(v: View?, hasFocus: Boolean) {
+               // Nothing to add since i made the Disposable Effect take care of it like Google does.
+               }
+            }
             
             // Text change listener
             editText.addTextChangedListener(object : TextWatcher {

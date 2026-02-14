@@ -12,6 +12,7 @@ import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
 
+// Used for Player bottom sheet, just a coagulation class.
 data class BottomSheetConfig(
     val peekHeight: Dp? = BSConfigDefaults.peekHeight,
     val expandedHeight: Dp = BSConfigDefaults.expandedHeight,
