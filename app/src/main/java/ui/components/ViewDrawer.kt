@@ -37,6 +37,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 
 /**
@@ -216,7 +217,7 @@ fun ViewDrawer(
     val mainFrameId = remember { View.generateViewId() }
     val composeMainId = remember { View.generateViewId() }
     val composeDrawerId = rememberSaveable { View.generateViewId() }
-
+    
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
@@ -269,9 +270,7 @@ fun ViewDrawer(
             }
         },
         update = { view ->
-
-
-
+            
             state.setDrawer(view)
 
             state.initDrawer()
@@ -279,14 +278,18 @@ fun ViewDrawer(
             // Set content to the ComposeViews
             val composeMain = view.findViewById<ComposeView>(composeMainId)
             val composeDrawer = view.findViewById<ComposeView>(composeDrawerId)
-
+            
+            
             composeMain.setContent {
+                
                 mainContent.invoke()
             }
-
+            
+            
             composeDrawer.setContent {
                 drawerContent.invoke()
             }
+            
         }
     )
 }

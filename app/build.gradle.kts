@@ -4,9 +4,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    
+    id("kotlin-parcelize")
 
     id("com.google.devtools.ksp")
-    //id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0" // or match your Kotlin version
     kotlin("plugin.serialization") version "2.2.0"
 }
 

@@ -80,6 +80,8 @@ private class CustomEditText(context: Context): AppCompatEditText(context){
 
 /**
  * Textfield that tries to scroll to avoid having the cursor under the IME.
+ * @param lineSpacingMultiplier the size of a line relative to the size of a line. Basically above 1f it adds space, under it removes (not reccomanded)
+ * @param onEditTextSetUp No real need for this but it allows the styling of the editText ONLY on initial creation and not on any recompositions.
  * */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -91,6 +93,7 @@ fun CustomTextField(
    modifier: Modifier = Modifier,
    textGravity: Int = Gravity.START or Gravity.TOP,
    onEditTextSetUp:(EditText)->Unit = {},
+   lineSpacingMultiplier:Float = 1f,
    enabled:Boolean = true
 ) {
    val view = LocalView.current
@@ -311,6 +314,8 @@ fun CustomTextField(
                // Nothing to add since i made the Disposable Effect take care of it like Google does.
                }
             }
+            // Setup lineSpacing
+            editText.setLineSpacing(0f,lineSpacingMultiplier)
             
             // Text change listener
             editText.addTextChangedListener(object : TextWatcher {
@@ -370,12 +375,15 @@ fun CustomTextField(
                }
                // Text size
                this.textSize = textSize
+               
                // Text color
                setTextColor(color.toArgb())
                
                gravity = textGravity
                
                this.isEnabled = enabled
+               
+               editText.setLineSpacing(0f,lineSpacingMultiplier)
             }
             
          },

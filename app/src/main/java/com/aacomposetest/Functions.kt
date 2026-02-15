@@ -25,7 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
@@ -521,3 +523,12 @@ fun Activity.buildSystemBarsStyle(lightMode:Int = MyColor.SemiTransparentLight.t
     }
 }
 
+
+fun Constraints.of(placeable: Placeable): Constraints{
+    return this.copy(
+        minWidth = placeable.width,
+        maxWidth = placeable.width,
+        minHeight = placeable.height,
+        maxHeight = placeable.height
+    )
+}

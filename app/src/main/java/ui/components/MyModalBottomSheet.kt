@@ -1,4 +1,4 @@
-package SrufComposeComponents
+package ui.components
 
 
 import androidx.activity.compose.BackHandler
@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -157,7 +158,7 @@ class SheetViewmodel(): ViewModel(){
                   .wrapContentSize()
                   .onGloballyPositioned {
                      intHeight = it.size.height
-                  },
+                  } then it.sheetModifier,
                contentPadding = config.contentPadding
             ) {
                it.content.invoke(this)
@@ -204,13 +205,12 @@ fun MyModalBottomSheet(
       }
    }
    
-   val backgroundA by remember {
+   val backgroundAlpha by remember {
       derivedStateOf {
          if (state.stack.size>0) {
             when {
                (state.stack[0].sheetState.targetDetent == SheetDetent.FullyExpanded) -> state.stack[0].sheetState.progress // fade in
                else -> 1f - state.stack[0].sheetState.progress // fade out
-               
             }
          } else {
             0f
@@ -226,7 +226,7 @@ fun MyModalBottomSheet(
       // Render the overlay
       if(state.stack.size>0) {
          BlackBackground(
-            alpha = backgroundA,
+            alpha = backgroundAlpha,
             color = backgroundTint
          )
       }
@@ -279,11 +279,9 @@ class SheetConfig private constructor() {
 data class BottomSheetInstance(
    var sheetState: BottomSheetState,
    val sheetConfig:@Composable ()-> SheetConfig,
+   val sheetModifier:Modifier = Modifier.shadow(5.dp),
    val content: @Composable BottomSheetScope.() -> Unit,
 )
-{
-
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

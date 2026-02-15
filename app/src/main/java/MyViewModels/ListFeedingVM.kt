@@ -8,8 +8,8 @@ import MyViewModels.FileWatcher.Companion.FileWatchListener
 import android.content.Context
 import com.aacomposetest.Classes.AutoStateFlow
 import com.aacomposetest.Classes.MyPrefs
-import com.aacomposetest.Classes.MyPrefs.getCursorValue
 import com.aacomposetest.Classes.Setting
+import com.aacomposetest.Classes.getCursorValue
 import com.aacomposetest.MyApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 object ListFeedingVM {
 
     private val prefs by lazy {
-        MyPrefs.getPrefs(MyApplication.instance)
+        MyPrefs.getPrefs(MyApplication.instance, MyPrefs.PrefDirs.VisualData)
     }
 
     private val IOscope = CoroutineScope(Dispatchers.IO)

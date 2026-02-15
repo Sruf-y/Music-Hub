@@ -4,8 +4,8 @@ import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
-import SrufComposeComponents.SheetViewmodel
-import SrufComposeComponents.rememberBottomSheetInstance
+import ui.components.SheetViewmodel
+import ui.components.rememberBottomSheetInstance
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import com.aacomposetest.Classes.MyPrefs
-import com.aacomposetest.Classes.MyPrefs.putCursorValue
+import com.aacomposetest.Classes.putCursorValue
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.launch
 import ui.components.BottomSheets.Content.SongsSort_Content
@@ -62,7 +62,7 @@ fun MainSongsColumn(
     val curentSortType by ListFeedingVM.SortedSongs.sortTypeFlow.stateFlow.collectAsState()
     val curentSortDirection by ListFeedingVM.SortedSongs.sortDirectionFlow.stateFlow.collectAsState()
 
-    val prefs = remember { MyPrefs.getPrefs(contextRef) }
+    val prefs = remember { MyPrefs.getPrefs(contextRef, MyPrefs.PrefDirs.VisualData) }
     
     val songsSortContent = rememberBottomSheetInstance {
         SongsSort_Content(

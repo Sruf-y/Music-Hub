@@ -4,30 +4,27 @@ import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
-import Navigation.Destinations.MenuBottomSheet_Holder
-import Navigation.Destinations.MenuBottomSheet_Holder.MainPager
-import Navigation.Destinations.StandaloneLocations.FullscreenPlayer
-import Navigation.Destinations.StandaloneLocations.PlaylistAddSongsPage
+import Navigation.Destinations.FullscreenPlayer
+import Navigation.Destinations.MainPager
+import Navigation.Destinations.PlayerBottomSheet_Frame
+import Navigation.Destinations.PlaylistAddSongsPage
 import Navigation.NavExtensions.safeNavigate
 import Navigation.SafeDrawer
+import Presentation.FullscreenPlayer.FullscreenPlayerPage
 import Presentation.Navigation.DrawerStandardLayout
 import Presentation.Navigation.MyNavigation
-import SrufComposeComponents.MyModalBottomSheet
-import SrufComposeComponents.SheetViewmodel
+import ui.components.MyModalBottomSheet
+import ui.components.SheetViewmodel
 import SrufComposeComponents.Text
 import android.Manifest
-import android.app.Activity
-import android.content.res.Configuration
 import android.database.ContentObserver
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseInOutElastic
@@ -55,12 +52,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -69,8 +64,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import com.aacomposetest.ui.theme.SrufTheme
-import com.composables.core.SheetDetent
-import com.composables.core.rememberBottomSheetState
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewModelScope
 import com.aacomposetest.Services.MusicService
@@ -84,6 +77,7 @@ import com.aacomposetest.Classes.ContentObserver_Impl
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.createPermissionLauncher
 import com.aacomposetest.Functions.map
+import com.aacomposetest.Log
 import com.aacomposetest.MyApplication
 import com.aacomposetest.buildSystemBarsStyle
 import com.aacomposetest.tryTo
@@ -194,8 +188,8 @@ class MainActivityView : ComponentActivity() {
          SrufTheme {
             Surface(modifier = Modifier.fillMaxSize()) {
                
-               MainView2()
-               //Preview()
+               MainView()
+               //DestinationTesting()
             }
             
          }
@@ -212,79 +206,11 @@ class MainActivityView : ComponentActivity() {
       super.onResume()
    }
    
-   
-   
-//   @OptIn(FlowPreview::class)
-//   @Composable
-//   private fun MainView(){
-//
-//      val globalBottomSheetVM : MyModalBottomSheet.ModalVM = viewModel()
-//      val modalSettingsSheetState = rememberBottomSheetState(initialDetent = SheetDetent.Hidden)
-//
-//      val contextRef = LocalContext.current
-//
-//
-//
-//      /**
-//       * This is where the service is started.
-//       * */
-//      LaunchedEffect(hasNotificationPermission.value) {
-//
-//         notificationPermissionLauncher.launch()
-//
-//         if(hasNotificationPermission.value && myExoPlayer.isInitialized.value) {
-//
-//            MusicService.handleOnAppStart(contextRef)
-//
-//         }
-//      }
-//
-//      // Try running the query for the first time if i have the permissions
-//      LaunchedEffect(Unit) {
-//         try {
-//            songViewModel.resyncALL_withMediaStore(
-//               context = contextRef,
-//               alsoPictures = true,
-//               forceUpdate = false
-//            )
-//         }catch (ex: Exception){
-//            ex.printStackTrace()
-//         }
-//      }
-//
-//
-//
-//
-//
-//
-//
-//      ParentContainer(
-//         activity = this@MainActivityView,
-//         globalBottomSheetVM = globalBottomSheetVM,
-//         refreshState = refreshState
-//      )
-//
-//
-//
-//      /**
-//       * Global settings BottomSheet
-//       *
-//       * i HAVE to change this to a stack of bottom sheets moderated by the ViewModel later
-//       * */
-//      MyModalBottomSheet(
-//         viewModel = globalBottomSheetVM,
-//         sheetState = modalSettingsSheetState,
-//         bottomSheetContent = globalBottomSheetVM.content.value
-//      )
-//
-//   }
-   
    @OptIn(FlowPreview::class)
    @Composable
-   private fun MainView2(){
+   private fun MainView(){
       
       val globalBottomSheetVM : SheetViewmodel = viewModel()
-      val modalSettingsSheetState = rememberBottomSheetState(initialDetent = SheetDetent.Hidden)
       
       val contextRef = LocalContext.current
       
@@ -319,16 +245,12 @@ class MainActivityView : ComponentActivity() {
       
       
       
-         
-            ParentContainer(
-               activity = this@MainActivityView,
-               globalBottomSheetVM = globalBottomSheetVM,
-               refreshState = refreshState
-            )
-         
-         
       
-      
+      ParentContainer(
+         activity = this@MainActivityView,
+         globalBottomSheetVM = globalBottomSheetVM,
+         refreshState = refreshState
+      )
       MyModalBottomSheet(modifier = Modifier.fillMaxSize(),state = globalBottomSheetVM)
       
    }
@@ -355,6 +277,17 @@ private fun ParentContainer(
       
       val drawerState = rememberViewDrawerState(initialValue = ViewDrawerValue.Closed)
       val allSongs by ListFeedingVM.allSongs.collectAsState()
+      
+      val navController = rememberNavController()
+      
+      val playerBottomSheetContent_NavController = rememberNavController()
+      
+      
+      
+      
+      
+      
+      
       SafeDrawer(
          state = drawerState,
          drawerContent = {
@@ -391,11 +324,8 @@ private fun ParentContainer(
                   }
                }
             }
-         }
-      ) {
-         val scope = rememberCoroutineScope()
-         
-         
+         },
+         mainContent =  {
          
          
          Box(modifier = Modifier
@@ -406,7 +336,7 @@ private fun ParentContainer(
          ) {
             
             val prefs by lazy {
-               MyPrefs.getPrefs(activity)
+               MyPrefs.getPrefs(activity, MyPrefs.PrefDirs.VisualData)
             }
             
             
@@ -432,31 +362,34 @@ private fun ParentContainer(
                val refreshBoxState = rememberPullToRefreshState()
                
                
-               val navController = rememberNavController()
+               
+               LaunchedEffect(Unit) {
+                  
+                  navController.addOnDestinationChangedListener { navController,navDestination,savedState->
+                     Log("Navigated to ${navDestination.route}")
+                  }
+               }
                
                /**
                 * Manages navigation inside the [Main Pager] container.
                 * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
                 * */
                
-               
-               
-               
                val contextRef = LocalContext.current
                MyNavigation(
                   startDestination = {
-                     MenuBottomSheet_Holder.PlayerBottomSheet_Frame
+                     PlayerBottomSheet_Frame
                   }.invoke(),
                   navController = navController
                ) {
                   
                   
-                  composable<MenuBottomSheet_Holder.PlayerBottomSheet_Frame> {
+                  composable<PlayerBottomSheet_Frame> {
                      
-                     MenuBottomSheet_Holder.PlayerBottomSheet_Frame.invoke(
+                     PlayerBottomSheet_Frame.invoke(
                         startDestination = MainPager,
                         prefs = prefs,
-                        globalNavController = navController,
+                        localNavController = playerBottomSheetContent_NavController,
                         refreshBoxState = refreshBoxState,
                         refreshState = refreshState,
                         globalBottomSheetVM = globalBottomSheetVM,
@@ -490,21 +423,18 @@ private fun ParentContainer(
                         )
                      }
                   ) {
-                     Box(
+                     
+                     FullscreenPlayerPage(
                         modifier = Modifier
                            .fillMaxSize()
                            .safeDrawingPadding()
-                     ) {
-                        FullscreenPlayer.invoke()
-                     }
+                     )
+                     
                   }
                   
                   
                   composable<PlaylistAddSongsPage>(
                      enterTransition = {
-                        scope.launch(Dispatchers.Main) {
-                           //songBS_Config.animateVisibilityTo(0f,tween(250))
-                        }
                         
                         slideIntoContainer(
                            AnimatedContentTransitionScope.SlideDirection.Up,
@@ -512,9 +442,6 @@ private fun ParentContainer(
                         )
                      },// page is navigated TO normally
                      popExitTransition = {
-                        scope.launch(Dispatchers.Main) {
-                           //songBS_Config.animateVisibilityTo(1f,tween(250))
-                        }
                         
                         slideOutOfContainer(
                            AnimatedContentTransitionScope.SlideDirection.Down,
@@ -545,6 +472,7 @@ private fun ParentContainer(
          }
          
       }
+      )
       
       
       
