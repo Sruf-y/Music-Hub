@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,8 +36,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onLayoutRectChanged
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachReversed
@@ -98,74 +103,76 @@ class SheetViewmodel(): ViewModel(){
          .displayCutoutPadding()
          .navigationBarsPadding()
          .imePadding()
-         .onGloballyPositioned {
-            parentHeight = it.size.height
+         .onSizeChanged(){
+            parentHeight = it.height
          }
       ){
          stack.forEachIndexed { index, it ->
-            
-            
-            var wasShown by remember { mutableStateOf(false) }
-            
-            // On Show
-            LaunchedEffect(Unit) {
-               if (it.sheetState.currentDetent == SheetDetent.Hidden && it.sheetState.isIdle) {
-                  it.sheetState.animateTo(SheetDetent.FullyExpanded)
-               }
-            }
-            
-            // On Dismiss
-            LaunchedEffect(it.sheetState.targetDetent, it.sheetState.currentDetent) {
+            key("bottomSheetStack_#${index}") {
                
-               if (it.sheetState.currentDetent == SheetDetent.FullyExpanded && wasShown == false) {
-                  wasShown = true
-               }
                
-               if (it.sheetState.targetDetent == SheetDetent.Hidden && it.sheetState.progress == 1f && wasShown) {
-                  // then it was hidden manually
-                  stack.remove(it)
-               }
-            }
-            
-            var intHeight by remember { mutableIntStateOf(0) }
-            val density = LocalDensity.current
-            
-            // Clickable Invisible Overlay
-            Box(
-               modifier = Modifier
-                  .fillMaxWidth()
-                  .height(with(density) { (parentHeight - intHeight).toDp() })
-                  .clickable(
-                     interactionSource = remember { MutableInteractionSource() },
-                     indication = null
-                  ) {
-                     
-                     if (it.sheetState.currentDetent == SheetDetent.FullyExpanded && it.sheetState.isIdle) {
-                        
-                        scope.launch {
-                           dismissCurrent()
-                        }
-                        
-                     }
+               // This is being used because initially the sheet is hidden and progress is 0, making it remove itself before being fully shown.
+               var wasShown by remember { mutableStateOf(false) }
+               
+               // On Show
+               LaunchedEffect(Unit) {
+                  if (it.sheetState.currentDetent == SheetDetent.Hidden && it.sheetState.isIdle) {
+                     it.sheetState.animateTo(SheetDetent.FullyExpanded)
                   }
-            )
-            
-            val config = it.sheetConfig()
-            BottomSheet(
-               it.sheetState,
-               shape = config.shape,
-               backgroundColor = config.backgroundColor,
-               modifier = Modifier
-                  .wrapContentSize()
-                  .onGloballyPositioned {
-                     intHeight = it.size.height
-                  } then it.sheetModifier,
-               contentPadding = config.contentPadding
-            ) {
-               it.content.invoke(this)
+               }
+               
+               // On Dismiss
+               LaunchedEffect(it.sheetState.targetDetent, it.sheetState.currentDetent) {
+                  
+                  if (it.sheetState.currentDetent == SheetDetent.FullyExpanded && wasShown == false) {
+                     wasShown = true
+                  }
+                  
+                  if (it.sheetState.targetDetent == SheetDetent.Hidden && it.sheetState.progress == 1f && wasShown) {
+                     // then it was hidden manually
+                     stack.remove(it)
+                  }
+               }
+               
+               var intHeight by remember { mutableIntStateOf(0) }
+               val density = LocalDensity.current
+               
+               // Clickable Invisible Overlay
+               Box(
+                  modifier = Modifier
+                     .fillMaxWidth()
+                     .height(with(density) { (parentHeight - intHeight).toDp() })
+                     .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                     ) {
+                        
+                        if (it.sheetState.currentDetent == SheetDetent.FullyExpanded && it.sheetState.isIdle) {
+                           
+                           scope.launch {
+                              dismissCurrent()
+                           }
+                           
+                        }
+                     }
+               )
+               
+               val config = it.sheetConfig()
+               BottomSheet(
+                  it.sheetState,
+                  shape = config.shape,
+                  backgroundColor = config.backgroundColor,
+                  modifier = Modifier
+                     .wrapContentSize()
+                     .onSizeChanged {
+                        intHeight = it.height
+                     } then it.sheetModifier,
+                  contentPadding = config.contentPadding
+               ) {
+                  it.content.invoke(this)
+               }
             }
          }
-         
          }
       }
    
