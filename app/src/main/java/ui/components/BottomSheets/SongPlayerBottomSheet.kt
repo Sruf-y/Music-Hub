@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,15 +31,12 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -59,14 +55,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,7 +71,6 @@ import coil.request.ImageRequest
 import com.aacomposetest.Functions.clickableNoRipple
 import com.aacomposetest.Functions.invert
 import com.aacomposetest.R
-import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.BottomSheet
@@ -84,6 +78,9 @@ import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import kotlinx.coroutines.delay
 import ui.components.LoopingText
+import kotlin.compareTo
+import kotlin.invoke
+import kotlin.math.roundToInt
 
 
 @Composable
@@ -328,7 +325,15 @@ fun ResponsivePlayerBS(
       ScalingBackground(
          modifier = Modifier
             .fillMaxSize()
-            .offset(y = backgroundYoffset.dp),
+            .layout{
+               measurable,constraints->
+               
+               val placeable = measurable.measure(constraints)
+               
+               layout(placeable.width, placeable.height) {
+                  placeable.place(0, 0+backgroundYoffset.roundToInt())
+               }
+            },
          blur = 3f,
          darkening = 0.5f,
          song = currentSong,
@@ -355,11 +360,17 @@ fun ResponsivePlayerBS(
       
       BigPlayer(
          isExpandedEnabled = isExpandedEnabled,
-         progressScalar = progressScalar,
+         modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer{
+               this.alpha = progressScalar
+            }
+            .clickableNoRipple(enabled = state.isIdle && progressScalar > 0f) {
+               onBackgroundClick.invoke()
+            },
          state = state,
          swapControls = swapControls,
          currentSong = currentSong,
-         onBackgroundClick = onBackgroundClick,
          onShuffle = onShuffle,
          slider = {
             ResponsiveSlider(
@@ -378,8 +389,12 @@ fun ResponsivePlayerBS(
       
       SmallPlayer(
          isMinimizedEnabled = isMinimizedEnabled,
-         height = peekHeight,
-         alpha = invertedProgressScalar,
+         modifier = Modifier
+            .fillMaxWidth()
+            .height(peekHeight)
+            .graphicsLayer{
+               alpha = invertedProgressScalar
+            },
          value = curPos.toFloat()/range.endInclusive,
          currentSong = currentSong,
          gotoSong = gotoSong
@@ -442,9 +457,7 @@ fun ResponsiveSlider(
    ){
       
       // Time text
-      Box(modifier = Modifier
-         .fillMaxWidth()
-      ){
+      Box(modifier = Modifier.fillMaxWidth()){
          val duration = remember(currentSong) { currentSong?.duration?:1L }
          
          val fontSize = remember { 14.sp }
@@ -542,19 +555,14 @@ fun ResponsiveSlider(
 @Composable
 private fun SmallPlayer(
    isMinimizedEnabled: Boolean,
-   height: Dp = 100.dp,
-   alpha: Float = 1f,
+   modifier:Modifier,
    @FloatRange(0.0, 1.0) value: Float,
    currentSong: Song?,
    iconSize: Dp = 40.dp,
    gotoSong: () -> Unit,
 ) {
    Box(
-      Modifier
-         .fillMaxWidth()
-         .height(height)
-         .alpha(alpha)
-   
+      modifier
    ) {
       val isPlaying by myExoPlayer.isPlaying.collectAsState()
       
@@ -613,11 +621,10 @@ private fun SmallPlayer(
 @Composable
 private fun BigPlayer(
    isExpandedEnabled: Boolean,
-   progressScalar: Float,
+   modifier:Modifier,
    state: BottomSheetState,
    swapControls: Boolean,
    currentSong: Song?,
-   onBackgroundClick:()-> Unit,
    slider:@Composable ()-> Unit,
    headText:@Composable ()->Unit = {
       Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -632,12 +639,7 @@ private fun BigPlayer(
    val isPlaying by myExoPlayer.isPlaying.collectAsState()
    
    LazyColumn(
-      modifier = Modifier
-         .fillMaxSize()
-         .alpha(progressScalar)
-         .clickableNoRipple(enabled = state.isIdle && progressScalar > 0f) {
-            onBackgroundClick.invoke()
-         },
+      modifier = modifier,
       verticalArrangement = Arrangement.SpaceEvenly,
       horizontalAlignment = Alignment.CenterHorizontally,
       reverseLayout = swapControls

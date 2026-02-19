@@ -294,8 +294,9 @@ private fun ParentContainer(
             DrawerStandardLayout(
                modifier = Modifier
                   .fillMaxHeight()
-                  .alpha(drawerState.currentOffset)
-                  //.width(250.dp)
+                  .graphicsLayer{
+                     this.alpha = drawerState.currentOffset
+                  }
                   .background(tempDrawerColor)
                   .pointerInput(Unit) {
                      detectTapGestures()
@@ -303,24 +304,19 @@ private fun ParentContainer(
                   .padding(
                      start = 10.dp,
                      top = 10.dp
-                  ),
-               header = {
-               
-               }
+                  )
             ) {
-               LazyColumn {
-                  items(
-                     items = allSongs,
-                     key = { item -> item.id }  // Only item, no index
-                  ) { song ->
-                     // Your item content
-                     Row(){
-                        Text("${song.id}|")
-                        
-                        Text("${song.timesPlayed}|")
-                        
-                        Text(song.title)
-                     }
+               items(
+                  items = allSongs,
+                  key = { item -> item.id }  // Only item, no index
+               ) { song ->
+                  // Your item content
+                  Row(){
+                     Text("${song.id}|")
+                     
+                     Text("${song.timesPlayed}|")
+                     
+                     Text(song.title)
                   }
                }
             }
@@ -344,17 +340,16 @@ private fun ParentContainer(
                modifier = Modifier
                   .fillMaxSize()
                   .graphicsLayer {
+                     shape = RoundedCornerShape(
+                        size = 20.dp.times(drawerState.currentOffset)
+                     )
+                     clip = true
                      val scalar = drawerState.currentOffset.map(0f, 1f, 1f, 0.8f)
                      
                      scaleX = scalar
                      scaleY = scalar
                      transformOrigin = TransformOrigin.Center
                   }
-                  .clip(
-                     shape = RoundedCornerShape(
-                        size = 20.dp.times(drawerState.currentOffset)
-                     )
-                  )
                   .background(MyColor.Background())
             ) {
                

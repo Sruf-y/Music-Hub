@@ -27,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.core.content.edit
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
@@ -255,8 +256,13 @@ object PlayerBottomSheet_Frame {
       
       if (songBS_Config.alpha.value > 0f) {
          val curSong by myExoPlayer.currentlyPlayingSong.collectAsState()
+         
          ResponsivePlayerBS(
-            modifier = Modifier.alpha(songBS_Config.alpha.value),
+            modifier = Modifier
+               .graphicsLayer{
+                  alpha = songBS_Config.alpha.value
+               }
+            ,
             state = songPlayerBS_State,
             currentSong = curSong,
             onBackgroundClick = {

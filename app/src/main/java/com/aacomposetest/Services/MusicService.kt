@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
 
 class MusicService: LifecycleService() {
     
-    var isStarted = false
     override fun onBind(intent: Intent): IBinder? {
         return super.onBind(intent)
     }
@@ -47,13 +46,7 @@ class MusicService: LifecycleService() {
 
         when(intent?.action){
             Actions.START.name->{
-
-                if(!isStarted) {
-                    sendToForeground()
-                    isStarted = true
-                }
-
-                
+                sendToForeground()
             }
             Actions.STOP.name->{
                 
@@ -359,11 +352,12 @@ class MusicService: LifecycleService() {
     companion object{
 
         fun handleOnAppStart(context: Context){
-            
-            val intent = Intent(context, MusicService::class.java).apply {
-                action = MusicService.Actions.START.name
+            if(!selfIsActive()) {
+                val intent = Intent(context, MusicService::class.java).apply {
+                    action = MusicService.Actions.START.name
+                }
+                context.startForegroundService(intent)
             }
-            context.startForegroundService(intent)
             
         }
 
@@ -383,7 +377,7 @@ class MusicService: LifecycleService() {
         const val mediaSessionTag = "MusicPlayer"
         
         
-        
+        private fun selfIsActive():Boolean = MyApplication.serviceInstance!=null
     }
 
 }

@@ -9,6 +9,7 @@ import android.view.WindowManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -117,11 +118,11 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
             },
             modifier = Modifier
                .weight(1f)
-               .background(MyColor.Background())
-               .padding(10.dp),
+               .background(MyColor.Background()),
             enabled = isEditing,
             color = MyColor.TextColor(),
-            lineSpacingMultiplier = 1.3f
+            lineSpacingMultiplier = 1.3f,
+            contentPadding = PaddingValues(10.dp)
          )
       }
    }
