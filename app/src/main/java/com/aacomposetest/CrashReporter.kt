@@ -1,17 +1,12 @@
 package com.aacomposetest
 
-import android.app.Application
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
-import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.annotation.StringRes
-import androidx.paging.Config
-import com.aacomposetest.MyApplication.Companion.crashLogger
 import java.io.File
 import java.io.IOException
 
@@ -22,7 +17,7 @@ class CrashReporter(val foldername:String? = null) {
     }else{
         File(Environment.DIRECTORY_DOWNLOADS)
     }
-    fun writeTextToFIle(text:String, filename: String, context: Context, folderName: String? = foldername): String{
+    fun writeTextToFile(text:String, filename: String, context: Context, folderName: String? = foldername): String{
         return writeToDownloads(
             text = text,
             context = context,
