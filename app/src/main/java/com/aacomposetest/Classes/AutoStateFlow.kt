@@ -13,4 +13,7 @@ class AutoStateFlow<T>(initialValue:T) {
     fun setValue(value:T){
         _stateFlow.value = value
     }
+    
+    val getValue :T
+        get() {return stateFlow.value}
 }

@@ -417,7 +417,7 @@ fun ResponsiveSlider(
    enabled: Boolean = true
 ) {
    
-   val currentSong by myExoPlayer.currentlyPlayingSong.collectAsState()
+   val currentSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
    val curPos by myExoPlayer.currentPositionVM().progress.collectAsState()
    
    val range by remember(currentSong) {

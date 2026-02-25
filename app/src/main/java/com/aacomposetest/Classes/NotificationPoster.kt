@@ -1,19 +1,11 @@
-package com.aacomposetest
+package com.aacomposetest.Classes
 
 import android.Manifest
 import android.R
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.ACTION_VIEW
-import android.content.pm.ResolveInfo
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.provider.DocumentsContract
-import android.provider.MediaStore
-import android.provider.Settings
-import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresPermission
 import androidx.compose.ui.graphics.Color
@@ -22,11 +14,8 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationChannelGroupCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat.startActivity
-import androidx.core.content.FileProvider
-import java.io.File
-import kotlin.random.Random
 import androidx.core.net.toUri
+import kotlin.random.Random
 
 class NotificationPoster(
    context: Context,
@@ -66,7 +55,7 @@ class NotificationPoster(
         createChannel()
     }
     fun generateId(min:Int = 0,max:Int = 10000):Int{
-        return Random.nextInt(min,max)
+        return Random.Default.nextInt(min,max)
     }
 
     private val summaryId = generateId()
@@ -81,7 +70,7 @@ class NotificationPoster(
        pendingIntent: PendingIntent? = null,
        context: Context,
        @DrawableRes icon: Int = R.drawable.ic_dialog_info,
-       color: Color = Color.Blue,
+       color: Color = Color.Companion.Blue,
        showAsGroup: Boolean = true,
     ) {
         // Ensure channel exists

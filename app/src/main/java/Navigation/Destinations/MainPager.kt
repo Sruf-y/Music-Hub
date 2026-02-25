@@ -20,10 +20,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.TabPosition
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TextField
@@ -59,6 +61,12 @@ import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+
+
+private val customIndicator =
+   @Composable { tabPositions: List<TabPosition>,pagerState: PagerState ->
+      TabRowIndicator(tabPositions, pagerState, 2.dp)
+   }
 
 @Serializable
 object MainPager {
@@ -98,10 +106,7 @@ object MainPager {
        * */
       val animationScope = rememberCoroutineScope()
       
-      val customIndicator =
-         @Composable { tabPositions: List<TabPosition> ->
-            TabRowIndicator(tabPositions, pagerState, 2.dp)
-         }
+      
       NestedScrollingFront(
          appbar = {
             SearchTopBar()
@@ -109,7 +114,9 @@ object MainPager {
          tabRow = {
             TabRow(
                modifier = Modifier.wrapContentHeight(),
-               indicator = customIndicator,
+               indicator = {
+                  customIndicator.invoke(it,pagerState)
+               },
                divider = {
                   HorizontalSeparator(
                      color = MyColor.Inactive,
@@ -161,7 +168,8 @@ object MainPager {
                   
                }
             }
-         }
+         },
+         cursorValue = MyPrefs._prefs_songListState_NestedScrollOffset
       )
       
       

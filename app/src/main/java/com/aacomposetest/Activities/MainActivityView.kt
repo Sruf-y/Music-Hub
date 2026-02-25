@@ -13,6 +13,7 @@ import Navigation.SafeDrawer
 import Presentation.FullscreenPlayer.FullscreenPlayerPage
 import Presentation.Navigation.DrawerStandardLayout
 import Presentation.Navigation.MyNavigation
+import SrufComposeComponents.Experimental.ColorPicker
 import ui.components.MyModalBottomSheet
 import ui.components.SheetViewmodel
 import SrufComposeComponents.Text
@@ -39,11 +40,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -52,10 +56,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -81,8 +86,10 @@ import com.aacomposetest.Log
 import com.aacomposetest.MyApplication
 import com.aacomposetest.buildSystemBarsStyle
 import com.aacomposetest.tryTo
+import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
+import ui.components.BasicPopUp
 import ui.components.Pages.AddSongsToPlaylistPage
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
@@ -137,19 +144,24 @@ class MainActivityView : ComponentActivity() {
       }
    )
    
+   private fun setupKeyboardPanMode(){
+      window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+   }
    
-   
-   
+   private fun setupNavBars(){
+      val statusBarStyle = buildSystemBarsStyle()
+      val navigationBarStyle = buildSystemBarsStyle(darkMode = MyColor.Black.toArgb())
+      enableEdgeToEdge(statusBarStyle = statusBarStyle, navigationBarStyle = navigationBarStyle)
+   }
    
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
       
       // No adjustment for text
-      window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+      setupKeyboardPanMode()
+      // Setup navbars colors
+      setupNavBars()
       
-      val statusBarStyle = buildSystemBarsStyle()
-      val navigationBarStyle = buildSystemBarsStyle(darkMode = MyColor.Black.toArgb())
-      enableEdgeToEdge(statusBarStyle = statusBarStyle, navigationBarStyle = navigationBarStyle)
       
       /**
        * Hook database to MediaStore database
@@ -178,7 +190,7 @@ class MainActivityView : ComponentActivity() {
       /**
        * Remove cyclic refferencing by simply setting onRefresh later than the initialization of the state.
        * */
-      refreshState.onRefresh = {
+      refreshState.setOnRefreshListener {
          mediaPermissionLauncher.launch()
       }
       
@@ -188,8 +200,9 @@ class MainActivityView : ComponentActivity() {
          SrufTheme {
             Surface(modifier = Modifier.fillMaxSize()) {
                
+               
                MainView()
-               //DestinationTesting()
+               
             }
             
          }
@@ -247,7 +260,6 @@ class MainActivityView : ComponentActivity() {
       
       
       ParentContainer(
-         activity = this@MainActivityView,
          globalBottomSheetVM = globalBottomSheetVM,
          refreshState = refreshState
       )
@@ -259,10 +271,10 @@ class MainActivityView : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
 @Composable
 private fun ParentContainer(
-   activity: ComponentActivity,
    globalBottomSheetVM: SheetViewmodel,
    refreshState: RefreshState
 ) {
+   val contextRef = LocalContext.current
    
    /**
     * Container for EVERYTHING that can have a [Settings Sheet] in front of it. So basically the entire application
@@ -280,13 +292,7 @@ private fun ParentContainer(
       
       val navController = rememberNavController()
       
-      val playerBottomSheetContent_NavController = rememberNavController()
-      
-      
-      
-      
-      
-      
+      val playerBS_mainContentNavController = rememberNavController()
       
       SafeDrawer(
          state = drawerState,
@@ -294,7 +300,7 @@ private fun ParentContainer(
             DrawerStandardLayout(
                modifier = Modifier
                   .fillMaxHeight()
-                  .graphicsLayer{
+                  .graphicsLayer {
                      this.alpha = drawerState.currentOffset
                   }
                   .background(tempDrawerColor)
@@ -311,7 +317,7 @@ private fun ParentContainer(
                   key = { item -> item.id }  // Only item, no index
                ) { song ->
                   // Your item content
-                  Row(){
+                  Row() {
                      Text("${song.id}|")
                      
                      Text("${song.timesPlayed}|")
@@ -321,158 +327,149 @@ private fun ParentContainer(
                }
             }
          },
-         mainContent =  {
-         
-         
-         Box(modifier = Modifier
-            .fillMaxSize()
-            .navigationBarsPadding()
-            .displayCutoutPadding()
-            .systemBarsPadding()
-         ) {
-            
-            val prefs by lazy {
-               MyPrefs.getPrefs(activity, MyPrefs.PrefDirs.VisualData)
-            }
-            
+         mainContent = {
             
             Box(
                modifier = Modifier
                   .fillMaxSize()
-                  .graphicsLayer {
-                     shape = RoundedCornerShape(
-                        size = 20.dp.times(drawerState.currentOffset)
-                     )
-                     clip = true
-                     val scalar = drawerState.currentOffset.map(0f, 1f, 1f, 0.8f)
-                     
-                     scaleX = scalar
-                     scaleY = scalar
-                     transformOrigin = TransformOrigin.Center
-                  }
+                  .navigationBarsPadding()
+                  .displayCutoutPadding()
+                  .systemBarsPadding()
                   .background(MyColor.Background())
             ) {
                
-               
-               val refreshBoxState = rememberPullToRefreshState()
-               
-               
-               
-               LaunchedEffect(Unit) {
-                  
-                  navController.addOnDestinationChangedListener { navController,navDestination,savedState->
-                     Log("Navigated to ${navDestination.route}")
-                  }
+               val prefs by lazy {
+                  MyPrefs.getPrefs(contextRef, MyPrefs.PrefDirs.VisualData)
                }
                
-               /**
-                * Manages navigation inside the [Main Pager] container.
-                * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
-                * */
                
-               val contextRef = LocalContext.current
-               MyNavigation(
-                  startDestination = {
-                     PlayerBottomSheet_Frame
-                  }.invoke(),
-                  navController = navController
+               Box(
+                  modifier = Modifier
+                     .fillMaxSize()
+                     .graphicsLayer {
+                        shape = RoundedCornerShape(
+                           size = 20.dp.times(drawerState.currentOffset)
+                        )
+                        clip = true
+                        val scalar = drawerState.currentOffset.map(0f, 1f, 1f, 0.8f)
+                        
+                        scaleX = scalar
+                        scaleY = scalar
+                        transformOrigin = TransformOrigin.Center
+                     }
                ) {
                   
                   
-                  composable<PlayerBottomSheet_Frame> {
-                     
-                     PlayerBottomSheet_Frame.invoke(
-                        startDestination = MainPager,
-                        prefs = prefs,
-                        localNavController = playerBottomSheetContent_NavController,
-                        refreshBoxState = refreshBoxState,
-                        refreshState = refreshState,
-                        globalBottomSheetVM = globalBottomSheetVM,
-                        onClickAddPlaylist = { args ->
-                           navController.safeNavigate(PlaylistAddSongsPage(args.title))
-                        },
-                        onBottomSheetClick = {
-                           
-                           tryTo {
-                              navController.safeNavigate(FullscreenPlayer)
-                           }
-                        }
-                     )
-                  }
+                  val refreshBoxState = rememberPullToRefreshState()
                   
                   
+                  /**
+                   * Manages navigation inside the [Main Pager] container.
+                   * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
+                   * */
                   
-                  composable<FullscreenPlayer>(
-                     enterTransition = {
-                        val duration = 250
-                        slideIntoContainer(
-                           AnimatedContentTransitionScope.SlideDirection.Up,
-                           animationSpec = tween(duration, easing = EaseInOut)
-                        )
-                     },
-                     popExitTransition = {
-                        val duration = 250
-                        slideOutOfContainer(
-                           AnimatedContentTransitionScope.SlideDirection.Down,
-                           animationSpec = tween(duration, easing = EaseInOut)
-                        )
-                     }
+                  val contextRef = LocalContext.current
+                  MyNavigation(
+                     startDestination = {
+                        PlayerBottomSheet_Frame
+                     }.invoke(),
+                     navController = navController
                   ) {
                      
-                     FullscreenPlayerPage(
-                        modifier = Modifier
-                           .fillMaxSize()
-                           .safeDrawingPadding()
-                     )
                      
-                  }
-                  
-                  
-                  composable<PlaylistAddSongsPage>(
-                     enterTransition = {
+                     composable<PlayerBottomSheet_Frame> {
                         
-                        slideIntoContainer(
-                           AnimatedContentTransitionScope.SlideDirection.Up,
-                           animationSpec = tween(500, easing = EaseInOutElastic)
-                        )
-                     },// page is navigated TO normally
-                     popExitTransition = {
-                        
-                        slideOutOfContainer(
-                           AnimatedContentTransitionScope.SlideDirection.Down,
-                           animationSpec = tween(500)
+                        PlayerBottomSheet_Frame.invoke(
+                           startDestination = MainPager,
+                           prefs = prefs,
+                           localNavController = playerBS_mainContentNavController,
+                           refreshBoxState = refreshBoxState,
+                           refreshState = refreshState,
+                           globalBottomSheetVM = globalBottomSheetVM,
+                           onClickAddPlaylist = { args ->
+                              navController.safeNavigate(PlaylistAddSongsPage(args.title))
+                           },
+                           onBottomSheetClick = {
+                              
+                              tryTo {
+                                 navController.safeNavigate(FullscreenPlayer)
+                              }
+                           }
                         )
                      }
-                  ) { backStack ->
-                     val args = backStack.toRoute<PlaylistAddSongsPage>()
                      
-                     val playlistTitle = args.title
                      
-                     val addsongstoplaylistState =
-                        rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
                      
-                     AddSongsToPlaylistPage(
-                        lazyListState = addsongstoplaylistState,
-                        playlistTitle = playlistTitle,
-                        onBack = {
-                           navController.popBackStack()
+                     composable<FullscreenPlayer>(
+                        enterTransition = {
+                           val duration = 250
+                           slideIntoContainer(
+                              AnimatedContentTransitionScope.SlideDirection.Up,
+                              animationSpec = tween(duration, easing = EaseInOut)
+                           )
+                        },
+                        popExitTransition = {
+                           val duration = 250
+                           slideOutOfContainer(
+                              AnimatedContentTransitionScope.SlideDirection.Down,
+                              animationSpec = tween(duration, easing = EaseInOut)
+                           )
                         }
-                     )
+                     ) {
+                        
+                        FullscreenPlayerPage(
+                           modifier = Modifier
+                              .fillMaxSize()
+                              .safeDrawingPadding()
+                        )
+                        
+                     }
+                     
+                     
+                     composable<PlaylistAddSongsPage>(
+                        enterTransition = {
+                           
+                           slideIntoContainer(
+                              AnimatedContentTransitionScope.SlideDirection.Up,
+                              animationSpec = tween(500, easing = EaseInOutElastic)
+                           )
+                        },// page is navigated TO normally
+                        popExitTransition = {
+                           
+                           slideOutOfContainer(
+                              AnimatedContentTransitionScope.SlideDirection.Down,
+                              animationSpec = tween(500)
+                           )
+                        }
+                     ) { backStack ->
+                        val args = backStack.toRoute<PlaylistAddSongsPage>()
+                        
+                        val playlistTitle = args.title
+                        
+                        val addsongstoplaylistState =
+                           rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+                        
+                        AddSongsToPlaylistPage(
+                           lazyListState = addsongstoplaylistState,
+                           playlistTitle = playlistTitle,
+                           onBack = {
+                              navController.popBackStack()
+                           }
+                        )
+                     }
+                     
                   }
                   
+                  
                }
-               
-               
             }
+            
          }
-         
-      }
       )
       
       
-      
-      
    }
+   
 }
 
 

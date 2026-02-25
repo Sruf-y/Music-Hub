@@ -231,7 +231,7 @@ fun AddSongsToPlaylistPage(
                                 /**
                                  * If the currently playing song was in this playlist, don't continue playing in this playlist.
                                  * */
-                                myExoPlayer.currentlyPlayingSong.value?.let {
+                                myExoPlayer.currentlyPlayingSong.getValue?.let {
                                     if(playlist?.songsIdList?.contains(it.id) == true){
                                         myExoPlayer.setCurrentPlaylist(null)
                                     }

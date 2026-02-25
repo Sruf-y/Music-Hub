@@ -42,6 +42,7 @@ data class CursorValue<T : Any>(
     * !!! Doesn't re-open the sharedPrefferences file BUT also doesn't check for the file to be correct.
     * */
    fun put(sharedPreferences: SharedPreferences, value:T){
+      
       sharedPreferences.edit(commit = true) {
          putCursorValue(this@CursorValue,value)
       }

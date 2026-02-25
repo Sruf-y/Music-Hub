@@ -338,10 +338,6 @@ internal fun Basic_ViewDrawer_Sample(){
                   
             ) {
                
-               SideEffect {
-                  Log("Lazyrow recomposed")
-               }
-               
                LazyRow(modifier = Modifier.align(Alignment.CenterStart)) {
                   items(count = 100) {
                      Button(

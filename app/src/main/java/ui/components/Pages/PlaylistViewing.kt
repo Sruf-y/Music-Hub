@@ -96,7 +96,7 @@ fun PlaylistViewing(
 
     val playlist by onScreenPlaylistVM.playlist.collectAsState()
 
-    val currentlyPlayingSong by myExoPlayer.currentlyPlayingSong.collectAsState()
+    val currentlyPlayingSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
 
 
     val const_PlaylistSongs by remember {
@@ -176,7 +176,7 @@ fun PlaylistViewing(
 
                         it
                     }
-                if (myExoPlayer.currentlyPlayingSong.value?.id == song.id) {
+                if (myExoPlayer.currentlyPlayingSong.getValue?.id == song.id) {
                     myExoPlayer.setCurrentPlaylist(null)
                 }
                 playlist?.songsIdList?.clear()
@@ -275,7 +275,7 @@ fun PlaylistViewing(
                 key = { it.id }
             ) { song ->
 
-                val textColor = if (currentlyPlayingSong == song) {
+                val textColor = if (currentlyPlayingSong?.id == song.id) {
                     MyColor.SelectedGold
                 } else {
                     MyColor.TextColor()

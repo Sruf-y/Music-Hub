@@ -11,21 +11,17 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Process
 import android.util.Log
-import android.view.View
-import android.view.ViewTreeObserver
 import android.view.WindowManager
-import android.widget.TextView
 import androidx.annotation.RequiresPermission
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import com.aacomposetest.Classes.NotificationPoster
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
-import com.aacomposetest.NotificationPoster.Companion.openMediaStoreUriPendingIntent
+import com.aacomposetest.Classes.NotificationPoster.Companion.openMediaStoreUriPendingIntent
 import com.aacomposetest.Services.MusicService
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -51,7 +47,7 @@ class MyApplication: Application(), ImageLoaderFactory {
 
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             // Log the crash
-            Log(crashLogger.folder.name)
+            Log("Logged crash to ${crashLogger.folder.name}")
             
             val uri = crashLogger.writeCrashToFile(throwable,this)
             allertPoster.postNotification(
@@ -121,7 +117,7 @@ class MyApplication: Application(), ImageLoaderFactory {
             get() = _serviceInstance
 
         fun killProccess(){
-            android.os.Process.killProcess(Process.myPid())
+            //android.os.Process.killProcess(Process.myPid())
         }
 
 
@@ -197,9 +193,25 @@ fun Log(message:String,type:String = "i"){
 
 }
 
-fun tryTo(action:()->Unit){
+fun tryTo(
+    onError: (Exception) -> Unit = {},
+    action: () -> Unit,
+) {
     try {
        action.invoke()
-    }catch (ex: Exception){}
+    }catch (ex: Exception){
+        onError.invoke(ex)
+    }
+}
+
+fun <T>tryValue(
+    onError: (Exception) -> T,
+    action: () -> T
+):T{
+    return try {
+        action.invoke()
+    }catch (ex: Exception){
+        onError.invoke(ex)
+    }
 }
 

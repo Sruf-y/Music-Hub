@@ -6,18 +6,6 @@ import kotlinx.coroutines.flow.StateFlow
 
 class ExoPlayerViewModel() : ViewModel() {
 
-
-
-    val progressVM = myExoPlayer.currentPositionVM()
-
-    val currentProgress: StateFlow<Long> = progressVM.progress
-
-    val currentSong: StateFlow<Song?> = myExoPlayer.currentlyPlayingSong
-
-    val isPlaying = myExoPlayer.isPlaying
-
-
-
     companion object{
 
         /**

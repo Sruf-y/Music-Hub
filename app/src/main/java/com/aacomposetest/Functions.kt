@@ -63,28 +63,13 @@ object Functions {
     }
 
     /**
+     * Maps a list after the order given by another list.
+     *
      * @sample mapAfterOrderOfExample
      *
      * */
 
-    private fun mapAfterOrderOfExample() {
-        class Item(val id: Int, val name: String)
-
-        val myOrder = listOf(1, 5, 3, 2, 4)
-
-        val myItems = listOf(
-            Item(id = 1, name = "One"),
-            Item(id = 2, name = "Two"),
-            Item(id = 3, name = "Three"),
-            Item(id = 4, name = "Four"),
-            Item(id = 5, name = "Five")
-        )
-
-        val orderedItemsList = myItems.mapAfterOrderOf(
-            orderList = myOrder,
-            selector = { it.id }
-        )
-    }
+    
     inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
 
         // Create a lookup map first
@@ -95,6 +80,24 @@ object Functions {
         // Then map in order
         val sortedItems = orderList.mapNotNull { id -> itemsMap[id] }
         return sortedItems
+    }
+    private fun mapAfterOrderOfExample() {
+        class Item(val id: Int, val name: String)
+        
+        val myOrder = listOf(1, 5, 3, 2, 4)
+        
+        val myItems = listOf(
+            Item(id = 1, name = "One"),
+            Item(id = 2, name = "Two"),
+            Item(id = 3, name = "Three"),
+            Item(id = 4, name = "Four"),
+            Item(id = 5, name = "Five")
+        )
+        
+        val orderedItemsList = myItems.mapAfterOrderOf(
+            orderList = myOrder,
+            selector = { it.id }
+        )
     }
 
     fun <T> List<T>.getRandom(except:T? = null): T?{
@@ -406,6 +409,22 @@ object Functions {
     fun Dp.toPx(density: Density):Float = with(density){
         this@toPx.toPx()
     }
+    /**
+     * Short wrapper for
+     *
+     *      with(density){calculation}
+     * */
+    fun Int.PxToDp(density: Density): Dp = with(density){
+        this@PxToDp.toDp()
+    }
+    /**
+     * Short wrapper for
+     *
+     *      with(density){calculation}
+     * */
+    fun Float.PxToDp(density: Density): Dp = with(density){
+        this@PxToDp.toDp()
+    }
     
     /**
      * Will fill the max size of the calculation given.
@@ -475,15 +494,6 @@ object Functions {
 
 
 
-
-
-
-
-
-
-
-
-
     /**
      * Renames the file and accounts for the extension.
      *
@@ -509,12 +519,30 @@ object Functions {
     }
 }
 
-fun Activity.isDarkMode() = when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+/**
+ * Copies a list N times.
+ *
+ * @return if count<=0 it returns an empty list
+ * @return [this] list repeated [count] times.
+ * */
+inline fun <T>List<T>.repeat(count:Int):List<T>{
+    
+    if(count<=0){
+        return emptyList()
+    }
+    
+    return List<T>(this.size*count){index->
+        this[index%this.size]
+    }
+}
+
+
+fun Context.isDarkMode() = when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
     Configuration.UI_MODE_NIGHT_YES -> true
     else -> false
 }
 
-fun Activity.buildSystemBarsStyle(lightMode:Int = MyColor.SemiTransparentLight.toArgb(),darkMode:Int = MyColor.SemiTransparentDark.toArgb()): SystemBarStyle{
+fun Context.buildSystemBarsStyle(lightMode:Int = MyColor.SemiTransparentLight.toArgb(),darkMode:Int = MyColor.SemiTransparentDark.toArgb()): SystemBarStyle{
     
     return if (isDarkMode()) {
         SystemBarStyle.dark(darkMode) // Dark mode = red

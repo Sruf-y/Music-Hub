@@ -57,7 +57,7 @@ fun MainSongsColumn(
 
     val songs by ListFeedingVM.SortedSongs.sortedAndFilteredSongsFlow.collectAsState()
 
-    val currentlyPlayingSong by myExoPlayer.currentlyPlayingSong.collectAsState()
+    val currentlyPlayingSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
 
     val curentSortType by ListFeedingVM.SortedSongs.sortTypeFlow.stateFlow.collectAsState()
     val curentSortDirection by ListFeedingVM.SortedSongs.sortDirectionFlow.stateFlow.collectAsState()

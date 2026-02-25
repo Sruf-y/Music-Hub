@@ -57,7 +57,7 @@ private fun Preview(){
 @Composable
 internal fun FullscreenSong(modifier: Modifier = Modifier) {
 
-    val currentSong: Song? by myExoPlayer.currentlyPlayingSong.collectAsState()
+    val currentSong: Song? by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
 
 
     content(currentSong,modifier)

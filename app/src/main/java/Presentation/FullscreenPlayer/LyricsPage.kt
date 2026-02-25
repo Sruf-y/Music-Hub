@@ -48,7 +48,7 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
    val contextRef = LocalContext.current
    val scope = rememberCoroutineScope()
    
-   val curSong by myExoPlayer.currentlyPlayingSong.collectAsState()
+   val curSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
    val lyricsManager = rememberLyricsManager()
    
    var isEditing by remember { mutableStateOf(false) }

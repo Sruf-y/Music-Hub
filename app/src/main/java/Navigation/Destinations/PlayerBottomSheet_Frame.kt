@@ -18,6 +18,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -98,36 +99,34 @@ object PlayerBottomSheet_Frame {
       )
       
       // Save scroll position for the [All Songs] page
-      LaunchedEffect(songsListState) {
-         snapshotFlow {
-            songsListState.firstVisibleItemIndex to songsListState.firstVisibleItemScrollOffset
-         }
-            .debounce(500L)
-            .collectLatest { (firstItem, offset) ->
-               prefs.edit {
-                  putCursorValue(
-                     MyPrefs._prefs_songListstate_FirstItem,
-                     firstItem
-                  )
-                  putCursorValue(MyPrefs._prefs_songListState_Offset, offset)
-               }
+      DisposableEffect(songsListState) {
+         onDispose {
+            prefs.edit(true) {
+               putCursorValue(
+                  MyPrefs._prefs_songListstate_FirstItem,
+                  songsListState.firstVisibleItemIndex
+               )
+               putCursorValue(
+                  MyPrefs._prefs_songListState_Offset,
+                  songsListState.firstVisibleItemScrollOffset
+               )
             }
+         }
       }
       // Save scroll position for the [All Playlists] page
-      LaunchedEffect(playlistsListState) {
-         snapshotFlow {
-            playlistsListState.firstVisibleItemIndex to playlistsListState.firstVisibleItemScrollOffset
-         }
-            .debounce(500L)
-            .collectLatest { (firstItem, offset) ->
-               prefs.edit {
-                  putInt(
-                     MyPrefs._prefs_playlistsListState_FirstItem.name,
-                     firstItem
-                  )
-                  putInt(MyPrefs._prefs_playlistsListState_Offset.name, offset)
-               }
+      DisposableEffect(playlistsListState) {
+         onDispose {
+            prefs.edit(true) {
+               putCursorValue(
+                  MyPrefs._prefs_playlistsListState_FirstItem,
+                  playlistsListState.firstVisibleItemIndex
+               )
+               putCursorValue(
+                  MyPrefs._prefs_playlistsListState_Offset,
+                  playlistsListState.firstVisibleItemScrollOffset
+               )
             }
+         }
       }
       
       
@@ -255,7 +254,7 @@ object PlayerBottomSheet_Frame {
       }
       
       if (songBS_Config.alpha.value > 0f) {
-         val curSong by myExoPlayer.currentlyPlayingSong.collectAsState()
+         val curSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
          
          ResponsivePlayerBS(
             modifier = Modifier

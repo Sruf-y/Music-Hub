@@ -200,7 +200,7 @@ class MusicService: LifecycleService() {
 
 
         val song_art = {
-            val file = myExoPlayer.currentlyPlayingSong.value?.tryGetThumbnail(this@MusicService)
+            val file = myExoPlayer.currentlyPlayingSong.stateFlow.value?.tryGetThumbnail(this@MusicService)
 
             if (file?.exists() == true) {
                 val bytes = file.readBytes()
@@ -220,15 +220,15 @@ class MusicService: LifecycleService() {
         val mediaSessionMetadata = MediaMetadataCompat.Builder()
             .putString(
                 MediaMetadataCompat.METADATA_KEY_TITLE,
-                myExoPlayer.currentlyPlayingSong.value?.title ?: "<unknown>"
+                myExoPlayer.currentlyPlayingSong.getValue?.title ?: "<unknown>"
             )
             .putString(
                 MediaMetadataCompat.METADATA_KEY_ARTIST,
-                myExoPlayer.currentlyPlayingSong.value?.artistName ?: "<unknown>"
+                myExoPlayer.currentlyPlayingSong.getValue?.artistName ?: "<unknown>"
             )
             .putLong(
                 MediaMetadataCompat.METADATA_KEY_DURATION,
-                myExoPlayer.currentlyPlayingSong.value?.duration ?: 0
+                myExoPlayer.currentlyPlayingSong.getValue?.duration ?: 0
             )
             .putBitmap(
                 MediaMetadataCompat.METADATA_KEY_ART,
@@ -317,10 +317,12 @@ class MusicService: LifecycleService() {
 
     fun sendToForeground(){
         StartForegroundNotification(CreateNotification())
+        currentLayerState = LayerState.Foreground
     }
 
     fun sendToBackground(){
         stopForeground(STOP_FOREGROUND_DETACH)
+        currentLayerState = LayerState.BackGround
     }
     
     enum class Actions{
@@ -350,9 +352,16 @@ class MusicService: LifecycleService() {
     }
 
     companion object{
+        
+        private enum class LayerState{
+            Foreground,
+            BackGround,
+            NONE
+        }
+        private var currentLayerState = LayerState.NONE
 
         fun handleOnAppStart(context: Context){
-            if(!selfIsActive()) {
+            if(currentLayerState != LayerState.Foreground) {
                 val intent = Intent(context, MusicService::class.java).apply {
                     action = MusicService.Actions.START.name
                 }

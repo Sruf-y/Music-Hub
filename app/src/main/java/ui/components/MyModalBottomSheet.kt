@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -36,11 +37,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onLayoutRectChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -264,7 +260,7 @@ class SheetConfig private constructor() {
    }
    companion object{
       @Composable
-      fun remember(
+      fun rememberSheetConfig(
          backgroundColor: Color = MyColor.SurfaceDark,
          contentPadding: PaddingValues = PaddingValues(0.dp),
          shape: Shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
@@ -297,7 +293,7 @@ fun rememberBottomSheetInstance(
    initialDetent: SheetDetent = SheetDetent.Hidden,
    state: BottomSheetState = rememberBottomSheetState(SheetDetent.Hidden),
    sheetConfig: @Composable ()-> SheetConfig = {
-      SheetConfig.remember(MyColor.Background())
+      SheetConfig.rememberSheetConfig(MyColor.Background())
    },
    content: @Composable BottomSheetScope.() -> Unit,
 ): BottomSheetInstance {
@@ -307,13 +303,11 @@ fun rememberBottomSheetInstance(
       mutableStateOf(initialDetent.identifier)
    }
    
-   // Track state changes using snapshotFlow
-   // (best way to track something, but more verbose and is single-key so it can't track more than 1 value)
-   LaunchedEffect(state) {
-      snapshotFlow { state.currentDetent }
-         .collect { detent ->
-            savedDetent = detent.identifier
-         }
+   // Store the savedDetent before rotation
+   DisposableEffect(state) {
+      onDispose {
+         savedDetent = state.currentDetent.identifier
+      }
    }
    
    // Handle restoration after rotation

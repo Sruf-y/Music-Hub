@@ -7,8 +7,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
-class RefreshState(rawState: MutableState<Boolean> = mutableStateOf(false), var onRefresh:()-> Unit = {}) {
-
+class RefreshState(rawState: MutableState<Boolean> = mutableStateOf(false),
+                   onRefresh:()-> Unit = {}
+) {
+    var onRefresh = onRefresh
+        private set
+    /**
+     * When refresh has been triggered by the user this will fire. It is reccomanded to set rawState's value to false afterwards.
+     * */
+    fun setOnRefreshListener(action:()-> Unit){
+        onRefresh = action
+    }
     var state by rawState
 }
 

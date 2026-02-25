@@ -19,6 +19,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import com.aacomposetest.Classes.AutoStateFlow
 import androidx.media3.exoplayer.ExoPlayer as External_ExoPlayer
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.open
@@ -59,8 +60,10 @@ object myExoPlayer {
         delayMillis = 250,
         initialValue = prefs?.getCursorValue(MyPrefs._prefs_LastSongPosition, 0) ?: 0,
         observingFunction = {
+            val curSong = currentlyPlayingSong.getValue
+            
             val currentPos = getCurrentPosition()
-            val duration = currentlyPlayingSong.value?.duration ?: 0
+            val duration = curSong?.duration ?: 0
 
 
             val progress = if (duration > 0) {
@@ -75,7 +78,7 @@ object myExoPlayer {
         onValueChange = {
             
             prefs?.edit(true){
-                Log.i(Logs.SHARED_PREFFERENCES.name,"PUT current song position")
+                Log.i(Logs.SHARED_PREFFERENCES.name,"PUT current song position Value [${it}]")
                 putCursorValue(MyPrefs._prefs_LastSongPosition,it)
             }
         }
@@ -93,8 +96,8 @@ object myExoPlayer {
     var isPrepared = false
 
 
-    private val _currentSong = MutableStateFlow<Song?>(value = null)
-    val currentlyPlayingSong: StateFlow<Song?> = _currentSong.asStateFlow()
+    
+    val currentlyPlayingSong  = AutoStateFlow<Song?>(null)
 
     private val allSongs = ListFeedingVM.SortedSongs.sortedSongsFlow
 
@@ -154,7 +157,7 @@ object myExoPlayer {
                             _isPlaying.value = isPlaying
 
                             if(isPlaying){
-                                Log("Started yodates")
+                                Log.i(Logs.EXOPLAYER.name,"Started exoPlayer progression updates")
                                 progressVM.startUpdates()
                             }else{
                                 progressVM.forceValue(exoPlayer!!.currentPosition)
@@ -183,7 +186,6 @@ object myExoPlayer {
                                 
                                 Player.STATE_ENDED -> {
                                     com.aacomposetest.Log("Ended")
-                                    playNextInPlaylist(allowLoop = isLoopAllowed)
                                 }
                                 
                                 Player.STATE_IDLE -> {
@@ -195,10 +197,9 @@ object myExoPlayer {
                                 }
                             }
                         }
-                        
-                        
                     }
                     )
+                    
                 }
 
 
@@ -216,9 +217,9 @@ object myExoPlayer {
                     val playlist = Playlist.getPlaylist(context,playlistTitle?:"")
 
                     progressVM.forceValue(songPosition)
-
-
-                    _currentSong.value = song
+                    
+                    
+                    currentlyPlayingSong.setValue(song)
 
 
 
@@ -248,7 +249,7 @@ object myExoPlayer {
     }
 
     fun rewind(autoStart:Boolean = true) {
-        currentlyPlayingSong.value?.let {
+        currentlyPlayingSong.stateFlow.value?.let {
             seekTo(0)
             if(autoStart){
                 start()
@@ -262,7 +263,7 @@ object myExoPlayer {
             val positionMs =
                 if (rawPosition) pos else (pos / 100) * player.duration.coerceAtLeast(1)
 
-            val seekedPosition = positionMs.coerceIn(0, currentlyPlayingSong.value?.duration)
+            val seekedPosition = positionMs.coerceIn(0, currentlyPlayingSong.stateFlow.value?.duration)
 
             player.seekTo(seekedPosition)
 
@@ -281,12 +282,13 @@ object myExoPlayer {
      * */
     private fun privSetSong(song: Song?, startOnPrepared:Boolean=true,throwErrorOnError: Boolean = false) {
 
-        val lastSong = currentlyPlayingSong
+        val lastSong = currentlyPlayingSong.getValue
 
         exoPlayer?.let { player ->
             try {
                 song?.let {
-                    _currentSong.tryEmit(song)
+                    currentlyPlayingSong.setValue(song)
+                    
                     val mediaItem = MediaItem.Builder()
                         .setUri(song.songUri.toUri())
                         .setMediaMetadata(
@@ -323,7 +325,7 @@ object myExoPlayer {
             } catch (ex: Exception) {
                 Log.e(Logs.DATA_ERROR.toString(), "Error setting song", ex)
                 if(!throwErrorOnError) {
-                    lastSong.value?.let {
+                    lastSong?.let {
                         privSetSong(
                             song = it,
                             startOnPrepared = startOnPrepared,
@@ -345,6 +347,11 @@ object myExoPlayer {
      * */
     fun setSong(song: Song?, startOnPrepared:Boolean=true, playlistTitle: String? =  null, initialPosition: Long = 0L){
 
+        Log("""
+            Tried to set song
+            id:${song?.id}
+            title:${song?.title}
+        """.trimIndent())
 
         setCurrentPlaylist(playlistTitle)
 
@@ -359,7 +366,7 @@ object myExoPlayer {
 
 
         prefs?.edit(){
-            putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.value?.id?:-1)
+            putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.getValue?.id?:-1)
 
             putCursorValue(MyPrefs._prefs_LastPlaylistTitle,playlistTitle?:"")
         }
@@ -373,8 +380,8 @@ object myExoPlayer {
                         During Play action, current song was not found in current playlist:
                         Current Song:
                         ${
-                    if(currentlyPlayingSong.value!=null){
-                        JsonFormat.encodeToString(Song.serializer(),currentlyPlayingSong.value!!)
+                    if(currentlyPlayingSong.getValue!=null){
+                        JsonFormat.encodeToString(Song.serializer(),currentlyPlayingSong.getValue!!)
                     }else{
                         "NULL"
                     }
@@ -390,7 +397,7 @@ object myExoPlayer {
                 }
                         
                         Song exists in playlist:
-                        ${curPlaylistVM.playlist.value?.songsIdList?.contains(currentlyPlayingSong.value?.id)}
+                        ${curPlaylistVM.playlist.value?.songsIdList?.contains(currentlyPlayingSong.getValue?.id)}
                     """.trimIndent(),
                 filename = "PlayerIssue",
                 context = MyApplication.instance
@@ -413,7 +420,7 @@ object myExoPlayer {
     ) {
         try {
             
-            currentlyPlayingSong.value?.let {currentSong->
+            currentlyPlayingSong.getValue?.let {currentSong->
                 
                 val curList = curPlaylistVM.playlist.value?.songsIdList?:allSongs.value.map { it.id }
                 
@@ -478,11 +485,11 @@ object myExoPlayer {
 
     private fun playRandom() {
 
-        currentlyPlayingSong.value?.let { currentSong ->
+        currentlyPlayingSong.getValue?.let { currentSong ->
 
             val curList = curPlaylistVM.playlist.value?.songsIdList ?: allSongs.value.map { it.id }
 
-            val randomId = curList.getRandom(currentlyPlayingSong.value?.id)
+            val randomId = curList.getRandom(currentlyPlayingSong.getValue?.id)
 
             playScope.launch {
 
@@ -545,7 +552,7 @@ object myExoPlayer {
             
             
             
-            currentlyPlayingSong.value?.let {currentSong->
+            currentlyPlayingSong.getValue?.let {currentSong->
                 
                 val curList = curPlaylistVM.playlist.value?.songsIdList?:allSongs.value.map { it.id }
                 
@@ -599,12 +606,14 @@ object myExoPlayer {
      * */
     fun start(){
         if(exoPlayer!= null && !isPlaying.value) {
-            
-            if (exoPlayer!!.currentPosition >= currentlyPlayingSong.value!!.duration) {
-                rewind()
-            } else {
-                exoPlayer?.play()
+            currentlyPlayingSong.getValue?.let {
+                if (exoPlayer!!.currentPosition >= it.duration) {
+                    rewind()
+                } else {
+                    exoPlayer?.play()
+                }
             }
+            
         }
     }
 
@@ -614,7 +623,10 @@ object myExoPlayer {
      * */
     fun pause(){
         if(exoPlayer!= null && isPlaying.value) {
-            exoPlayer?.pause()
+            currentlyPlayingSong.getValue?.let {
+                exoPlayer?.pause()
+            }
+            
         }
     }
 
@@ -651,7 +663,7 @@ object myExoPlayer {
         progressVM.stopUpdates()
         onDestroy_SaveLogic()
 
-        _currentSong.value = null
+        currentlyPlayingSong.setValue(null)
         setCurrentPlaylist(null)
 
 
@@ -672,9 +684,9 @@ object myExoPlayer {
     }
 
     fun onDestroy_SaveLogic(){
-        prefs?.edit {
+        prefs?.edit(true) {
             putCursorValue(MyPrefs._prefs_LastSongPosition,getCurrentPosition())
-            putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.value?.id?:-1)
+            putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.getValue?.id?:-1)
             putCursorValue(MyPrefs._prefs_LastPlaylistTitle,curPlaylistVM.playlist.value?.title?:"")
         }
     }

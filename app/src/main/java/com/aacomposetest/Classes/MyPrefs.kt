@@ -27,19 +27,21 @@ object MyPrefs {
 
     val _prefs_songListstate_FirstItem = CursorValue("SongListState_FirstItem",Int::class,PrefDirs.VisualData)
     val _prefs_songListState_Offset = CursorValue("SongListState_Offset",Int::class,PrefDirs.VisualData)
+    val _prefs_songListState_NestedScrollOffset = CursorValue("SongListState_NestedScrollOfster",Float::class, PrefDirs.VisualData)
 
     val _prefs_playlistsListState_FirstItem = CursorValue("PlaylistsListState_FirstItem",Int::class,PrefDirs.VisualData)
     val _prefs_playlistsListState_Offset = CursorValue("PlaylistsListState_Offset",Int::class,PrefDirs.VisualData)
 
     val _prefs_PagerPosition = CursorValue("PagerTab",String::class,PrefDirs.VisualData)
 
+    
     val _prefs_globalSongsSortType = CursorValue("GlobalSongsSortType",String::class,PrefDirs.VisualData)
     val _prefs_globalSongsSortDirection = CursorValue("GlobalSongsSortirection",String::class,PrefDirs.VisualData)
 
     val _prefs_playlistSongsSortType = CursorValue("PlaylistSongsSortType",String::class,PrefDirs.VisualData)
     val _prefs_playlistSongsSortDirection = CursorValue("PlaylistSongsSortirection",String::class,PrefDirs.VisualData)
 
-
+    
     
 
     
