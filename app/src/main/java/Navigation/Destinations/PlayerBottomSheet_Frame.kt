@@ -8,8 +8,13 @@ import Presentation.Navigation.MyNavigation
 import Presentation.SongsPage.MainSongsColumn
 import ui.components.SheetViewmodel
 import SrufComposeComponents.Text
+import android.app.Activity
+import android.app.Application
 import ui.components.rememberBottomSheetInstance
 import android.content.SharedPreferences
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -33,9 +38,12 @@ import androidx.core.content.edit
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Impl
+import com.aacomposetest.Classes.ActivityLifecycleEffect
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.getCursorValue
 import com.aacomposetest.Classes.putCursorValue
+import com.aacomposetest.Log
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
 import kotlinx.coroutines.flow.collectLatest
@@ -98,37 +106,44 @@ object PlayerBottomSheet_Frame {
          emptyList()
       )
       
-      // Save scroll position for the [All Songs] page
-      DisposableEffect(songsListState) {
-         onDispose {
-            prefs.edit(true) {
-               putCursorValue(
-                  MyPrefs._prefs_songListstate_FirstItem,
-                  songsListState.firstVisibleItemIndex
-               )
-               putCursorValue(
-                  MyPrefs._prefs_songListState_Offset,
-                  songsListState.firstVisibleItemScrollOffset
-               )
-            }
-         }
-      }
-      // Save scroll position for the [All Playlists] page
-      DisposableEffect(playlistsListState) {
-         onDispose {
-            prefs.edit(true) {
-               putCursorValue(
-                  MyPrefs._prefs_playlistsListState_FirstItem,
-                  playlistsListState.firstVisibleItemIndex
-               )
-               putCursorValue(
-                  MyPrefs._prefs_playlistsListState_Offset,
-                  playlistsListState.firstVisibleItemScrollOffset
-               )
-            }
-         }
-      }
       
+      // TODO Make this a listener to the onPause for the activity
+      // Save scroll position for the [All Songs] page
+      ActivityLifecycleEffect(
+         key = songsListState,
+         callbacks = object : ActivityLifecycleCallbacks_Impl(){
+            override fun onActivityPaused(activity: Activity) {
+               prefs.edit(true) {
+                  putCursorValue(
+                     MyPrefs._prefs_songListstate_FirstItem,
+                     songsListState.firstVisibleItemIndex
+                  )
+                  putCursorValue(
+                     MyPrefs._prefs_songListState_Offset,
+                     songsListState.firstVisibleItemScrollOffset
+                  )
+               }
+            }
+         }
+      )
+      // Save scroll position for the [All Playlists] page
+      ActivityLifecycleEffect(
+         key = playlistsListState,
+         callbacks = object : ActivityLifecycleCallbacks_Impl(){
+            override fun onActivityPaused(activity: Activity) {
+               prefs.edit(true) {
+                  putCursorValue(
+                     MyPrefs._prefs_playlistsListState_FirstItem,
+                     playlistsListState.firstVisibleItemIndex
+                  )
+                  putCursorValue(
+                     MyPrefs._prefs_playlistsListState_Offset,
+                     playlistsListState.firstVisibleItemScrollOffset
+                  )
+               }
+            }
+         }
+      )
       
       
       

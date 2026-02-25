@@ -1,6 +1,7 @@
 package SrufComposeComponents
 
 import Navigation.ScreenState.PersistentState
+import android.app.Activity
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.media3.ui.compose.state.rememberPresentationState
 import coil.request.Disposable
+import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Impl
+import com.aacomposetest.Classes.ActivityLifecycleEffect
 import com.aacomposetest.Classes.CursorValue
 import com.aacomposetest.Classes.MyPrefs.open
 import com.aacomposetest.Log
@@ -72,17 +75,18 @@ fun NestedScrollingFront(
     }
     
     // Handles saving the cursorValue
-    DisposableEffect(cursorValue) {
-        
-        onDispose {
-            cursorValue?.run {
-                
-                val prefs = dir.open(contextRef)
-                
-                put(prefs,appbarOffset)
+    ActivityLifecycleEffect(
+        key = cursorValue,
+        callbacks = object : ActivityLifecycleCallbacks_Impl(){
+            override fun onActivityPaused(activity: Activity) {
+                cursorValue?.run {
+                    val prefs = dir.open(contextRef)
+                    
+                    put(prefs, appbarOffset)
+                }
             }
         }
-    }
+    )
     
     
     val nestedScrollConnection = remember {

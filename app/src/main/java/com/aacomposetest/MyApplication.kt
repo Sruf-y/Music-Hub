@@ -39,7 +39,7 @@ class MyApplication: Application(), ImageLoaderFactory {
             name,
             NotificationManager.IMPORTANCE_DEFAULT
         )
-
+        
 
         Log.i(Logs.RUNNING_INFO.name,"Notification channel created.")
 
@@ -81,7 +81,7 @@ class MyApplication: Application(), ImageLoaderFactory {
             //.logger(DebugLogger()) // ONLY for when i NEED a logger otherwise it clogs the logs.
             .build()
     }
-
+    
     companion object{
         lateinit var instance: Application
             private set
@@ -110,23 +110,21 @@ class MyApplication: Application(), ImageLoaderFactory {
         } }
 
         val crashLogger by lazy { CrashReporter(foldername = "CrashLogs_${instance.getString(R.string.app_name)}") }
-
-
-        private var _serviceInstance: MusicService? = null
-        val serviceInstance: MusicService?
-            get() = _serviceInstance
+        
+        var serviceInstance: MusicService? = null
+            private set
 
         fun killProccess(){
-            //android.os.Process.killProcess(Process.myPid())
+            android.os.Process.killProcess(Process.myPid())
         }
 
 
         fun registerServiceInstance(service: MusicService) {
-            _serviceInstance = service
+            serviceInstance = service
         }
 
         fun unregisterServiceInstance() {
-            _serviceInstance = null
+            serviceInstance = null
         }
         
         fun showSystemAlert(

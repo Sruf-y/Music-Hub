@@ -1,6 +1,7 @@
 package com.aacomposetest
 
 import android.app.Activity
+import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
 import android.content.res.Configuration
@@ -8,6 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.net.Uri
+import android.os.Bundle
 import android.os.FileObserver
 import android.os.FileObserver.CLOSE_WRITE
 import android.os.FileObserver.MOVE_SELF
@@ -16,10 +18,12 @@ import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.TextView
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -32,6 +36,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import com.aacomposetest.ui.theme.MyColor
 import com.google.common.reflect.TypeToken
@@ -49,474 +54,428 @@ import java.io.IOException
 import kotlin.random.Random
 
 object Functions {
-
-    fun List<String>.concatenateWith(divider:String ="", exceptForElements:List<Int>):String{
-        val stringBuilder = StringBuilder(this.first())
-
-        this.forEachIndexed { index,string->
-            if(!exceptForElements.contains(index) && index!=0) {
-                stringBuilder.append(divider)
-                stringBuilder.append(string)
+   
+   fun List<String>.concatenateWith(divider:String ="", exceptForElements:List<Int>):String{
+      val stringBuilder = StringBuilder(this.first())
+      
+      this.forEachIndexed { index,string->
+         if(!exceptForElements.contains(index) && index!=0) {
+            stringBuilder.append(divider)
+            stringBuilder.append(string)
+         }
+      }
+      return stringBuilder.toString()
+   }
+   
+   /**
+    * Maps a list after the order given by another list.
+    *
+    * @sample mapAfterOrderOfExample
+    *
+    * */
+   
+   
+   inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
+      
+      // Create a lookup map first
+      val itemsMap = this.associateBy {
+         selector(it)
+      }
+      
+      // Then map in order
+      val sortedItems = orderList.mapNotNull { id -> itemsMap[id] }
+      return sortedItems
+   }
+   private fun mapAfterOrderOfExample() {
+      class Item(val id: Int, val name: String)
+      
+      val myOrder = listOf(1, 5, 3, 2, 4)
+      
+      val myItems = listOf(
+         Item(id = 1, name = "One"),
+         Item(id = 2, name = "Two"),
+         Item(id = 3, name = "Three"),
+         Item(id = 4, name = "Four"),
+         Item(id = 5, name = "Five")
+      )
+      
+      val orderedItemsList = myItems.mapAfterOrderOf(
+         orderList = myOrder,
+         selector = { it.id }
+      )
+   }
+   
+   fun <T> List<T>.getRandom(except:T? = null): T?{
+      
+      if(this.isEmpty()) return null
+      
+      if(this.size ==1 && indexOf(except) != -1) return null
+      
+      val exception = indexOf(except)
+      
+      var result = Random.nextInt(0,this.size)
+      
+      while (result == exception){
+         result = Random.nextInt(0,this.size)
+      }
+      
+      
+      return this[result]
+   }
+   
+   @Composable
+   fun Modifier.clickableNoRipple(enabled:Boolean = true, role: Role? = null, onClick:()-> Unit)
+      = this.clickable(enabled = enabled,role = role,interactionSource = remember { MutableInteractionSource() }, indication = null,onClick = onClick)
+   
+   /**
+    * @return [T] at the index specified. Index is wrapped around if over the list's [size] or if it is negative
+    * */
+   inline fun <T> List<T>.cyclicalGet(index:Int):T{
+      
+      val i = Math.floorMod(index,size)
+      return this.get(i)
+   }
+   
+   
+   fun MutableState<Boolean>.invert(){
+      this.value = !this.value
+   }
+   
+   
+   
+   object Images{
+      
+      fun getBitmapFromDrawable(context:Context,drawableResId: Int): Bitmap {
+         val drawable = ContextCompat.getDrawable(context, drawableResId)!!
+         val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
+         val canvas = Canvas(bitmap)
+         drawable.setBounds(0, 0, canvas.width, canvas.height)
+         drawable.draw(canvas)
+         return bitmap
+      }
+      
+      
+      suspend fun saveAsJpg(directory:File , filename: String, bitmap: Bitmap?): File? =
+         withContext(Dispatchers.IO)
+         {
+            
+            // Early return if bitmap is null
+            if (bitmap == null) {
+               Log.e(Logs.DATA_ERROR.name, "Cannot save null bitmap")
+               return@withContext null
             }
-        }
-        return stringBuilder.toString()
-    }
-
-    /**
-     * Maps a list after the order given by another list.
-     *
-     * @sample mapAfterOrderOfExample
-     *
-     * */
-
-    
-    inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
-
-        // Create a lookup map first
-        val itemsMap = this.associateBy {
-            selector(it)
-        }
-
-        // Then map in order
-        val sortedItems = orderList.mapNotNull { id -> itemsMap[id] }
-        return sortedItems
-    }
-    private fun mapAfterOrderOfExample() {
-        class Item(val id: Int, val name: String)
-        
-        val myOrder = listOf(1, 5, 3, 2, 4)
-        
-        val myItems = listOf(
-            Item(id = 1, name = "One"),
-            Item(id = 2, name = "Two"),
-            Item(id = 3, name = "Three"),
-            Item(id = 4, name = "Four"),
-            Item(id = 5, name = "Five")
-        )
-        
-        val orderedItemsList = myItems.mapAfterOrderOf(
-            orderList = myOrder,
-            selector = { it.id }
-        )
-    }
-
-    fun <T> List<T>.getRandom(except:T? = null): T?{
-
-        if(this.isEmpty()) return null
-
-        if(this.size ==1 && indexOf(except) != -1) return null
-
-        val exception = indexOf(except)
-
-        var result = Random.nextInt(0,this.size)
-
-        while (result == exception){
-            result = Random.nextInt(0,this.size)
-        }
-
-
-        return this[result]
-    }
-
-    @Composable
-    fun Modifier.clickableNoRipple(enabled:Boolean = true, role: Role? = null, onClick:()-> Unit)
-    = this.clickable(enabled = enabled,role = role,interactionSource = remember { MutableInteractionSource() }, indication = null,onClick = onClick)
-
-    /**
-     * @return [T] at the index specified. Index is wrapped around if over the list's [size] or if it is negative
-     * */
-    inline fun <T> List<T>.cyclicalGet(index:Int):T{
-
-        val i = Math.floorMod(index,size)
-        return this.get(i)
-    }
-
-
-    fun MutableState<Boolean>.invert(){
-        this.value = !this.value
-    }
-
-
-
-    object Images{
-
-        fun getBitmapFromDrawable(context:Context,drawableResId: Int): Bitmap {
-            val drawable = ContextCompat.getDrawable(context, drawableResId)!!
-            val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
-            val canvas = Canvas(bitmap)
-            drawable.setBounds(0, 0, canvas.width, canvas.height)
-            drawable.draw(canvas)
-            return bitmap
-        }
-
-
-        suspend fun saveAsJpg(directory:File , filename: String, bitmap: Bitmap?): File? =
-            withContext(Dispatchers.IO)
-            {
-
-                // Early return if bitmap is null
-                if (bitmap == null) {
-                    Log.e(Logs.DATA_ERROR.name, "Cannot save null bitmap")
-                    return@withContext null
-                }
-
-                var target_dir: File = directory
-
-
-                if (!target_dir.exists()) {
-                    target_dir.mkdirs()
-                }
-
-
-                val fullFilename = filename.replace(".jpg", "") + ".jpg"
-                val file = File(target_dir, fullFilename) // Use proper context path
-                val newbitmap = bitmap
-                return@withContext try {
-
-                    // Use auto-closing stream
-                    FileOutputStream(file).use { outputStream ->
-
-
-                        if (!newbitmap.compress(Bitmap.CompressFormat.JPEG, 92, outputStream)) {
-                            throw IOException("Failed to compress bitmap")
-                        }
-                    }
-
-                    return@withContext file
-                } catch (e: IOException) {
-                    // Clean up if something went wrong
-                    if (file.exists()) {
-                        file.delete()
-                        return@withContext null
-                    }
-                    Log.e("PhotoSave", "Error saving photo", e)
-                    return@withContext null
-                }
+            
+            var target_dir: File = directory
+            
+            
+            if (!target_dir.exists()) {
+               target_dir.mkdirs()
             }
-
-
-
-
-
-        /**
-         * Example of usage: val bitmap = decodeSampledBitmapFromUri(contentResolver, contentUri, 1000, 1000)
-         * */
-        fun decodeSampledBitmapFromUri(contentResolver: ContentResolver, uri: Uri, reqWidth: Int, reqHeight: Int): Bitmap? {
-            return try {
-                // Step 1: Decode with inJustDecodeBounds=true to get image dimensions
-                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-
-                contentResolver.openInputStream(uri)?.use { inputStream ->
-                    BitmapFactory.decodeStream(inputStream, null, options)
-                }
-
-                // Step 2: Calculate inSampleSize
-                options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
-                options.inJustDecodeBounds = false
-
-                // Step 3: Decode bitmap with inSampleSize set
-                contentResolver.openInputStream(uri)?.use { inputStream ->
-                    BitmapFactory.decodeStream(inputStream, null, options)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
+            
+            
+            val fullFilename = filename.replace(".jpg", "") + ".jpg"
+            val file = File(target_dir, fullFilename) // Use proper context path
+            val newbitmap = bitmap
+            return@withContext try {
+               
+               // Use auto-closing stream
+               FileOutputStream(file).use { outputStream ->
+                  
+                  
+                  if (!newbitmap.compress(Bitmap.CompressFormat.JPEG, 92, outputStream)) {
+                     throw IOException("Failed to compress bitmap")
+                  }
+               }
+               
+               return@withContext file
+            } catch (e: IOException) {
+               // Clean up if something went wrong
+               if (file.exists()) {
+                  file.delete()
+                  return@withContext null
+               }
+               Log.e("PhotoSave", "Error saving photo", e)
+               return@withContext null
             }
-        }
-
-        private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
-            val height = options.outHeight
-            val width = options.outWidth
-            var inSampleSize = 1
-
-            if (height > reqHeight || width > reqWidth) {
-                val halfHeight = height / 2
-                val halfWidth = width / 2
-
-                while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                    inSampleSize *= 2
-                }
+         }
+      
+      
+      
+      
+      
+      /**
+       * Example of usage: val bitmap = decodeSampledBitmapFromUri(contentResolver, contentUri, 1000, 1000)
+       * */
+      fun decodeSampledBitmapFromUri(contentResolver: ContentResolver, uri: Uri, reqWidth: Int, reqHeight: Int): Bitmap? {
+         return try {
+            // Step 1: Decode with inJustDecodeBounds=true to get image dimensions
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+               BitmapFactory.decodeStream(inputStream, null, options)
             }
-            return inSampleSize
-        }
-
-    }
-
-//    fun map(x:Float, in_min:Float, in_max:Float, out_min:Float, out_max:Float):Float {
+            
+            // Step 2: Calculate inSampleSize
+            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
+            options.inJustDecodeBounds = false
+            
+            // Step 3: Decode bitmap with inSampleSize set
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+               BitmapFactory.decodeStream(inputStream, null, options)
+            }
+         } catch (e: Exception) {
+            e.printStackTrace()
+            null
+         }
+      }
+      
+      private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+         val height = options.outHeight
+         val width = options.outWidth
+         var inSampleSize = 1
+         
+         if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2
+            val halfWidth = width / 2
+            
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+               inSampleSize *= 2
+            }
+         }
+         return inSampleSize
+      }
+      
+   }
+   
+   //    fun map(x:Float, in_min:Float, in_max:Float, out_min:Float, out_max:Float):Float {
 //        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 //    }
-    fun Float.map(in_min:Float, in_max:Float, out_min:Float, out_max:Float):Float {
-        return (this - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-    }
-
-    object JsonOp{
-        private val jsonMutex: Mutex = Mutex()
-
-        private val eventMask = (CLOSE_WRITE or MOVE_SELF)
-
-        class JsonFileObserver(file: File, val onFileChanged:()->Unit):FileObserver(file,eventMask){
-
-            override fun onEvent(event: Int, path: String?) {
-                if((event and eventMask) ==0){
-                    onFileChanged.invoke()
-                }
-
-
+   fun Float.map(in_min:Float, in_max:Float, out_min:Float, out_max:Float):Float {
+      return (this - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+   }
+   
+   object JsonOp{
+      private val jsonMutex: Mutex = Mutex()
+      
+      
+      fun saveAsJson(context: Context, filename:String, data:Any,parent:File=context.filesDir,onFinished:(suspend ()->Unit)? = null) {
+         val _filename = filename.replace(".json","")
+         
+         CoroutineScope(Dispatchers.IO).launch {
+            jsonMutex.withLock {
+               if(!parent.exists()){
+                  parent.mkdirs()
+               }
+               
+               val json=Gson().toJson(data);
+               val Filename= "$_filename.json"
+               
+               File(parent,Filename).writeText(json)
+               
+               withContext(Dispatchers.Main) {
+                  onFinished?.invoke()
+               }
+               
             }
-        }
-
-        /**
-         * To be used with a state value. Example
-         *
-         *      val mystring by remember { mutableStateOf("my string") }
-         *      playlist.watchFile(
-         *          {
-         *              mystring = file.readText()
-         *          }
-         *      )
-         *
-         * To display the text from a file at all times dinamicly.
-         *
-         * */
-        @Composable
-        fun watchFile(fileState:File?, onFileChange:()-> Unit){
-
-
-            fileState?.path?.let {
-                DisposableEffect(fileState.path) {
-                    val observer = JsonFileObserver(
-                        file = fileState,
-                        onFileChanged = onFileChange
-                    )
-
-                    observer.startWatching()
-
-                    onDispose { observer.stopWatching() }
-                }
+         }
+      }
+      
+      
+      
+      suspend inline fun <reified T> loadFromJson(
+         context: Context,
+         filename: String,
+         parent: File = context.filesDir
+      ): T? {
+         var Filename = filename
+         
+         if (!filename.endsWith(".json"))
+            Filename = "$filename.json"
+         
+         val file = File(parent, Filename)
+         
+         return loadFromJson(file)
+      }
+      
+      suspend inline fun <reified T> loadFromJson(file: File?): T? {
+         
+         if(file!=null) {
+            return withContext(Dispatchers.IO) {
+               if (file.exists()) {
+                  val loadedFile = file.readText()
+                  val type = object : TypeToken<T>() {}.type
+                  val readData: T = Gson().fromJson(loadedFile, type)
+                  return@withContext readData
+               }
+               return@withContext null
             }
-        }
-
-        fun saveAsJson(context: Context, filename:String, data:Any,parent:File=context.filesDir,onFinished:(suspend ()->Unit)? = null) {
-            val _filename = filename.replace(".json","")
-            
-            CoroutineScope(Dispatchers.IO).launch {
-                jsonMutex.withLock {
-                    if(!parent.exists()){
-                        parent.mkdirs()
-                    }
-
-                    val json=Gson().toJson(data);
-                    val Filename= "$_filename.json"
-
-                    File(parent,Filename).writeText(json)
-
-                    withContext(Dispatchers.Main) {
-                        onFinished?.invoke()
-                    }
-
-                }
-            }
-        }
-
-
-
-
-
-
-        suspend inline fun <reified T> loadFromJson(
-            context: Context,
-            filename: String,
-            parent: File = context.filesDir
-        ): T? {
-            var Filename = filename
-
-            if (!filename.endsWith(".json"))
-                Filename = "$filename.json"
-
-            val file = File(parent, Filename)
-            
-            return loadFromJson(file)
-        }
-        
-        suspend inline fun <reified T> loadFromJson(file: File?): T? {
-            
-            if(file!=null) {
-                return withContext(Dispatchers.IO) {
-                    if (file.exists()) {
-                        val loadedFile = file.readText()
-                        val type = object : TypeToken<T>() {}.type
-                        val readData: T = Gson().fromJson(loadedFile, type)
-                        return@withContext readData
-                    }
-                    return@withContext null
-                }
-            }
-            else {
-                return null
-            }
-            
-        }
-        
-        inline fun <reified T> syncLoadFromJson(
-            context: Context,
-            filename: String,
-            parent: File = context.filesDir
-        ): T? {
-            var Filename = filename
-
-            if (!filename.endsWith(".json"))
-                Filename = "$filename.json"
-
-            val file = File(parent, Filename)
-
-
-
+         }
+         else {
+            return null
+         }
+         
+      }
+      
+      inline fun <reified T> syncLoadFromJson(
+         context: Context,
+         filename: String,
+         parent: File = context.filesDir
+      ): T? {
+         var Filename = filename
+         
+         if (!filename.endsWith(".json"))
+            Filename = "$filename.json"
+         
+         val file = File(parent, Filename)
+         
+         
+         
+         if (file.exists()) {
+            val loadedFile = file.readText()
+            val type = object : TypeToken<T>() {}.type
+            val readData: T = Gson().fromJson(loadedFile, type)
+            return readData
+         }
+         return null
+         
+      }
+      
+      inline fun <reified T> syncLoadFromJson(file: File?): T? {
+         
+         
+         file?.let {
             if (file.exists()) {
-                val loadedFile = file.readText()
-                val type = object : TypeToken<T>() {}.type
-                val readData: T = Gson().fromJson(loadedFile, type)
-                return readData
+               val loadedFile = file.readText()
+               val type = object : TypeToken<T>() {}.type
+               val readData: T = Gson().fromJson(loadedFile, type)
+               return readData
             }
-            return null
-
-        }
-        
-        inline fun <reified T> syncLoadFromJson(file: File?): T? {
-
-
-            file?.let {
-                if (file.exists()) {
-                    val loadedFile = file.readText()
-                    val type = object : TypeToken<T>() {}.type
-                    val readData: T = Gson().fromJson(loadedFile, type)
-                    return readData
-                }
+         }
+         return null
+         
+         
+      }
+   }
+   
+   
+   
+   
+   /**
+    * Short wrapper for
+    *
+    *      with(density){calculation}
+    * */
+   fun Dp.toPx(density: Density):Float = with(density){
+      this@toPx.toPx()
+   }
+   /**
+    * Short wrapper for
+    *
+    *      with(density){calculation}
+    * */
+   fun Int.PxToDp(density: Density): Dp = with(density){
+      this@PxToDp.toDp()
+   }
+   /**
+    * Short wrapper for
+    *
+    *      with(density){calculation}
+    * */
+   fun Float.PxToDp(density: Density): Dp = with(density){
+      this@PxToDp.toDp()
+   }
+   
+   /**
+    * Will fill the max size of the calculation given.
+    * */
+   fun View.fillMaxSize(
+      parentWidth: () -> Int,
+      parentHeight: () -> Int,
+   ) {
+      viewTreeObserver.addOnGlobalLayoutListener(
+         object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+               viewTreeObserver.removeOnGlobalLayoutListener(this)
+               
+               this@fillMaxSize.minimumHeight = parentHeight.invoke()
+               this@fillMaxSize.minimumWidth = parentWidth.invoke()
+               
+               requestLayout()
             }
-            return null
-
-
-        }
-    }
-    
-    
-    
-    
-    /**
-     * Short wrapper for
-     *
-     *      with(density){calculation}
-     * */
-    fun Dp.toPx(density: Density):Float = with(density){
-        this@toPx.toPx()
-    }
-    /**
-     * Short wrapper for
-     *
-     *      with(density){calculation}
-     * */
-    fun Int.PxToDp(density: Density): Dp = with(density){
-        this@PxToDp.toDp()
-    }
-    /**
-     * Short wrapper for
-     *
-     *      with(density){calculation}
-     * */
-    fun Float.PxToDp(density: Density): Dp = with(density){
-        this@PxToDp.toDp()
-    }
-    
-    /**
-     * Will fill the max size of the calculation given.
-     * */
-    fun View.fillMaxSize(
-        parentWidth: () -> Int,
-        parentHeight: () -> Int,
-    ) {
-        viewTreeObserver.addOnGlobalLayoutListener(
-            object : ViewTreeObserver.OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    viewTreeObserver.removeOnGlobalLayoutListener(this)
-                    
-                    this@fillMaxSize.minimumHeight = parentHeight.invoke()
-                    this@fillMaxSize.minimumWidth = parentWidth.invoke()
-                    
-                    requestLayout()
-                }
+         }
+      )
+   }
+   /**
+    * Will fill the max size of the calculation given.
+    * */
+   fun TextView.fillMaxSize(
+      parentWidth: () -> Int,
+      parentHeight: () -> Int,
+   ) {
+      viewTreeObserver.addOnGlobalLayoutListener(
+         object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+               viewTreeObserver.removeOnGlobalLayoutListener(this)
+               
+               this@fillMaxSize.minimumHeight = parentHeight.invoke()
+               this@fillMaxSize.minimumWidth = parentWidth.invoke()
+               
+               requestLayout()
             }
-        )
-    }
-    /**
-     * Will fill the max size of the calculation given.
-     * */
-    fun TextView.fillMaxSize(
-        parentWidth: () -> Int,
-        parentHeight: () -> Int,
-    ) {
-        viewTreeObserver.addOnGlobalLayoutListener(
-            object : ViewTreeObserver.OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    viewTreeObserver.removeOnGlobalLayoutListener(this)
-                    
-                    this@fillMaxSize.minimumHeight = parentHeight.invoke()
-                    this@fillMaxSize.minimumWidth = parentWidth.invoke()
-                    
-                    requestLayout()
-                }
+         }
+      )
+   }
+   /**
+    * Will TRY to fill the max size of the TextView's parent.
+    *
+    * Catches errors it causes itself.
+    * */
+   fun TextView.fillMaxSize() {
+      viewTreeObserver.addOnGlobalLayoutListener(
+         object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+               viewTreeObserver.removeOnGlobalLayoutListener(this)
+               
+               try {
+                  this@fillMaxSize.minimumHeight = (parent as View).height
+                  this@fillMaxSize.minimumWidth = (parent as View).width
+                  requestLayout()
+               }catch (ex: Exception){}
+               
+               
+               
             }
-        )
-    }
-    /**
-     * Will TRY to fill the max size of the TextView's parent.
-     *
-     * Catches errors it causes itself.
-     * */
-    fun TextView.fillMaxSize() {
-        viewTreeObserver.addOnGlobalLayoutListener(
-            object : ViewTreeObserver.OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    viewTreeObserver.removeOnGlobalLayoutListener(this)
-                    
-                    try {
-                        this@fillMaxSize.minimumHeight = (parent as View).height
-                        this@fillMaxSize.minimumWidth = (parent as View).width
-                        requestLayout()
-                    }catch (ex: Exception){}
-                    
-                    
-                    
-                }
-            }
-        )
-    }
-
-
-
-
-
-    /**
-     * Renames the file and accounts for the extension.
-     *
-     * Do not add the extension to the file's name in the [string] parameter
-     * */
-    fun File.rename(string:String):File?{
-        if(this.exists()){
-            val filepath = this.toPath()
-
-            val newExtension = if(this.extension.isNotEmpty())".${this.extension}" else ""
-
-
-            val newfile = File(this.parent,string+newExtension)
-
-            this.renameTo(newfile)
-
-            return newfile
-        }
-        else {
-            Log.e("ERROR","File does not exist")
-            return null
-        }
-    }
+         }
+      )
+   }
+   
+   
+   
+   
+   
+   /**
+    * Renames the file and accounts for the extension.
+    *
+    * Do not add the extension to the file's name in the [string] parameter
+    * */
+   fun File.rename(string:String):File?{
+      if(this.exists()){
+         val filepath = this.toPath()
+         
+         val newExtension = if(this.extension.isNotEmpty())".${this.extension}" else ""
+         
+         
+         val newfile = File(this.parent,string+newExtension)
+         
+         this.renameTo(newfile)
+         
+         return newfile
+      }
+      else {
+         Log.e("ERROR","File does not exist")
+         return null
+      }
+   }
 }
 
 /**
@@ -526,37 +485,40 @@ object Functions {
  * @return [this] list repeated [count] times.
  * */
 inline fun <T>List<T>.repeat(count:Int):List<T>{
-    
-    if(count<=0){
-        return emptyList()
-    }
-    
-    return List<T>(this.size*count){index->
-        this[index%this.size]
-    }
+   
+   if(count<=0){
+      return emptyList()
+   }
+   
+   return List<T>(this.size*count){index->
+      this[index%this.size]
+   }
 }
 
 
 fun Context.isDarkMode() = when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
-    Configuration.UI_MODE_NIGHT_YES -> true
-    else -> false
+   Configuration.UI_MODE_NIGHT_YES -> true
+   else -> false
 }
 
 fun Context.buildSystemBarsStyle(lightMode:Int = MyColor.SemiTransparentLight.toArgb(),darkMode:Int = MyColor.SemiTransparentDark.toArgb()): SystemBarStyle{
-    
-    return if (isDarkMode()) {
-        SystemBarStyle.dark(darkMode) // Dark mode = red
-    } else {
-        SystemBarStyle.light(lightMode, MyColor.Black.toArgb()) // Light mode
-    }
+   
+   return if (isDarkMode()) {
+      SystemBarStyle.dark(darkMode) // Dark mode = red
+   } else {
+      SystemBarStyle.light(lightMode, MyColor.Black.toArgb()) // Light mode
+   }
 }
 
 
 fun Constraints.of(placeable: Placeable): Constraints{
-    return this.copy(
-        minWidth = placeable.width,
-        maxWidth = placeable.width,
-        minHeight = placeable.height,
-        maxHeight = placeable.height
-    )
+   return this.copy(
+      minWidth = placeable.width,
+      maxWidth = placeable.width,
+      minHeight = placeable.height,
+      maxHeight = placeable.height
+   )
 }
+
+
+

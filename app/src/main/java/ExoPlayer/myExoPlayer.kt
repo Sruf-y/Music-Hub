@@ -12,6 +12,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.compose.ui.util.fastForEach
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
@@ -38,9 +39,50 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
+
+
+interface MyPlayerListener{
+    fun onToggle(value:Boolean)
+    fun onStart()
+    fun onPause()
+    fun onSongSet()
+    fun onSeek()
+}
+
+private fun ArrayList<MyPlayerListener>.dispatchStart() {
+    this.fastForEach {
+        it.onStart()
+        it.onToggle(true)
+    }
+}
+private fun ArrayList<MyPlayerListener>.dispatchPause() {
+    this.fastForEach {
+        it.onPause()
+        it.onToggle(false)
+    }
+}
+private fun ArrayList<MyPlayerListener>.dispatchSongSet() {
+    this.fastForEach {
+        it.onSongSet()
+    }
+}
+private fun ArrayList<MyPlayerListener>.dispatchSeek() {
+    this.fastForEach {
+        it.onSeek()
+    }
+}
 
 object myExoPlayer {
+    
+    val myListeners = ArrayList<MyPlayerListener>()
+    
+    fun registerListener(listener:MyPlayerListener){
+        myListeners.add(listener)
+        
+    }fun unRegisterListener(listener:MyPlayerListener){
+        myListeners.remove(listener)
+    }
+    
 
     private val _isInitialized = MutableStateFlow<Boolean>(value = false)
     val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
@@ -159,19 +201,24 @@ object myExoPlayer {
                             if(isPlaying){
                                 Log.i(Logs.EXOPLAYER.name,"Started exoPlayer progression updates")
                                 progressVM.startUpdates()
+                                myListeners.dispatchStart()
                             }else{
                                 progressVM.forceValue(exoPlayer!!.currentPosition)
                                 progressVM.stopUpdates()
+                                myListeners.dispatchPause()
                             }
                         }
 
+                        // onSeek
                         override fun onPositionDiscontinuity(
                             oldPosition: Player.PositionInfo,
                             newPosition: Player.PositionInfo,
                             reason: Int
                         ) {
                             super.onPositionDiscontinuity(oldPosition, newPosition, reason)
+                            
                             progressVM.forceValue(newPosition.positionMs)
+                            myListeners.dispatchSeek()
                         }
                     })
                     
@@ -362,6 +409,7 @@ object myExoPlayer {
         song?.let {
             songsVM?.updateSong(it)
         }
+        myListeners.dispatchSongSet()
 
 
 
@@ -375,7 +423,7 @@ object myExoPlayer {
     
     private fun playActionLogError(){
         tryTo {
-            MyApplication.crashLogger.writeTextToFIle(
+            MyApplication.crashLogger.writeTextToFile(
                 text = """
                         During Play action, current song was not found in current playlist:
                         Current Song:
@@ -663,8 +711,8 @@ object myExoPlayer {
         progressVM.stopUpdates()
         onDestroy_SaveLogic()
 
-        currentlyPlayingSong.setValue(null)
-        setCurrentPlaylist(null)
+        //currentlyPlayingSong.setValue(null)
+        //setCurrentPlaylist(null)
 
 
         _isInitialized.value = false
@@ -683,7 +731,7 @@ object myExoPlayer {
         exoPlayer?.release()
     }
 
-    fun onDestroy_SaveLogic(){
+    private fun onDestroy_SaveLogic(){
         prefs?.edit(true) {
             putCursorValue(MyPrefs._prefs_LastSongPosition,getCurrentPosition())
             putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.getValue?.id?:-1)

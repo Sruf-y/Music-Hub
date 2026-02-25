@@ -213,6 +213,7 @@ class MainActivityView : ComponentActivity() {
    
    override fun onPause() {
       super.onPause()
+      
    }
    
    override fun onResume() {
