@@ -4,6 +4,15 @@ import SrufComposeComponents.Text
 import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.BlendMode
+import android.graphics.RuntimeShader
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -28,16 +37,15 @@ import com.aacomposetest.ui.theme.Theme.LightColorScheme
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.tooling.preview.Preview
 import com.aacomposetest.isDarkMode
 
 object Theme{
 
-   // TODO Create logic for loading and storing themes in the Application class
-   private fun storeThemes(){}
-   private fun loadThemes(){}
    
-  
 
      var DarkColorScheme = darkColorScheme(
         primary = MyColor.Myprimary,
@@ -54,27 +62,6 @@ object Theme{
    
    
    
-   
-   internal var colorChangedBroadcaster by mutableIntStateOf(0)
-   
-   private fun _changeColor(isDarkMode:Boolean,colorScheme: ColorScheme){
-      if(isDarkMode){
-         DarkColorScheme = colorScheme
-      }else{
-         LightColorScheme = colorScheme
-      }
-      colorChangedBroadcaster = (colorChangedBroadcaster+1)%128
-      
-   }
-   
-   fun changeColor(context:Context,colorScheme: ColorScheme){
-      _changeColor(context.isDarkMode(),colorScheme)
-   }
-   
-   @Composable
-   fun changeColor(colorScheme: ColorScheme){
-      _changeColor(isSystemInDarkTheme(),colorScheme)
-   }
 }
 
 @Composable
@@ -83,13 +70,14 @@ fun SrufTheme(
    content: @Composable () -> Unit
 ) {
    
-   key(Theme.colorChangedBroadcaster) {
+   
       MaterialTheme(
          colorScheme = Theme.colorScheme(forceDarkMode),
          typography = Typography,
          content = content
       )
-   }
+   
    
 }
+
 

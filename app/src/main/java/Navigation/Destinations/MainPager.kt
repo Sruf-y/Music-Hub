@@ -1,7 +1,7 @@
 package Navigation.Destinations
 
 import MyViewModels.ListFeedingVM
-import Navigation.ScreenState.PersistentState
+import com.aacomposetest.Classes.PersistentState
 import SrufComposeComponents.CustomPagerTab
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.KeyboardAwareBox
@@ -25,7 +25,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.TabPosition
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TextField
@@ -34,7 +33,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope

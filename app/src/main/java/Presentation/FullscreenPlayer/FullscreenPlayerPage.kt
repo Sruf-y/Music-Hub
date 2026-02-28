@@ -1,6 +1,6 @@
 package Presentation.FullscreenPlayer
 
-import Navigation.ScreenState.PersistentState
+import com.aacomposetest.Classes.PersistentState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

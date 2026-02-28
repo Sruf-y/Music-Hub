@@ -111,6 +111,9 @@ dependencies {
 
     //Gson
     implementation("com.google.code.gson:gson:2.11.0")
+    
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.2.0")
 
     //Animation
     implementation("androidx.compose.animation:animation-graphics:1.10.1")

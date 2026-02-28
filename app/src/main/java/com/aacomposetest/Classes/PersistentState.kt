@@ -1,4 +1,4 @@
-package Navigation.ScreenState
+package com.aacomposetest.Classes
 
 import androidx.compose.runtime.State
 import kotlin.properties.ReadWriteProperty
