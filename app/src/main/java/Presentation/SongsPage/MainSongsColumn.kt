@@ -10,6 +10,7 @@ import ui.components.SheetViewmodel
 import ui.components.rememberBottomSheetInstance
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -30,6 +31,7 @@ import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
 import ui.components.BottomSheets.Content.SongsSort_Content
+import ui.components.Overlay
 import ui.components.SongItem
 import ui.components.SongItem_Mockup
 
@@ -160,7 +162,9 @@ fun MainSongsColumn(
                // For when initiating a refresh while having songs on the screen scrolled
                if(AndroidDatabase.isRefreshingSongs){
                   // Apply mockup of on-screen songs for a smoother loading experience
-                  AndroidDatabase.RefreshingBox{
+                  Overlay({
+                     AndroidDatabase.RefreshingBox(Modifier.fillMaxSize()){}
+                  }) {
                      SongItem(
                         song = song,
                         textColor = textColor,
@@ -177,6 +181,7 @@ fun MainSongsColumn(
                         }
                      )
                   }
+                  
                }else{
                   // Everything works as intended
                   SongItem(
