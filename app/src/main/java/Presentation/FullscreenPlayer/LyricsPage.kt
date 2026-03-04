@@ -5,7 +5,10 @@ import ExoPlayer.myExoPlayer
 import MyViewModels.rememberLyricsManager
 import SrufComposeComponents.IconButton
 import android.app.Activity
+import android.view.Gravity
 import android.view.WindowManager
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -40,7 +44,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.SrufTheme
+import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
+import ui.components.BottomSheets.renderDefaultBackground
 import ui.components.CustomTextField
 
 @Composable
@@ -57,13 +63,20 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
       lyricsManager.loadLyricsForSong(curSong?.id,contextRef)
    }
    
+   BackHandler(isEditing) {
+      Toast.makeText(contextRef,"Implement popups and confirmations for this. ",Toast.LENGTH_SHORT).show()
+   }
    
    Box(modifier = modifier){
+      
       Column(modifier = Modifier.fillMaxSize()) {
          /**
           * Top bar
           * */
-         Row(modifier = Modifier.fillMaxWidth()) {
+         Row(modifier = Modifier
+            .fillMaxWidth()
+            .background(Theme.Sourcesets.ToolbarBackground())
+         ) {
             val buttonsSize = remember { 40.dp }
             
             if(isEditing){
@@ -116,14 +129,15 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
             onValueChange = {
                lyricsManager.lyrics.value = it.toString()
             },
-            modifier = Modifier
-               .weight(1f)
-               .background(MyColor.Background()),
+            modifier = Modifier.weight(1f),
             enabled = isEditing,
+            textGravity = Gravity.START or Gravity.TOP,
             color = MyColor.TextColor(),
             lineSpacingMultiplier = 1.3f,
             contentPadding = PaddingValues(10.dp)
          )
+         
+        
       }
    }
 }

@@ -22,11 +22,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
@@ -294,7 +298,14 @@ fun CustomTextField(
    
    val layoutDirection = LocalLayoutDirection.current
    
-   Layout(modifier = modifier,content = {
+   // minHeight == its bounds height to be able to start writting from anywhere
+   var minTextViewHeight by remember { mutableIntStateOf(0) }
+   
+   Layout(modifier = modifier
+      .onSizeChanged{
+         minTextViewHeight = it.height
+      }.imePadding(),
+      content = {
       AndroidView(
          modifier = modifier
             .clipToBounds()
@@ -310,8 +321,15 @@ fun CustomTextField(
                if (selectionEnd > imeTop) {
                   scrollView.scrollBy(0, selectionEnd - imeTop)
                }
+               
+               
             },
          factory = { context ->
+            
+            // Minimum height for better experience
+            editText.apply {
+               minHeight = minTextViewHeight
+            }
             
             // Setup lineSpacing
             editText.setLineSpacing(0f, lineSpacingMultiplier)
@@ -373,6 +391,10 @@ fun CustomTextField(
             //val editText = nestedScrollView.getChildAt(0) as EditText
             
             editText.apply {
+               
+               // Apply minHeight in case of change
+               minHeight = minTextViewHeight
+               
                // Hint
                editText.hint = hint
                editText.setHintTextColor(hintColor.toArgb())
@@ -405,6 +427,8 @@ fun CustomTextField(
                   },
                   top = with(density) { contentPadding.calculateTopPadding().roundToPx() }
                )
+               
+               
             }
             
          }

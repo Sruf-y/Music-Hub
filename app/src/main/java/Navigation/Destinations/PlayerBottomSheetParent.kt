@@ -9,12 +9,8 @@ import Presentation.SongsPage.MainSongsColumn
 import ui.components.SheetViewmodel
 import SrufComposeComponents.Text
 import android.app.Activity
-import android.app.Application
 import ui.components.rememberBottomSheetInstance
 import android.content.SharedPreferences
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -23,16 +19,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.core.content.edit
 import androidx.navigation.NavHostController
@@ -43,11 +35,8 @@ import com.aacomposetest.Classes.ActivityLifecycleEffect
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.getCursorValue
 import com.aacomposetest.Classes.putCursorValue
-import com.aacomposetest.Log
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import kotlinx.serialization.Serializable
 import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
@@ -57,7 +46,7 @@ import ui.components.Pages.PlaylistViewing
 import ui.components.Pages.PlaylistsPage
 
 @Serializable
-object PlayerBottomSheet_Frame {
+object PlayerBottomSheetParent {
    
    @Composable
    fun invoke(

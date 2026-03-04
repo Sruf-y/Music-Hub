@@ -6,14 +6,13 @@ import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
 import Navigation.Destinations.FullscreenPlayer
 import Navigation.Destinations.MainPager
-import Navigation.Destinations.PlayerBottomSheet_Frame
+import Navigation.Destinations.PlayerBottomSheetParent
 import Navigation.Destinations.PlaylistAddSongsPage
 import Navigation.NavExtensions.safeNavigate
 import Navigation.SafeDrawer
 import Presentation.FullscreenPlayer.FullscreenPlayerPage
 import Presentation.Navigation.DrawerStandardLayout
 import Presentation.Navigation.MyNavigation
-import SrufComposeComponents.Experimental.ColorPicker
 import ui.components.MyModalBottomSheet
 import ui.components.SheetViewmodel
 import SrufComposeComponents.Text
@@ -37,17 +36,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.mandatorySystemGesturesPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -56,11 +52,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -82,14 +75,12 @@ import com.aacomposetest.Classes.ContentObserver_Impl
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.createPermissionLauncher
 import com.aacomposetest.Functions.map
-import com.aacomposetest.Log
 import com.aacomposetest.MyApplication
 import com.aacomposetest.buildSystemBarsStyle
 import com.aacomposetest.tryTo
-import com.github.skydoves.colorpicker.compose.rememberColorPickerController
+import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
-import ui.components.BasicPopUp
 import ui.components.Pages.AddSongsToPlaylistPage
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
@@ -336,7 +327,7 @@ private fun ParentContainer(
                   .navigationBarsPadding()
                   .displayCutoutPadding()
                   .systemBarsPadding()
-                  .background(MyColor.Background())
+                  .background(Theme.Sourcesets.SongsBackground())
             ) {
                
                val prefs by lazy {
@@ -372,15 +363,15 @@ private fun ParentContainer(
                   val contextRef = LocalContext.current
                   MyNavigation(
                      startDestination = {
-                        PlayerBottomSheet_Frame
+                        PlayerBottomSheetParent
                      }.invoke(),
                      navController = navController
                   ) {
                      
                      
-                     composable<PlayerBottomSheet_Frame> {
+                     composable<PlayerBottomSheetParent> {
                         
-                        PlayerBottomSheet_Frame.invoke(
+                        PlayerBottomSheetParent.invoke(
                            startDestination = MainPager,
                            prefs = prefs,
                            localNavController = playerBS_mainContentNavController,

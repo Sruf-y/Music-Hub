@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.aacomposetest.Log
 import com.aacomposetest.ui.theme.MyColor
+import ui.components.BottomSheets.renderDefaultBackground
 
 @Composable
 fun FullscreenPlayerPage(modifier: Modifier = Modifier,initialPage:Int? = null){
@@ -34,6 +35,7 @@ fun FullscreenPlayerPage(modifier: Modifier = Modifier,initialPage:Int? = null){
     }
     
     Box(modifier = modifier.background(MyColor.SeparatorGray)){
+        renderDefaultBackground(Modifier.fillMaxSize())
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()

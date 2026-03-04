@@ -14,6 +14,10 @@ object MyColor{
     @Stable val Pink40 = Color(0xFF7D5260)
 
     @Stable val Transparent = Color(0x00FFFFFF)
+    /**
+     * Epsilon transparent. Almost transparent.
+     * */
+    @Stable val eTransparent = Color(0x12FFFFFF)
 
     @Stable val Black = Color(0xFF000000)
     @Stable val White = Color(0xFFFFFFFF)
@@ -25,6 +29,7 @@ object MyColor{
     @Stable val Orange = Color(0xFFFF9900)
     @Stable val Red = Color(0xFFFF0000)
     @Stable val ConfirmBlue = Color(0xFF0088FF)
+    @Stable val ConfirmGreen = Color(0xFF78FF69)
     @Stable val Blue = Color(0xFF0066FF)
     @Stable val Green = Color(0xFF30DC3E)
     @Stable val Teal = Color(0xFF00FFA6)
@@ -58,6 +63,14 @@ object MyColor{
         else
             Black
     }
+    
+    @Composable
+    fun SystemColor(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
+        return if(isDarkMode)
+            Black
+        else
+            White
+    }
 
     @Composable
     fun Background(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
@@ -66,5 +79,22 @@ object MyColor{
         else
             BackgroundLight
     }
+    
+    @Composable
+    fun OnBackground(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
+        return if(isDarkMode)
+            Black
+        else
+            White
+    }
+    
+    @Composable
+    fun IconTint(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
+        return if(isDarkMode)
+            White
+        else
+            Black
+    }
+    
 }
 

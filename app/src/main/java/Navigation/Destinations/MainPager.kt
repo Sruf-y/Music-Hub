@@ -121,7 +121,8 @@ object MainPager {
                      thickness = 2.dp
                   )
                },
-               selectedTabIndex = pagerState.currentPage
+               selectedTabIndex = pagerState.currentPage,
+               containerColor = Theme.Sourcesets.TabRowBackground()
             ) {
                pageState.pages.forEachIndexed { index, title ->
                   val interactionSource =

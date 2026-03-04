@@ -37,8 +37,12 @@ import com.aacomposetest.Functions.clickableNoRipple
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.SrufTheme
+import com.aacomposetest.ui.theme.Theme
+import com.aacomposetest.ui.theme.Theme.DefaultBackground
 import ui.components.BottomSheets.PlayPauseButton
 import ui.components.BottomSheets.ResponsiveSlider
+import ui.components.BottomSheets.ScalingBackground
+import ui.components.BottomSheets.renderDefaultBackground
 import ui.components.LoopingText
 
 @Preview
@@ -66,31 +70,35 @@ internal fun FullscreenSong(modifier: Modifier = Modifier) {
 
 @Composable
 private fun content(currentSong: Song?,modifier:Modifier = Modifier){
-    Column(modifier = modifier, verticalArrangement = Arrangement.SpaceAround) {
-
-        ScreenSpace(verticalPercent = 0.5f){
-            _ImageSpace(
-                currentSong,
-                Modifier.fillMaxSize()
-            )
-        }
-
-        ScreenSpace(verticalPercent = 0.15f){
-            _TextSpace(currentSong,modifier = Modifier
+    Box(modifier){
+        
+        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceAround) {
+            
+            ScreenSpace(verticalPercent = 0.5f){
+                _ImageSpace(
+                    currentSong,
+                    Modifier.fillMaxSize()
+                )
+            }
+            
+            ScreenSpace(verticalPercent = 0.15f){
+                _TextSpace(currentSong,modifier = Modifier
+                    .fillMaxSize()
+                )
+            }
+            
+            ScreenSpace(verticalPercent = 0.35f,modifier = Modifier
                 .fillMaxSize()
-                .background(MyColor.Red))
+            ){
+                _ButtonsSpace(currentSong)
+            }
+            
+            
+            
+            
         }
-
-        ScreenSpace(verticalPercent = 0.35f,modifier = Modifier
-            .fillMaxSize()
-            .background(MyColor.Blue)){
-            _ButtonsSpace(currentSong)
-        }
-
-
-
-
     }
+    
 }
 
 @Composable
@@ -109,7 +117,7 @@ private fun _ImageSpace(song:Song?, modifier: Modifier = Modifier.fillMaxSize())
 private fun SongImage(
     song:Song?,
     modifier:Modifier = Modifier.fillMaxSize(),
-    @DrawableRes errorDrawable: Int? = R.drawable.exclamation_sign
+    @DrawableRes errorDrawable: Int? = Theme.ErrorImage()
 ){
     AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)

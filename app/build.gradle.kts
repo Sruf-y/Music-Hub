@@ -120,6 +120,9 @@ dependencies {
     implementation("androidx.compose.animation:animation-core:1.10.1")
     implementation("androidx.transition:transition-ktx:1.7.0")
     
+    // Shimmer/Glint animation
+    implementation("com.valentinilk.shimmer:compose-shimmer:1.3.3")
+    
     //Navigation
     implementation("androidx.navigation:navigation-compose:2.9.5")
 

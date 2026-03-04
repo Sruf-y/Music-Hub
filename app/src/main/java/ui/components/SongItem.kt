@@ -3,8 +3,8 @@ package ui.components
 import AppDatabase.SongRelated.Song
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -33,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +48,8 @@ import coil.request.ImageRequest
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
+import com.aacomposetest.ui.theme.Theme
+import com.aacomposetest.ui.theme.Theme.Glint.GlintMaskBox
 import java.io.File
 
 
@@ -54,28 +58,113 @@ import java.io.File
 private fun Preview(){
     SrufTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier
+            Column(modifier = Modifier
                 .fillMaxSize()
-                .background(MyColor.SeparatorGray), contentAlignment = Alignment.Center){
+                .background(MyColor.SeparatorGray),
+                verticalArrangement = Arrangement.Center
+            ){
 
-                SongItem(modifier = Modifier.background(MyColor.Red))
+                SongItem_Mockup(modifier = Modifier.background(MyColor.Red))
+                SongItem(modifier = Modifier.background(MyColor.Blue))
             }
         }
     }
 }
 
-
+@Composable
+fun SongItem_Mockup(
+    modifier: Modifier = Modifier,
+    thumbNailSize:Float = 55f,
+    height:Dp = 70.dp,
+    iconTint:Color = Theme.IconTint(),
+    textPadding: PaddingValues = PaddingValues(10.dp,0.dp),
+    optionsMenu: @Composable ((isExpanded: MutableState<Boolean>)-> Unit)? = null,
+    leftmostContent: @Composable (RowScope.() -> Unit)? = null
+){
+    Box(modifier = modifier){
+        Row(
+            modifier = Modifier
+                .height(height)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            
+            
+            leftmostContent?.invoke(this@Row)
+            
+            
+            
+            // Song icon
+            Box(contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .padding(10.dp)
+                    .size(thumbNailSize.dp)
+                    .clip(RoundedCornerShape(size = 10.dp))
+            ){
+                
+                Theme.Glint.GlintMaskBox(modifier = Modifier.fillMaxSize())
+                
+            }
+            
+            // Song title & artist
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(textPadding)
+            ){
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                ) {
+                    Spacer(modifier = Modifier.weight(2f))
+                    
+                    
+                    GlintMaskBox(modifier = Modifier.height(20.dp).width(150.dp))
+                    
+                    Spacer(modifier = Modifier.weight(1f))
+                    
+                    GlintMaskBox(modifier = Modifier.height(20.dp).width(80.dp))
+                    
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+            
+            
+            var menuIsExpanded = remember { mutableStateOf(false) }
+            
+            // Playlist More options
+            
+            if(optionsMenu!=null){
+                Box(contentAlignment = Alignment.Center,modifier = Modifier.padding(5.dp)) {
+                    
+                    IconButton(enabled = false,
+                        imageVector = Icons.Default.MoreVert,
+                        modifier = Modifier.size(45.dp,45.dp),
+                        iconSize = Size(0.75f,0.75f),
+                        iconTint = iconTint,
+                        onclick = {
+                            menuIsExpanded.value = true
+                        }
+                    )
+                    
+                    optionsMenu.invoke(menuIsExpanded)
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun SongItem(
     modifier: Modifier = Modifier,
     song: Song? = null,
-    textColor:Color = MyColor.TextColor(),
+    textColor:Color = Theme.TextColor(),
     titleFontSize: TextUnit = 16.sp,
     artistFontSize: TextUnit = 12.sp,
     thumbNailSize:Float = 55f,
     height:Dp = 70.dp,
-    iconTint:Color = if(isSystemInDarkTheme()) Color.White else Color.Black,
+    iconTint:Color = Theme.IconTint(),
     textPadding: PaddingValues = PaddingValues(10.dp,0.dp),
     optionsMenu: @Composable ((isExpanded: MutableState<Boolean>)-> Unit)? = null,
     leftmostContent: @Composable (RowScope.() -> Unit)? = null
@@ -145,7 +234,6 @@ fun SongItem(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = textColor
-
                     )
 
                     Spacer(modifier = Modifier.weight(1f))

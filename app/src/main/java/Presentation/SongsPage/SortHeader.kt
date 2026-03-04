@@ -40,3 +40,25 @@ internal fun SortHeader(
         }
     }
 }
+
+@Composable
+internal fun SortHeader_Mockup(onFilterClick: (() -> Unit)? = null){
+    Box(
+        modifier = Modifier
+            .wrapContentHeight()
+            .fillMaxWidth(), contentAlignment = Alignment.CenterStart
+    ) {
+        
+        Text(text = "Songs(?)")
+        
+        if (onFilterClick != null) {
+            IconButton(
+                resId = R.drawable.ic_sort,
+                modifier = IconButtonDefaults.modifier.align(Alignment.CenterEnd)
+            ) {
+                onFilterClick.invoke()
+            }
+            
+        }
+    }
+}

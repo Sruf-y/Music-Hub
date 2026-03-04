@@ -19,6 +19,7 @@ class SongsViewModel(context: Context): ViewModel() {
     private val repo = SongRepository(dao)
 
     init {
+        // i'll keep it like this because this way i can manually influence on-screen songs
         viewModelScope.launch {
             repo.allsongsFlow.collect{songs->
                 _songsAsFlow.value = songs

@@ -9,6 +9,11 @@ import android.content.Context
 import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import androidx.room.Database
@@ -16,6 +21,7 @@ import com.aacomposetest.Functions
 import com.aacomposetest.Functions.Images
 import com.aacomposetest.Functions.concatenateWith
 import com.aacomposetest.Logs
+import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -39,6 +45,7 @@ object AndroidDatabase {
      * */
     suspend fun doSongsQuery(viewmodel: SongsViewModel?, context:Context, alsoPictures: Boolean = true,forceUpdate:Boolean = false,  onFinish: (suspend ()->Unit)? = null):Int =
         withContext(Dispatchers.IO) {
+            startRefresh()
             val contentResolver = context.contentResolver
 
             val FROM = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
@@ -226,9 +233,25 @@ object AndroidDatabase {
 
 
                 onFinish?.invoke()
-
+                
+                finishRefresh()
             }
 
             return@withContext counter
         }
+    
+    var isRefreshingSongs by mutableStateOf(false)
+        private set
+    
+    private fun startRefresh(){
+        isRefreshingSongs = true
+    }
+    private fun finishRefresh(){
+        isRefreshingSongs = false
+    }
+    
+    @Composable
+    fun RefreshingBox(modifier:Modifier = Modifier,content:@Composable ()-> Unit){
+        Theme.Glint.GlintBox(modifier,content)
+    }
 }

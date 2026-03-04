@@ -133,7 +133,7 @@ fun PlayPauseButton(
 fun ScalingBackground(
    modifier: Modifier = Modifier.fillMaxSize(),
    song: Song?,
-   @DrawableRes errorDrawable: Int? = R.drawable.exclamation_sign,
+   @DrawableRes errorDrawable: Int? = Theme.DefaultBackground(),
    //@FloatRange(0.0,1.0)
    blur: Float = 0f,
    @FloatRange(0.0,1.0)
@@ -181,6 +181,16 @@ fun ScalingBackground(
    
 }
 
+@Composable
+fun renderDefaultBackground(modifier: Modifier = Modifier,@DrawableRes id:Int = Theme.DefaultBackground()){
+   AsyncImage(ImageRequest.Builder(LocalContext.current)
+      .data(id)
+      .build(),
+      modifier = modifier,
+      contentDescription = null,
+      contentScale = ContentScale.Crop // CenterCrop
+   )
+}
 
 @Composable
 private fun ButtonsRow(
