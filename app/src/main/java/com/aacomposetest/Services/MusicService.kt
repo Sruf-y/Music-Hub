@@ -365,7 +365,7 @@ class MusicService: LifecycleService() {
       private var currentLayerState = LayerState.NONE
       
       fun handleOnAppStart(context: Context){
-         if(currentLayerState != LayerState.Foreground) {
+         if(currentLayerState == LayerState.NONE || MyApplication.serviceInstance == null) {
             val intent = Intent(context, MusicService::class.java).apply {
                action = MusicService.Actions.START.name
             }
