@@ -172,7 +172,7 @@ data class Page_ViewPlaylist(val title: String) {
             }
          }
          
-         Surface(modifier = modifier) {
+         Box(modifier = modifier) {
             
             
             val sHeaderTitle by remember {

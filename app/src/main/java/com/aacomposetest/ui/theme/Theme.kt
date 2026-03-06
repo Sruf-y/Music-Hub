@@ -67,6 +67,8 @@ object Theme{
    
    @Composable
    fun TextColor():Color = MyColor.TextColor()
+   @Composable
+   fun HintColor():Color = MyColor.TextColor().copy(alpha = 0.5f)
    
    @Composable
    fun SystemColor():Color = MyColor.SystemColor()

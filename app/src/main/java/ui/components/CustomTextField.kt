@@ -54,6 +54,7 @@ import androidx.core.view.forEach
 import androidx.core.view.updatePadding
 import com.aacomposetest.Log
 import com.aacomposetest.ui.theme.MyColor
+import com.aacomposetest.ui.theme.Theme
 
 
 public class CustomEditText(context: Context): AppCompatEditText(context){
@@ -217,10 +218,10 @@ fun CustomTextField(
    modifier: Modifier = Modifier,
    text: String?,
    hint: String = "",
-   hintColor: Color = Color.DarkGray,
+   hintColor: Color = Theme.HintColor(),
    onValueChange: (Editable?) -> Unit,
    textSize: Float = 16.sp.value,
-   color: Color = Color.Black,
+   color: Color = Theme.TextColor(),
    singleLine:Boolean = false,
    textGravity: Int = Gravity.START or Gravity.CENTER,
    onEditTextSetUp: (EditText) -> Unit = {},
