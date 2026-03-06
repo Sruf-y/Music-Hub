@@ -357,7 +357,8 @@ data class Page_ViewPlaylist(val title: String) {
                                  Icon(
                                     painter = painterResource(R.drawable.ic_drag_handle),
                                     contentDescription = "Reorder",
-                                    modifier = Modifier.fillMaxHeight(0.9f).aspectRatio(1f)
+                                    modifier = Modifier.fillMaxHeight(0.9f).aspectRatio(1f),
+                                    tint = MyColor.TextColor()
                                  )
                               }
                         }
