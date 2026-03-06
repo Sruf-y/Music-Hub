@@ -83,6 +83,7 @@ import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import kotlinx.coroutines.delay
 import ui.components.LoopingText
+import java.io.File
 import kotlin.compareTo
 import kotlin.invoke
 import kotlin.math.roundToInt
@@ -150,38 +151,71 @@ fun ScalingBackground(
       // Default background
       Box(modifier = Modifier
          .fillMaxSize()
-         .background(defaultBackground))
-      
-      AsyncImage(
-         model = ImageRequest.Builder(LocalContext.current)
-            .data(song?.thumbnailPath)
-            .allowHardware(true)
-            .memoryCacheKey(song?.thumbnailPath)
-            .placeholderMemoryCacheKey(song?.thumbnailPath)
-            .let {
-               if(errorDrawable!=null){
-                  it.error(errorDrawable)
+         .background(defaultBackground)
+      )
+      if(song==null || !File(song.thumbnailPath).exists()){
+         AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+               .data(song?.thumbnailPath)
+               .allowHardware(true)
+               .memoryCacheKey(song?.thumbnailPath)
+               .placeholderMemoryCacheKey(song?.thumbnailPath)
+               .let {
+                  if(errorDrawable!=null){
+                     it.error(errorDrawable)
+                  }
+                  else
+                     it
                }
-               else
-                  it
-            }
-            .build(),
-         contentDescription = "Song thumbnail scaled",
-         modifier = Modifier
-            .fillMaxSize()
-            .blur((blur).dp),
-         contentScale = ContentScale.Crop // CenterCrop
-      )
+               .build(),
+            contentDescription = "Song thumbnail scaled",
+            modifier = Modifier
+               .fillMaxSize(),
+            contentScale = ContentScale.Crop // CenterCrop
+         )
+      }else{
+         AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+               .data(song?.thumbnailPath)
+               .allowHardware(true)
+               .memoryCacheKey(song?.thumbnailPath)
+               .placeholderMemoryCacheKey(song?.thumbnailPath)
+               .let {
+                  if(errorDrawable!=null){
+                     it.error(errorDrawable)
+                  }
+                  else
+                     it
+               }
+               .build(),
+            contentDescription = "Song thumbnail scaled",
+            modifier = Modifier
+               .fillMaxSize()
+               .let{
+                  if(song==null || !File(song.thumbnailPath).exists())
+                  {
+                     it
+                  }else{
+                     it.blur((blur).dp)
+                  }
+               }
+            ,
+            contentScale = ContentScale.Crop // CenterCrop
+         )
+         
+         // Darkening effect over the picture
+         
+         Box(
+            modifier = Modifier
+               .fillMaxSize()
+               .background(
+                  color = MyColor.Black.copy(alpha = darkening)
+               )
+         
+         )
+      }
       
-      // Darkening effect over the picture
-      Box(
-         modifier = Modifier
-            .fillMaxSize()
-            .background(
-               color = MyColor.Black.copy(alpha = darkening)
-            )
-            
-      )
+      
    }
    
 }
@@ -342,13 +376,12 @@ fun ResponsivePlayerBS(
       ScalingBackground(
          modifier = Modifier
             .fillMaxSize()
-            .layout{
-               measurable,constraints->
+            .layout { measurable, constraints ->
                
                val placeable = measurable.measure(constraints)
                
                layout(placeable.width, placeable.height) {
-                  placeable.place(0, 0+backgroundYoffset.roundToInt())
+                  placeable.place(0, 0 + backgroundYoffset.roundToInt())
                }
             },
          blur = 3f,
@@ -379,7 +412,7 @@ fun ResponsivePlayerBS(
          isExpandedEnabled = isExpandedEnabled,
          modifier = Modifier
             .fillMaxSize()
-            .graphicsLayer{
+            .graphicsLayer {
                this.alpha = progressScalar
             }
             .clickableNoRipple(enabled = state.isIdle && progressScalar > 0f) {
@@ -412,7 +445,7 @@ fun ResponsivePlayerBS(
          modifier = Modifier
             .fillMaxWidth()
             .height(peekHeight)
-            .graphicsLayer{
+            .graphicsLayer {
                alpha = invertedProgressScalar
             },
          value = curPos.toFloat()/range.endInclusive,
