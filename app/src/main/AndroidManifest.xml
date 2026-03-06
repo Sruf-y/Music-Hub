@@ -21,25 +21,40 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ComposeTest"
         >
+
         <activity
             android:name="TestLayouts.TestActivity"
             android:exported="false" />
-<!--        <activity-->
-<!--            android:name=".Activities.MainActivityView"-->
-<!--            android:exported="false" />-->
+
         <activity
             android:name=".Activities.MainActivityView"
             android:exported="true"
-            android:label="@string/app_name"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustNothing"
             android:theme="@style/Theme.ComposeTest">
+            <!-- Launcher intent -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Intent filter for opening media files -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
         </activity>
+
+        <activity
+            android:name=".Activities.FullScreenPlayerActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustNothing"
+            android:theme="@style/Theme.ComposeTest">
+        </activity>
+
         <service android:name=".Services.MusicService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false">
@@ -47,6 +62,7 @@
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>
         </service>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -56,6 +72,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
     </application>
 
 

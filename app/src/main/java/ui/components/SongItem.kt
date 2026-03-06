@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.aacomposetest.Classes.MyIcons
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
@@ -74,10 +76,9 @@ private fun Preview(){
 @Composable
 fun SongItem_Mockup(
     modifier: Modifier = Modifier,
-    thumbNailSize:Float = 55f,
-    height:Dp = 70.dp,
+    height:Dp = 60.dp,
     iconTint:Color = Theme.IconTint(),
-    textPadding: PaddingValues = PaddingValues(10.dp,0.dp),
+    textPadding: PaddingValues = PaddingValues(0.dp,0.dp),
     optionsMenu: @Composable ((isExpanded: MutableState<Boolean>)-> Unit)? = null,
     leftmostContent: @Composable (RowScope.() -> Unit)? = null
 ){
@@ -98,8 +99,9 @@ fun SongItem_Mockup(
             // Song icon
             Box(contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(10.dp)
-                    .size(thumbNailSize.dp)
+                    .padding(horizontal = 10.dp)
+                    .fillMaxHeight(0.8f)
+                    .aspectRatio(1f)
                     .clip(RoundedCornerShape(size = 10.dp))
             ){
                 
@@ -119,10 +121,7 @@ fun SongItem_Mockup(
                 ) {
                     Spacer(modifier = Modifier.weight(2f))
                     
-                    
                     GlintMaskBox(modifier = Modifier.height(20.dp).width(150.dp))
-                    
-                    Spacer(modifier = Modifier.weight(1f))
                     
                     GlintMaskBox(modifier = Modifier.height(20.dp).width(80.dp))
                     
@@ -162,11 +161,10 @@ fun SongItem(
     textColor:Color = Theme.TextColor(),
     titleFontSize: TextUnit = 16.sp,
     artistFontSize: TextUnit = 12.sp,
-    thumbNailSize:Float = 55f,
-    height:Dp = 70.dp,
+    height:Dp = 60.dp,
     iconTint:Color = Theme.IconTint(),
-    textPadding: PaddingValues = PaddingValues(10.dp,0.dp),
-    optionsMenu: @Composable ((isExpanded: MutableState<Boolean>)-> Unit)? = null,
+    textPadding: PaddingValues = PaddingValues(0.dp,0.dp),
+    optionsMenu: @Composable ((isExpanded: MutableState<Boolean>)-> Unit)? = {},
     leftmostContent: @Composable (RowScope.() -> Unit)? = null
 ) {
 
@@ -188,8 +186,8 @@ fun SongItem(
             // Song icon
             Box(contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(10.dp)
-                    .size(thumbNailSize.dp)
+                    .padding(horizontal = 10.dp)
+                    .fillMaxHeight(0.8f).aspectRatio(1f)
                     .clip(RoundedCornerShape(size = 10.dp))
             ){
                 if(File(song?.thumbnailPath?:"").exists()) {
@@ -236,7 +234,6 @@ fun SongItem(
                         color = textColor
                     )
 
-                    Spacer(modifier = Modifier.weight(1f))
 
                     Text(
                         text = song?.artistName?:"<artist name>",
@@ -260,8 +257,8 @@ fun SongItem(
 
                     IconButton(
                         imageVector = Icons.Default.MoreVert,
-                        modifier = Modifier.size(45.dp,45.dp),
-                        iconSize = Size(0.75f,0.75f),
+                        modifier = Modifier.size(MyIcons.sizeMedium, MyIcons.sizeMedium),
+                        iconSize = Size(1f,1f),
                         iconTint = iconTint,
                         onclick = {
                             menuIsExpanded.value = true

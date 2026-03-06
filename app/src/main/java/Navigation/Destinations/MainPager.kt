@@ -8,10 +8,13 @@ import SrufComposeComponents.KeyboardAwareBox
 import SrufComposeComponents.NestedScrollingFront
 import SrufComposeComponents.TabRowIndicator
 import SrufComposeComponents.Text
+import android.view.Gravity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,12 +56,14 @@ import androidx.compose.ui.zIndex
 import androidx.core.content.edit
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.putCursorValue
+import com.aacomposetest.Log
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import ui.components.CustomTextField
 
 
 private val customIndicator =
@@ -181,7 +186,7 @@ object MainPager {
          modifier = Modifier
             .height(60.dp)
             .fillMaxWidth()
-            .background(MyColor.SeparatorGray)
+            .background(Theme.Sourcesets.AppbarBackground())
             .clipToBounds()
       ) {isImeVisible,imeInsets,navBarInset->
          
@@ -202,9 +207,8 @@ object MainPager {
          
          val isFocused by ListFeedingVM.SortedSongs.isSearching.collectAsState()
          
-         
          LaunchedEffect(isSearchInProgress,  focusState?.hasFocus, shouldBeFocused) {
-            ListFeedingVM.SortedSongs.setSearching(isSearchInProgress || focusState?.hasFocus?:false || shouldBeFocused)
+            ListFeedingVM.SortedSongs.setSearching(isSearchInProgress || focusState?.hasFocus == true || shouldBeFocused)
          }
          
          
@@ -240,9 +244,20 @@ object MainPager {
             LaunchedEffect(isFocused) {
                focusRequester.requestFocus()
             }
-            
-            TextField(
+            CustomTextField(textGravity = Gravity.START or Gravity.CENTER,
                singleLine = true,
+               contentPadding = PaddingValues(start = 10.dp),
+               text = searchWord,
+               onValueChange = {
+                  ListFeedingVM.SortedSongs.setSearchWord(it.toString())
+               },
+               modifier = Modifier
+                  .fillMaxSize()
+                  .focusRequester(focusRequester)
+                  .onFocusChanged {
+                     focusState = it
+                  },
+               hint = "Search",
                trailingIcon = {
                   IconButton(
                      modifier = iconModifier,
@@ -253,21 +268,9 @@ object MainPager {
                         shouldBeFocused = false
                      }
                   )
-               },
-               modifier = Modifier
-                  .fillMaxSize()
-                  .focusRequester(focusRequester)
-                  .onFocusChanged {
-                     focusState = it
-                  },
-               value = searchWord,
-               onValueChange = {
-                  ListFeedingVM.SortedSongs.setSearchWord(it)
-               },
-               placeholder = {
-                  Text(text = "Search")
                }
             )
+            
          }
          
       }

@@ -394,11 +394,14 @@ object myExoPlayer {
      * */
     fun setSong(song: Song?, startOnPrepared:Boolean=true, playlistTitle: String? =  null, initialPosition: Long = 0L){
 
-        Log("""
-            Tried to set song
-            id:${song?.id}
-            title:${song?.title}
-        """.trimIndent())
+        Log.i(
+            Logs.EXOPLAYER.name,
+            """
+                Tried to set song with data:
+                id - [${song?.id}]
+                title - [${song?.title}]
+            """.trimIndent()
+        )
 
         setCurrentPlaylist(playlistTitle)
 

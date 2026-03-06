@@ -106,7 +106,6 @@ class SheetViewmodel(): ViewModel(){
          stack.forEachIndexed { index, it ->
             key("bottomSheetStack_#${index}") {
                
-               
                // This is being used because initially the sheet is hidden and progress is 0, making it remove itself before being fully shown.
                var wasShown by remember { mutableStateOf(false) }
                

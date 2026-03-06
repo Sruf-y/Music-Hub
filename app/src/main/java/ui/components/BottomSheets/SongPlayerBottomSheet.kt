@@ -5,8 +5,11 @@ import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
+import android.app.Activity
+import android.content.Intent
 import android.text.format.DateUtils
 import android.view.View
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
 import androidx.annotation.FloatRange
 import androidx.appcompat.widget.AppCompatImageView
@@ -68,8 +71,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.aacomposetest.Activities.FullScreenPlayerActivity
 import com.aacomposetest.Functions.clickableNoRipple
 import com.aacomposetest.Functions.invert
+import com.aacomposetest.Log
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
@@ -182,7 +187,7 @@ fun ScalingBackground(
 }
 
 @Composable
-fun renderDefaultBackground(modifier: Modifier = Modifier,@DrawableRes id:Int = Theme.DefaultBackground()){
+fun renderDefaultBackground(modifier: Modifier = Modifier.fillMaxSize(),@DrawableRes id:Int = Theme.DefaultBackground()){
    AsyncImage(ImageRequest.Builder(LocalContext.current)
       .data(id)
       .build(),
@@ -248,8 +253,8 @@ private fun RespProgressBar(
       .height(10.dp),
    @FloatRange(0.0,1.0) value: Float,
    shape: Shape = RectangleShape,
-   filledCollor: Color = MyColor.Green,
-   backgroundColor: Color = MyColor.SeparatorGray,
+   filledCollor: Color = Theme.Sourcesets.progressBar,
+   backgroundColor: Color = Theme.Sourcesets.barBackground,
 ) {
    
    Box(
@@ -284,9 +289,11 @@ fun ResponsivePlayerBS(
    onShuffle:()->Unit = {
       myExoPlayer.playerSettings.isShuffling.invert()
    },
-   onBackgroundClick:()->Unit = {}
-) {
+   onBackgroundClick:(Activity)->Unit = {
    
+   }
+) {
+   val activity = LocalActivity.current
    
    // middle would be if both members of the equation were divided by 2, but the middle does create some flickers.
    /**
@@ -376,7 +383,10 @@ fun ResponsivePlayerBS(
                this.alpha = progressScalar
             }
             .clickableNoRipple(enabled = state.isIdle && progressScalar > 0f) {
-               onBackgroundClick.invoke()
+               activity?.run {
+                  
+                  onBackgroundClick.invoke(activity)
+               }
             },
          state = state,
          swapControls = swapControls,
@@ -519,7 +529,7 @@ fun ResponsiveSlider(
             Box(
                Modifier
                   .size(16.dp)
-                  .background(Color.White, CircleShape)
+                  .background(Theme.Sourcesets.thumb, CircleShape)
             )
          },
          track = {
@@ -532,7 +542,7 @@ fun ResponsiveSlider(
                   .height(8.dp)
                   .shadow(elevation = 3.dp, shape = shape)
                   .clip(shape)
-                  .background(MyColor.SeparatorGray)
+                  .background(Theme.Sourcesets.barBackground)
                   .let {
                      if (borderColor != null) {
                         it.border(
@@ -550,7 +560,7 @@ fun ResponsiveSlider(
                   modifier = Modifier
                      .fillMaxWidth(calculatedSliderPosition / range.endInclusive)
                      .fillMaxHeight()
-                     .background(color = MyColor.Blue)
+                     .background(color = Theme.Sourcesets.seekBar)
                )
             }
          },

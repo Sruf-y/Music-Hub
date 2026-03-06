@@ -14,18 +14,20 @@ import com.aacomposetest.Log
 @Composable
 inline fun ActivityLifecycleEffect(
    key:Any?,
-   callbacks: Application.ActivityLifecycleCallbacks
+   callbacks: ActivityLifecycleCallbacks_Impl
 ){
    val activity = LocalActivity.current
    
    LaunchedEffect(key) {
-      Log("ActivityLifecycle Launched Effect")
       activity?.unregisterActivityLifecycleCallbacks(callbacks)
       
       activity?.registerActivityLifecycleCallbacks(callbacks)
    }
 }
 
+/**
+ * Wrapper implementation made so i won't have to implement everything else besides exactly what i need.
+ * */
 open class ActivityLifecycleCallbacks_Impl(): Application.ActivityLifecycleCallbacks{
    override fun onActivityCreated(
       activity: Activity,

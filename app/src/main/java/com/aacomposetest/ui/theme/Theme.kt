@@ -9,7 +9,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,6 +25,7 @@ import com.aacomposetest.ui.theme.MyColor.White
 import com.valentinilk.shimmer.LocalShimmerTheme
 import com.valentinilk.shimmer.defaultShimmerTheme
 import com.valentinilk.shimmer.shimmer
+import ui.components.BottomSheets.renderDefaultBackground
 import ui.components.SongItem
 
 object Theme{
@@ -53,9 +57,7 @@ object Theme{
    @Composable
    fun onBackground() = MyColor.OnBackground()
    
-   val seekBar = MyColor.ConfirmBlue
-   val progressBar = MyColor.Green
-   val barBackground = MyColor.SeparatorGray
+   
    
    @Composable
    fun IconTint():Color = MyColor.IconTint()
@@ -97,7 +99,7 @@ object Theme{
       @Composable
       fun GlintBox(
          modifier: Modifier = Modifier,
-         content: @Composable () -> Unit
+         content: @Composable () -> Unit = {}
       ){
          Box(
             modifier = modifier
@@ -126,18 +128,35 @@ object Theme{
       }
    }
    
-   object Sourcesets{
-      @Composable
-      fun SongsBackground() = Theme.background()
-      
-      @Composable
-      fun TabRowBackground()  = Theme.SystemColor()
-      
-      @Composable
-      fun ToolbarBackground() = Theme.ToolBar()
-   }
+   var Sourcesets by mutableStateOf(object:ThemeSourceSet(){})
+      private set
+   
+   
+   
+   
    
 }
+
+abstract class ThemeSourceSet{
+   @Composable
+   open fun SongsBackground():Color = Theme.background().copy(alpha = 0.4f)
+   
+   @Composable
+   open fun TabRowBackground():Color  = Theme.SystemColor().copy(alpha = 0.4f)
+   
+   @Composable
+   open fun ToolbarBackground():Color = Theme.ToolBar()
+   
+   @Composable
+   open fun AppbarBackground():Color = ToolbarBackground().copy(alpha = 0.4f)
+   
+   open val thumb:Color = MyColor.White
+   open val seekBar:Color = MyColor.ConfirmBlue
+   open val progressBar:Color = MyColor.Green
+   open val barBackground:Color = MyColor.SeparatorGray
+}
+
+
 val myShimmerTheme = defaultShimmerTheme.copy(
    // Rotatie in grade
    rotation = 15f
@@ -151,6 +170,7 @@ fun SrufTheme(
    CompositionLocalProvider(
       LocalShimmerTheme provides myShimmerTheme
    ) {
+      
       MaterialTheme(
          colorScheme = Theme.colorScheme(forceDarkMode),
          typography = Typography,

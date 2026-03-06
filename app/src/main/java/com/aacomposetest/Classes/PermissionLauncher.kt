@@ -72,8 +72,6 @@ fun ComponentActivity.createPermissionLauncher(
 
 class PermissionLauncher(val permission:String, private val launcher: ActivityResultLauncher<String>){
    
-   fun checkSelf(context:Context) = ContextCompat.checkSelfPermission(context,permission) == PackageManager.PERMISSION_GRANTED
-   
    fun launch(){
       launcher.launch(permission)
    }

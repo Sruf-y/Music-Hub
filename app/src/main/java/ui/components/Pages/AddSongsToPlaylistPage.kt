@@ -166,8 +166,7 @@ fun AddSongsToPlaylistPage(
                         items(items = checkableItems, key = { it.item.id }) { item ->
                             SongItem(
                                 leftmostContent = {
-                                    val checkboxInteractionSong =
-                                        remember { MutableInteractionSource() }
+                                    
                                     Checkbox(
                                         modifier = Modifier
                                             .padding(horizontal = 10.dp),

@@ -365,12 +365,15 @@ class MusicService: LifecycleService() {
       private var currentLayerState = LayerState.NONE
       
       fun handleOnAppStart(context: Context){
-         if(currentLayerState == LayerState.NONE || MyApplication.serviceInstance == null) {
+         if(currentLayerState == LayerState.NONE) {
             val intent = Intent(context, MusicService::class.java).apply {
                action = MusicService.Actions.START.name
             }
             context.startForegroundService(intent)
-         }
+         }else
+            if(currentLayerState == LayerState.BackGround){
+               MyApplication.serviceInstance?.sendToForeground()
+            }
          
       }
       
@@ -382,7 +385,7 @@ class MusicService: LifecycleService() {
          val appTasks = activityManager.appTasks
 
 //            appTasks.forEach {
-//                Log.i("WTF",it.taskInfo.topActivity?.className?:"Nothing.")
+//                Log(it.taskInfo.topActivity?.className?:"Nothing.")
 //            }
          return appTasks.isNotEmpty()
       }

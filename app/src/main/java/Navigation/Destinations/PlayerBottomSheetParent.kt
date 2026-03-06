@@ -11,6 +11,7 @@ import SrufComposeComponents.Text
 import android.app.Activity
 import ui.components.rememberBottomSheetInstance
 import android.content.SharedPreferences
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -23,6 +24,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -37,12 +39,13 @@ import com.aacomposetest.Classes.getCursorValue
 import com.aacomposetest.Classes.putCursorValue
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.BottomSheets.ResponsivePlayerBS
 import ui.components.BottomSheets.rememberBottomSheetConfig
-import ui.components.Pages.PlaylistViewing
 import ui.components.Pages.PlaylistsPage
 
 @Serializable
@@ -96,7 +99,7 @@ object PlayerBottomSheetParent {
       )
       
       
-      // TODO Make this a listener to the onPause for the activity
+      
       // Save scroll position for the [All Songs] page
       ActivityLifecycleEffect(
          key = songsListState,
@@ -115,6 +118,7 @@ object PlayerBottomSheetParent {
             }
          }
       )
+      
       // Save scroll position for the [All Playlists] page
       ActivityLifecycleEffect(
          key = playlistsListState,
@@ -178,6 +182,13 @@ object PlayerBottomSheetParent {
                      }
                      
                      val plusClickContent = rememberBottomSheetInstance {
+                        val scope = rememberCoroutineScope()
+                        BackHandler {
+                           scope.launch {
+                              globalBottomSheetVM.dismissCurrent()
+                           }
+                           
+                        }
                         PlaylistAddOrEdit_Content(
                            allPlaylists,
                            bottomSheetVM = globalBottomSheetVM
@@ -239,7 +250,7 @@ object PlayerBottomSheetParent {
             
             
             
-            PlaylistViewing(
+            Page_ViewPlaylist.PlaylistViewing(
                playlistTitle = args.title,
                lazyListState = playlistViewingLazyListState,
                onBack = {

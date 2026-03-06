@@ -4,29 +4,43 @@ import AppDatabase.PlaylistRelated.Playlist
 import ExoPlayer.myExoPlayer
 import MyViewModels.FileWatcher
 import MyViewModels.LyricsManager
+import MyViewModels.SongsViewModel
 import android.Manifest
 import android.app.Activity
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.database.ContentObserver
 import android.os.Process
+import android.provider.MediaStore
 import android.util.Log
 import android.view.WindowManager
 import androidx.annotation.RequiresPermission
+import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import com.aacomposetest.Classes.ContentObserver_Impl
 import com.aacomposetest.Classes.NotificationPoster
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
 import com.aacomposetest.Classes.NotificationPoster.Companion.openMediaStoreUriPendingIntent
 import com.aacomposetest.Services.MusicService
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 
 class MyApplication: Application(), ImageLoaderFactory {
+    
+    val songViewModel: SongsViewModel by lazy {
+        SongsViewModel(this)
+    }
+    
+    var mediastoreObserver: ContentObserver? = null
+        private set
+    
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onCreate() {
         super.onCreate()
@@ -39,12 +53,33 @@ class MyApplication: Application(), ImageLoaderFactory {
             name,
             NotificationManager.IMPORTANCE_DEFAULT
         )
-        
-
         Log.i(Logs.RUNNING_INFO.name,"Notification channel created.")
-
         getSystemService(NotificationManager::class.java).createNotificationChannel(musicNotificationChannel)
-
+        
+        
+        /**
+         * Hook database to MediaStore database
+         */
+        mediastoreObserver = ContentObserver_Impl(
+            onAnyChange = { selfChange->
+                
+                with(songViewModel){
+                    viewModelScope.launch {
+                        resyncALL_withMediaStore(MyApplication.instance, alsoPictures = true, forceUpdate = false)
+                    }
+                }
+            }
+        ).apply {
+            /**
+             * Register the created implementation for updates from MediaStore
+             */
+            contentResolver.registerContentObserver(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                true, // notify for descendants
+                this
+            )
+        }
+        
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             // Log the crash
             Log("Logged crash to ${crashLogger.folder.name}")
@@ -57,8 +92,7 @@ class MyApplication: Application(), ImageLoaderFactory {
                 pendingIntent = openMediaStoreUriPendingIntent(this,uri)
             )
         }
-
-
+        
     }
 
     override fun newImageLoader(): ImageLoader {
@@ -83,17 +117,17 @@ class MyApplication: Application(), ImageLoaderFactory {
     }
     
     companion object{
-        lateinit var instance: Application
+        lateinit var instance: MyApplication
             private set
 
         val allertPoster by lazy {
             NotificationPoster(
                 context = instance,
-                channelId = "53453345432",
+                channelId = "AlertPosterChannelId#0001",
                 channelName = "AllertPoster",
                 //pendingIntent = PendingIntentCompat.
             ).apply {
-                setGroup("Allerts","543885823")
+                setGroup("Allerts","AlertPosterGroupId#0001")
             }
         }
         
@@ -102,21 +136,13 @@ class MyApplication: Application(), ImageLoaderFactory {
         ).apply {
             startWatching()
         } }
-        
-        val lyricsFolderWatcher:FileWatcher by lazy { FileWatcher(
-            LyricsManager.getDir(instance)
-        ).apply {
-            startWatching()
-        } }
 
         val crashLogger by lazy { CrashReporter(foldername = "CrashLogs_${instance.getString(R.string.app_name)}") }
         
         var serviceInstance: MusicService? = null
             private set
-
-        fun killProccess(){
-            android.os.Process.killProcess(Process.myPid())
-        }
+        
+        
 
 
         fun registerServiceInstance(service: MusicService) {
@@ -125,6 +151,10 @@ class MyApplication: Application(), ImageLoaderFactory {
 
         fun unregisterServiceInstance() {
             serviceInstance = null
+        }
+        
+        fun killProccess(){
+            android.os.Process.killProcess(Process.myPid())
         }
         
         fun showSystemAlert(
@@ -191,7 +221,7 @@ fun Log(message:String,type:String = "i"){
 
 }
 
-fun tryTo(
+inline fun tryTo(
     onError: (Exception) -> Unit = {},
     action: () -> Unit,
 ) {
@@ -202,7 +232,7 @@ fun tryTo(
     }
 }
 
-fun <T>tryValue(
+inline fun <T>tryValue(
     onError: (Exception) -> T,
     action: () -> T
 ):T{

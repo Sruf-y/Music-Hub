@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.BasicTextField
@@ -125,11 +126,11 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
          }
          
          CustomTextField(
-            text = lyricsManager.lyrics,
+            text = lyricsManager.lyrics.value,
             onValueChange = {
                lyricsManager.lyrics.value = it.toString()
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).imePadding(),
             enabled = isEditing,
             textGravity = Gravity.START or Gravity.TOP,
             color = MyColor.TextColor(),

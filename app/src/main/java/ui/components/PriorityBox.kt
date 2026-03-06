@@ -1,13 +1,14 @@
 package ui.components
 
+import android.text.Layout
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 
 /**
- * Box that prioritize content in the middle being on the screen but first it prioritizes the top and bottom content
+ * Box that prioritize content in the middle being on the screen but first it prioritizes the bottom content
  *
- * Priority is:  top -> bottom -> content
+ * Priority is:  bottom -> content
  * */
 @Composable
 fun PriorityBox(
@@ -68,4 +69,6 @@ fun PriorityBox(
       
    }
 }
+
+
 

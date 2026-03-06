@@ -163,7 +163,7 @@ fun MainSongsColumn(
                if(AndroidDatabase.isRefreshingSongs){
                   // Apply mockup of on-screen songs for a smoother loading experience
                   Overlay({
-                     AndroidDatabase.RefreshingBox(Modifier.fillMaxSize()){}
+                     Theme.Glint.GlintBox(Modifier.fillMaxSize())
                   }) {
                      SongItem(
                         song = song,
@@ -175,7 +175,7 @@ fun MainSongsColumn(
                                  onItemClick.invoke(song)
                               }
                            )
-                           .padding(5.dp),
+                           .padding(vertical = 5.dp),
                         optionsMenu = {
                            // TODO
                         }
@@ -194,7 +194,7 @@ fun MainSongsColumn(
                               onItemClick.invoke(song)
                            }
                         )
-                        .padding(5.dp),
+                        .padding(vertical = 5.dp),
                      optionsMenu = {
                         // TODO
                      }
