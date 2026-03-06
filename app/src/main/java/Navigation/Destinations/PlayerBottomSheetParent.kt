@@ -15,17 +15,20 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.core.content.edit
@@ -35,11 +38,12 @@ import androidx.navigation.toRoute
 import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Impl
 import com.aacomposetest.Classes.ActivityLifecycleEffect
 import com.aacomposetest.Classes.MyPrefs
+import com.aacomposetest.Classes.PersistentState
 import com.aacomposetest.Classes.getCursorValue
 import com.aacomposetest.Classes.putCursorValue
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
@@ -245,9 +249,20 @@ object PlayerBottomSheetParent {
          composable<Page_ViewPlaylist> {
             val args = it.toRoute<Page_ViewPlaylist>()
             
-            val playlistViewingLazyListState =
-               rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+            var persistentIndex by remember{ PersistentState("page_view_playlist_index#${args.title}",{ 0 }) }
+            var persistentOffset by remember{ PersistentState("page_view_playlist_offset#${args.title}",{ 0 }) }
             
+            val playlistViewingLazyListState = rememberLazyListState(persistentIndex,persistentOffset)
+            
+            LaunchedEffect(Unit) {
+               snapshotFlow {
+                  playlistViewingLazyListState.firstVisibleItemIndex to playlistViewingLazyListState.firstVisibleItemScrollOffset
+               }.debounce { 500 }
+                  .collect {
+                     persistentIndex = it.first
+                     persistentOffset = it.second
+                  }
+            }
             
             
             Page_ViewPlaylist.PlaylistViewing(

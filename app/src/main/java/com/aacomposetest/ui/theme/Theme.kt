@@ -88,9 +88,9 @@ object Theme{
    @Composable
    fun ToolBar(darkMode:Boolean = isSystemInDarkTheme()):Color{
       return if(darkMode){
-         MyColor.SeparatorGray
-      }else{
          MyColor.Inactive
+      }else{
+         MyColor.SeparatorGray
       }
    }
    

@@ -234,7 +234,8 @@ data class Page_ViewPlaylist(val title: String) {
                   Box(
                      modifier = Modifier
                         .fillMaxWidth()
-                        .wrapContentHeight(),
+                        .wrapContentHeight()
+                        .background(Theme.Sourcesets.ToolbarBackground()),
                   ) {
                      
                      Text(
