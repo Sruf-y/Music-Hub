@@ -3,10 +3,13 @@ package com.aacomposetest.Classes
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.aacomposetest.Log
+import io.ktor.util.reflect.instanceOf
+import okhttp3.internal.wait
 
 /**
  * @param callbacks use [ActivityLifecycleCallbacks_Impl] for an easier time overriding just the required functions.

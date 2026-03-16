@@ -4,12 +4,9 @@ import MyViewModels.ListFeedingVM
 import com.aacomposetest.Classes.PersistentState
 import SrufComposeComponents.CustomPagerTab
 import SrufComposeComponents.IconButton
-import SrufComposeComponents.KeyboardAwareBox
 import SrufComposeComponents.NestedScrollingFront
 import SrufComposeComponents.TabRowIndicator
 import SrufComposeComponents.Text
-import android.view.Gravity
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -30,7 +27,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.TabPosition
 import androidx.compose.material3.TabRow
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,7 +52,6 @@ import androidx.compose.ui.zIndex
 import androidx.core.content.edit
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.putCursorValue
-import com.aacomposetest.Log
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
@@ -182,13 +177,13 @@ object MainPager {
    }
    @Composable
    private fun SearchTopBar(){
-      KeyboardAwareBox(
+      Box(
          modifier = Modifier
             .height(60.dp)
             .fillMaxWidth()
             .background(Theme.Sourcesets.AppbarBackground())
             .clipToBounds()
-      ) {isImeVisible,imeInsets,navBarInset->
+      ) {
          
          val searchWord by ListFeedingVM.SortedSongs.searchWordFlow.collectAsState()
          
@@ -211,11 +206,6 @@ object MainPager {
             ListFeedingVM.SortedSongs.setSearching(isSearchInProgress || focusState?.hasFocus == true || shouldBeFocused)
          }
          
-         
-         LaunchedEffect(isImeVisible) {
-            if(!isImeVisible) focusManager.clearFocus()
-            shouldBeFocused = false
-         }
          
          val iconModifier = Modifier
             .fillMaxHeight()
@@ -242,12 +232,12 @@ object MainPager {
          else {
             
             LaunchedEffect(isFocused) {
-               focusRequester.requestFocus()
+               //focusRequester.requestFocus()
             }
-            CustomTextField(textGravity = Gravity.START or Gravity.CENTER,
+            CustomTextField(
                singleLine = true,
                contentPadding = PaddingValues(start = 10.dp),
-               text = searchWord,
+               value = searchWord,
                onValueChange = {
                   ListFeedingVM.SortedSongs.setSearchWord(it.toString())
                },
@@ -268,7 +258,8 @@ object MainPager {
                         shouldBeFocused = false
                      }
                   )
-               }
+               },
+               textAlign = Alignment.CenterStart
             )
             
          }

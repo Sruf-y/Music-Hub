@@ -155,7 +155,7 @@ class MainActivityView : CustomComponentActivity() {
       
       // You can also get additional flags
       val flags = intent.flags
-      Log("Received URI - [${audioUri.toString()}]")
+      
       if (audioUri != null) {
          
          // Create the intent and pass the data to it
@@ -195,7 +195,7 @@ class MainActivityView : CustomComponentActivity() {
       
       
       // Setup navbars colors
-      defaultSetupNavBars()
+      this.defaultSetupNavBars()
       
       /**
        * Try running the query for the first time if i have the permissions

@@ -33,8 +33,20 @@ import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.launch
 import SrufComposeComponents.NestedScrollingFront
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.FocusRequester
+import com.aacomposetest.Log
+import ui.components.CustomTextField
 
 
 class TestActivity : ComponentActivity() {
@@ -52,10 +64,28 @@ class TestActivity : ComponentActivity() {
                 Surface(modifier = Modifier
                     .fillMaxSize()
                     .safeDrawingPadding(), color = MyColor.SemiTransparentBackground) {
-                    ColorPicker()
+                    Column(Modifier.fillMaxSize()) {
+                        val focusRequester = remember { FocusRequester() }
+                        Button({
+                            focusRequester.requestFocus()
+                        }) {Text("Request Focus") }
+                        Button({
+                            focusRequester.freeFocus()
+                        }) {Text("Lose Focus") }
+                        var text by remember { mutableStateOf("") }
+                        
+                        LaunchedEffect(focusRequester) {
+                            Log("Something happened")
+                        }
+                        
+                        CustomTextField(
+                            value = text,
+                            onValueChange = {text = it.toString()},
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                        )
+                    }
                 }
-
-                //NestedScrollTest()
+                
             }
         }
 

@@ -311,9 +311,9 @@ class MusicService: LifecycleService() {
    
    fun playPauseLogic(isPlaying:Boolean = myExoPlayer.isPlaying.value){
       
-      if (isPlaying || isAppTaskStillExists()) {
+      if ((isPlaying || isAppTaskStillExists()) && currentLayerState!= LayerState.Foreground) {
          sendToForeground()
-      } else {
+      } else if(currentLayerState == LayerState.Foreground) {
          sendToBackground()
       }
       

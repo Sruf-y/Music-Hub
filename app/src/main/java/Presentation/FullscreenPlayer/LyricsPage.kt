@@ -4,9 +4,6 @@ package Presentation.FullscreenPlayer
 import ExoPlayer.myExoPlayer
 import MyViewModels.rememberLyricsManager
 import SrufComposeComponents.IconButton
-import android.app.Activity
-import android.view.Gravity
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -18,16 +15,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,16 +31,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
 import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
-import ui.components.BottomSheets.renderDefaultBackground
 import ui.components.CustomTextField
 
 @Composable
@@ -124,15 +114,25 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
                )
             }
          }
-         
+         if(false)
+         OutlinedTextField(
+            value = lyricsManager.lyrics.value?:"",
+            onValueChange = {
+               lyricsManager.lyrics.value = it.toString()
+            },
+            modifier = Modifier.fillMaxSize().weight(1f).imePadding(),
+            enabled = isEditing,
+            textStyle = TextStyle(textAlign = TextAlign.Left)
+         )
+         else
          CustomTextField(
-            text = lyricsManager.lyrics.value,
+            value = lyricsManager.lyrics.value,
             onValueChange = {
                lyricsManager.lyrics.value = it.toString()
             },
             modifier = Modifier.weight(1f).imePadding(),
             enabled = isEditing,
-            textGravity = Gravity.START or Gravity.TOP,
+            textAlign = Alignment.TopStart,
             color = MyColor.TextColor(),
             lineSpacingMultiplier = 1.3f,
             contentPadding = PaddingValues(10.dp)

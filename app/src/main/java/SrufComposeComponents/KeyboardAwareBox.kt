@@ -7,12 +7,15 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+
 /**
  * @param modifier The modifier of the box that contains the content.
  * @param content The keyboard aware content. It gives isImeVisible:Boolean, imeInsets:Int, navBarInsets:Int and expects to return.
@@ -43,4 +46,17 @@ fun KeyboardAwareBox(modifier:Modifier = Modifier, content:@Composable BoxScope.
     }
 
 
+}
+
+@Composable
+fun rememberIsKeyboardVisible(): Boolean {
+    val density = LocalDensity.current
+    val imeInsets = WindowInsets.ime
+    val navInsets = WindowInsets.navigationBars
+    
+    return remember {
+        derivedStateOf {
+            imeInsets.getBottom(density) > navInsets.getBottom(density)
+        }
+    }.value
 }

@@ -1,5 +1,6 @@
 package com.aacomposetest.ui.theme
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -59,32 +60,40 @@ object Theme{
    
    
    
+   @SuppressLint("ComposableNaming")
    @Composable
    fun IconTint():Color = MyColor.IconTint()
    
+   @SuppressLint("ComposableNaming")
    @Composable
    fun SemiTransparent():Color = MyColor.SemiTransparent()
    
+   @SuppressLint("ComposableNaming")
    @Composable
    fun TextColor():Color = MyColor.TextColor()
+   
+   @SuppressLint("ComposableNaming")
    @Composable
    fun HintColor():Color = MyColor.TextColor().copy(alpha = 0.5f)
    
+   @SuppressLint("ComposableNaming")
    @Composable
    fun SystemColor():Color = MyColor.SystemColor()
    
    
-   
+   @SuppressLint("ComposableNaming")
    @Composable
    fun DefaultBackground():Int{
       return remember{ com.aacomposetest.R.drawable.gradient1 }
    }
    
+   @SuppressLint("ComposableNaming")
    @Composable
    fun ErrorImage():Int{
       return remember{ com.aacomposetest.R.drawable.exclamation_sign }
    }
    
+   @SuppressLint("ComposableNaming")
    @Composable
    fun ToolBar(darkMode:Boolean = isSystemInDarkTheme()):Color{
       return if(darkMode){
@@ -120,7 +129,9 @@ object Theme{
             modifier = modifier.background(GlintMaskColor())
          )
       }
+      
       // Returns just the glint color
+      @SuppressLint("ComposableNaming")
       @Composable
       fun GlintMaskColor(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
          return if(isDarkMode)

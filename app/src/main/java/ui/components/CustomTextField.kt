@@ -1,16 +1,20 @@
 package ui.components
 
+import ExoPlayer.myExoPlayer
 import android.content.Context
 import android.content.Intent
 import android.graphics.Rect
 import android.os.Build
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.AttributeSet
 import android.view.ActionMode
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ScrollView
@@ -19,26 +23,22 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -48,11 +48,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.util.fastCoerceAtLeast
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.forEach
 import androidx.core.view.updatePadding
-import com.aacomposetest.Log
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 
@@ -216,22 +214,34 @@ val textToolbar:(CustomEditText,ScrollView)-> ActionMode.Callback ={editText,par
 @Composable
 fun CustomTextField(
    modifier: Modifier = Modifier,
-   text: String?,
+   value: String?,
    hint: String = "",
-   hintColor: Color = Theme.HintColor(),
+   hintColor: Color = Color.Gray,
    onValueChange: (Editable?) -> Unit,
    textSize: Float = 16.sp.value,
    color: Color = Theme.TextColor(),
    singleLine:Boolean = false,
-   textGravity: Int = Gravity.START or Gravity.CENTER,
+   textAlign: Alignment = Alignment.TopStart,
+   // refactor this later
    onEditTextSetUp: (EditText) -> Unit = {},
+   /**
+    * multiplies the height of line spacing by a factor
+    * */
    lineSpacingMultiplier: Float = 1f,
    contentPadding: PaddingValues = PaddingValues(0.dp),
-   selectionActionModeCallback:(CustomEditText,ScrollView)->ActionMode.Callback = textToolbar,
-   insertionActionModeCallback:(CustomEditText,ScrollView)->ActionMode.Callback = emptyTextToolbar,
+   /**
+    * FAB that appears when selecting text
+    * */
+   selectionActionModeCallback:(CustomEditText, ScrollView)->ActionMode.Callback = textToolbar,
+   /**
+    * FAB that appears when trying to insert text
+    * */
+   insertionActionModeCallback:(CustomEditText, ScrollView)->ActionMode.Callback = emptyTextToolbar,
+   focusChangeListener:View.OnFocusChangeListener? = null,
    trailingIcon:@Composable (()->Unit)? = null,
    enabled: Boolean = true,
 ) {
+   
    val view = LocalView.current
    val context = LocalContext.current
    val density = LocalDensity.current
@@ -255,42 +265,21 @@ fun CustomTextField(
          isVerticalScrollBarEnabled = true
          
          isNestedScrollingEnabled = true
-         overScrollMode = View.OVER_SCROLL_ALWAYS
+         overScrollMode = View.OVER_SCROLL_NEVER
+         
+         isFillViewport = true
       }
    }
    
    val editText = remember {
       CustomEditText(context).apply {
+         isNestedScrollingEnabled = true
          
-         id = editTextID
-         // Unimportant to autofill
-         importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
-         
-         // Set background to TRANSPARENT
-         setBackgroundColor(Color.Transparent.toArgb())
-         
-         layoutParams = ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-         )
-         
-         //minWidth = with(density){200.dp.roundToPx()}
-         //minHeight = with(density){48.dp.roundToPx()}
-         gravity = textGravity
-         
-         setText(text)
-         setTextColor(color.toArgb())
-         this.textSize = textSize
-         
-         // Set padding to 0
-         setPadding(0, 0, 0, 0)
-         
-         // Customize the system selection toolbar.
-         customSelectionActionModeCallback = selectionActionModeCallback(this,scrollView)
-         // No action bar on double tapping for insertion.
-         customInsertionActionModeCallback = insertionActionModeCallback(this,scrollView)
-         
-         this.isEnabled = enabled
+         // Set focusable properly
+         isFocusable = true
+         isFocusableInTouchMode = true
+         overScrollMode = View.OVER_SCROLL_NEVER
+      
       }
    }
    
@@ -307,147 +296,187 @@ fun CustomTextField(
    // minHeight == its bounds height to be able to start writting from anywhere
    var minTextViewHeight by remember { mutableIntStateOf(0) }
    
+   
+   
+   
+   
+   
+   
+   
    Layout(modifier = modifier
-      .onSizeChanged{
+      
+      .onSizeChanged() {
          minTextViewHeight = it.height
       },
       content = {
          
-            AndroidView(
-               modifier = Modifier
-                  
-                  .clipToBounds()
-                  // Safe Autoscroll logic
-                  .onSizeChanged {
+         AndroidView(
+            modifier = Modifier
+               .clipToBounds()
+               // Safe Autoscroll logic
+               .onSizeChanged {
 //            scrollView.updateLayoutParams {
 //               this.height = it.height
 //            }
-                     val selectionBottom = editText.getSelectionScreenRect()?.bottom ?: 0
-                     
-                     val selectionEnd = selectionBottom % (view.bottom.takeIf { it != 0 } ?: 1)
-                     
-                     if (selectionEnd > imeTop) {
-                        scrollView.scrollBy(0, selectionEnd - imeTop)
-                     }
-                     
-                  },
-               factory = { context ->
+                  val selectionBottom = editText.getSelectionScreenRect()?.bottom ?: 0
                   
-                  // Minimum height for better experience
-                  editText.apply {
-                     minHeight = minTextViewHeight
-                     
-                     isSingleLine = singleLine
-                     gravity = textGravity
+                  val selectionEnd = selectionBottom % (view.bottom.takeIf { it != 0 } ?: 1)
+                  
+                  if (selectionEnd > imeTop) {
+                     scrollView.scrollBy(0, selectionEnd - imeTop)
                   }
                   
-                  // Setup lineSpacing
-                  editText.setLineSpacing(0f, lineSpacingMultiplier)
+               },
+            factory = { context ->
+               
+               // Minimum height for better experience
+               editText.apply {
+                  id = editTextID
+                  // Unimportant to autofill
+                  importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
                   
-                  // Text change listener
-                  editText.addTextChangedListener(object : TextWatcher {
-                     override fun afterTextChanged(s: Editable?) {
-                        onValueChange.invoke(s)
-                     }
-                     
-                     override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                     
-                     }
-                     
-                     override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                     
-                     }
-                  })
-                  
-                  // Scroll listener. This verifies if the cursor is still in view of the user.
-                  var pastCursorVisibility = false
-                  
-                  scrollView.setOnScrollChangeListener(
-                     object : View.OnScrollChangeListener {
-                        @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-                        override fun onScrollChange(
-                           v: View,
-                           scrollX: Int,
-                           scrollY: Int,
-                           oldScrollX: Int,
-                           oldScrollY: Int,
-                        ) {
-                           
-                           editText.isCursorVisibleInScroll(scrollY, v.height).apply {
-                              
-                              if (this != pastCursorVisibility) {
-                                 editText.currentActionMode?.invalidate()
-                                 pastCursorVisibility = this
-                              }
-                           }
-                           
-                        }
-                     }
+                  layoutParams = ViewGroup.LayoutParams(
+                     ViewGroup.LayoutParams.MATCH_PARENT,
+                     ViewGroup.LayoutParams.WRAP_CONTENT
                   )
                   
-                  scrollView.addView(editText)
-                  //editText.fillMaxSize()
+                  // Set background to TRANSPARENT
+                  setBackgroundColor(Color.Transparent.toArgb())
                   
-                  // Callback to allow outside modifications
-                  onEditTextSetUp.invoke(editText)
+                  // Set padding to 0
+                  setPadding(0, 0, 0, 0)
                   
+                  // Customize the system selection toolbar.
+                  customSelectionActionModeCallback = selectionActionModeCallback(this,scrollView)
+                  // No action bar on double tapping for insertion.
+                  customInsertionActionModeCallback = insertionActionModeCallback(this,scrollView)
+                  // Focus change listener setup
+                  onFocusChangeListener = focusChangeListener
+                  
+                  
+               }
+               
+               // Setup lineSpacing
+               editText.setLineSpacing(0f, lineSpacingMultiplier)
+               
+               // Text change listener
+               editText.addTextChangedListener(object : TextWatcher {
+                  override fun afterTextChanged(s: Editable?) {
+                     onValueChange.invoke(s)
+                  }
+                  
+                  override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                  
+                  }
+                  
+                  override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                  
+                  }
+               })
+               
+               // Scroll listener. This verifies if the cursor is still in view of the user.
+               var pastCursorVisibility = false
+               
+               scrollView.setOnScrollChangeListener(
+                  object : View.OnScrollChangeListener {
+                     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+                     override fun onScrollChange(
+                        v: View,
+                        scrollX: Int,
+                        scrollY: Int,
+                        oldScrollX: Int,
+                        oldScrollY: Int,
+                     ) {
+                        
+                        editText.isCursorVisibleInScroll(scrollY, v.height).apply {
+                           
+                           if (this != pastCursorVisibility) {
+                              editText.currentActionMode?.invalidate()
+                              pastCursorVisibility = this
+                           }
+                        }
+                        
+                     }
+                  }
+               )
+               
+               scrollView.addView(editText)
+               //editText.fillMaxSize()
+               
+               // Callback to allow outside modifications
+               onEditTextSetUp.invoke(editText)
+               
+               //editText.hint = hint
+               editText.setHintTextColor(hintColor.toArgb())
+               
+               scrollView
+               //editText
+               
+            },
+            update = { nestedScrollView ->
+               //val editText = nestedScrollView.getChildAt(0) as EditText
+               
+               editText.apply {
+                  
+                  gravity = textAlign.toGravity()
+                  
+                  isSingleLine = singleLine
+                  
+                  // Apply minHeight in case of change
+                  //minHeight = minTextViewHeight
+                  //this.fillMaxSize()
+                  
+                  // Text size
+                  this.textSize = textSize
+                  
+                  setLineSpacing(0f, lineSpacingMultiplier)
+                  
+                  textAlignment = when(textAlign) {
+                     Alignment.CenterStart -> View.TEXT_ALIGNMENT_VIEW_START
+                     Alignment.Center -> View.TEXT_ALIGNMENT_CENTER
+                     Alignment.CenterEnd -> View.TEXT_ALIGNMENT_VIEW_END
+                     else -> View.TEXT_ALIGNMENT_GRAVITY
+                  }
+                  
+                  
+                  
+                  
+                  
+                  updatePadding(
+                     left = with(density) {
+                        contentPadding.calculateLeftPadding(layoutDirection).roundToPx()
+                     },
+                     bottom = with(density) { contentPadding.calculateBottomPadding().roundToPx() },
+                     right = with(density) {
+                        contentPadding.calculateRightPadding(layoutDirection).roundToPx()
+                     },
+                     top = with(density) { contentPadding.calculateTopPadding().roundToPx() }
+                  )
+                  this.isEnabled = enabled
+                  
+                  // Hint
                   editText.hint = hint
                   editText.setHintTextColor(hintColor.toArgb())
                   
-                  scrollView
-                  //editText
-               },
-               update = { nestedScrollView ->
-                  //val editText = nestedScrollView.getChildAt(0) as EditText
+                  // Text color
+                  setTextColor(color.toArgb())
                   
-                  editText.apply {
-                     gravity = textGravity
-                     
-                     isSingleLine = singleLine
-                     
-                     // Apply minHeight in case of change
-                     minHeight = minTextViewHeight
-                     
-                     // Hint
-                     editText.hint = hint
-                     editText.setHintTextColor(hintColor.toArgb())
-                     
-                     // Text listening
-                     if (editText.text.toString() != text) {
-                        
-                        setText(text)
-                     }
-                     // Text size
-                     this.textSize = textSize
-                     
-                     // Text color
-                     setTextColor(color.toArgb())
-                     
-                     
-                     
-                     this.isEnabled = enabled
-                     
-                     setLineSpacing(0f, lineSpacingMultiplier)
-                     
-                     
-                     updatePadding(
-                        left = with(density) {
-                           contentPadding.calculateLeftPadding(layoutDirection).roundToPx()
-                        },
-                        bottom = with(density) { contentPadding.calculateBottomPadding().roundToPx() },
-                        right = with(density) {
-                           contentPadding.calculateRightPadding(layoutDirection).roundToPx()
-                        },
-                        top = with(density) { contentPadding.calculateTopPadding().roundToPx() }
-                     )
-                     
-                     
+                  // Text listening
+                  if (editText.text.toString() != value) {
+                     setText(value)
+                  }
+                  
+                  
+                  if(this.isEnabled && false){
+                     this.requestFocus()
                   }
                   
                }
-            )
-            
-            trailingIcon?.invoke()
+               
+            }
+         )
+         
+         trailingIcon?.invoke()
          
          
       }
@@ -482,6 +511,7 @@ fun CustomTextField(
       }
       
       layout(layoutWidth, layoutHeight) {
+         
          firstPlaceable.placeRelative(0, 0)
          trail?.placeRelative(
             x = layoutWidth - trail.width,
@@ -500,14 +530,70 @@ fun CustomTextField(
       editText.customInsertionActionModeCallback = insertionActionModeCallback(editText,scrollView)
    }
    
+   LaunchedEffect(focusChangeListener) {
+      editText.onFocusChangeListener = focusChangeListener
+   }
+   
    
 }
 
 
 
-   
-   
 
+
+fun Alignment.toGravity(): Int{
+   return when {
+      this == Alignment.TopStart -> {
+         Gravity.TOP or Gravity.START
+      }
+      this == Alignment.TopCenter -> {
+         Gravity.TOP or Gravity.CENTER_HORIZONTAL
+      }
+      this == Alignment.TopEnd -> {
+         Gravity.TOP or Gravity.END
+      }
+      this == Alignment.CenterStart -> {
+         Gravity.CENTER_VERTICAL or Gravity.START
+      }
+      this == Alignment.Center -> {
+         Gravity.CENTER
+      }
+      this == Alignment.CenterEnd -> {
+         Gravity.CENTER_VERTICAL or Gravity.END
+      }
+      this == Alignment.BottomStart -> {
+         Gravity.BOTTOM or Gravity.START
+      }
+      this == Alignment.BottomCenter -> {
+         Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+      }
+      this == Alignment.BottomEnd -> {
+         Gravity.BOTTOM or Gravity.END
+      }
+      this == Alignment.Top -> {
+         Gravity.TOP
+      }
+      this == Alignment.CenterVertically -> {
+         Gravity.CENTER_VERTICAL
+      }
+      this == Alignment.Bottom -> {
+         Gravity.BOTTOM
+      }
+      this == Alignment.Start -> {
+         Gravity.START
+      }
+      this == Alignment.CenterHorizontally -> {
+         Gravity.CENTER_HORIZONTAL
+      }
+      this == Alignment.End -> {
+         Gravity.END
+      }
+      
+      else -> {
+         throw NoSuchElementException("Exhausive switch somehow wasn't exhausted")
+      }
+   }
+}
 
 fun EditText.getSelectionScreenRect(): Rect? {
    val layout = layout ?: return null
@@ -534,3 +620,67 @@ fun EditText.getSelectionScreenRect(): Rect? {
 }
 
 
+// TODO look at this and learn a bit about how to handle a little more complex touch events in views
+class PagerAwareScrollView @JvmOverloads constructor(
+   context: Context,
+   attrs: AttributeSet? = null
+) : ScrollView(context, attrs) {
+   
+   private var touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+   private var initialX = 0f
+   private var initialY = 0f
+   private var isOverscrolling = false
+   
+   override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+      when (ev.action) {
+         MotionEvent.ACTION_DOWN -> {
+            initialX = ev.x
+            initialY = ev.y
+            isOverscrolling = false
+            parent.requestDisallowInterceptTouchEvent(true)
+         }
+         MotionEvent.ACTION_MOVE -> {
+            val dx = Math.abs(ev.x - initialX)
+            val dy = Math.abs(ev.y - initialY)
+            
+            // If horizontal movement exceeds vertical, let pager handle
+            if (dx > dy && dx > touchSlop) {
+               parent.requestDisallowInterceptTouchEvent(false)
+               return false
+            }
+            
+            // Check if we're at scroll limits
+            val atTop = scrollY == 0
+            val atBottom = scrollY >= getMaxScrollY()
+            
+            // If at limit and trying to overscroll vertically
+            if ((atTop && ev.y > initialY) || (atBottom && ev.y < initialY)) {
+               isOverscrolling = true
+               // After threshold, let parent handle
+               if (dy > touchSlop * 3) {
+                  parent.requestDisallowInterceptTouchEvent(false)
+                  return false
+               }
+            }
+         }
+      }
+      return super.onInterceptTouchEvent(ev)
+   }
+   
+   override fun onTouchEvent(ev: MotionEvent): Boolean {
+      if (isOverscrolling) {
+         // During overscroll, still consume but don't let it bubble
+         when (ev.action) {
+            MotionEvent.ACTION_MOVE -> {
+               // Show some visual feedback maybe
+               return true
+            }
+         }
+      }
+      return super.onTouchEvent(ev)
+   }
+   
+   private fun getMaxScrollY(): Int {
+      return getChildAt(0)?.height?.minus(height) ?: 0
+   }
+}

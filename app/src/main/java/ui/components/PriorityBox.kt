@@ -4,6 +4,7 @@ import android.text.Layout
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import kotlin.math.max
 
 /**
  * Box that prioritize content in the middle being on the screen but first it prioritizes the bottom content
@@ -41,7 +42,8 @@ fun PriorityBox(
             
             val totalHeight = (bottomPlaceable.height+contentPlaceable.height).coerceAtMost(constraints.maxHeight)
             
-            layout(constraints.maxWidth,totalHeight){
+            // +1 due to possible rounding error along the way
+            layout(constraints.maxWidth, totalHeight+1){
                contentPlaceable.placeRelative(0,0)
                
                bottomPlaceable.placeRelative(0,contentPlaceable.height)
