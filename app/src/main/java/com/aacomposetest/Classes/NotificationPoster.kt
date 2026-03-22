@@ -15,6 +15,7 @@ import androidx.core.app.NotificationChannelGroupCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
+import com.aacomposetest.Log
 import kotlin.random.Random
 
 class NotificationPoster(
@@ -150,35 +151,27 @@ class NotificationPoster(
     
     companion object{
         
-        fun openMediaStoreUriPendingIntent(context: Context, mediaStoreUri: String): PendingIntent {
+        fun openMediaStoreUriPendingIntent(context: Context, mediaStoreUri: Uri?): PendingIntent? {
             // Convert string to Uri
-            val uri = mediaStoreUri.toUri()
+            if(mediaStoreUri == null){
+                return null
+            }
             
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 // Use the MediaStore URI directly
-                data = uri
                 
-                // For MediaStore URIs, you often need to set the MIME type
-                // Try to extract it from the MediaStore
-                val mimeType = getMimeTypeFromUri(context, uri)
-                if (mimeType != null) {
-                    type = mimeType
-                } else {
-                    type = "*/*"  // Fallback
-                }
+                setDataAndType(mediaStoreUri,getMimeTypeFromUri(context, mediaStoreUri))
+                
                 
                 addFlags(
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                       Intent.FLAG_ACTIVITY_NEW_TASK
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
             }
-            
-            val chooser = Intent.createChooser(intent, "Open file")
             
             return PendingIntent.getActivity(
                 context,
                 mediaStoreUri.hashCode(),
-                chooser,
+                intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         }

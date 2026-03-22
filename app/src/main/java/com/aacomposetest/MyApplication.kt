@@ -209,13 +209,13 @@ class MyApplication: Application(), ImageLoaderFactory {
     
 }
 
-fun Log(message:String,type:String = "i"){
+fun Log(message:String,tag:String = "WTF",type:String = "e"){
     when(type){
         "e"->{
-            Log.e("WTF",message)
+            Log.e(tag,message)
         }
         "i"->{
-            Log.i("WTF",message)
+            Log.i(tag,message)
         }
     }
 

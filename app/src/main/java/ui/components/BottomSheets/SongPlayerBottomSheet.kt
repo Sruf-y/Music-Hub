@@ -180,13 +180,7 @@ fun ScalingBackground(
                .allowHardware(true)
                .memoryCacheKey(song?.thumbnailPath)
                .placeholderMemoryCacheKey(song?.thumbnailPath)
-               .let {
-                  if(errorDrawable!=null){
-                     it.error(errorDrawable)
-                  }
-                  else
-                     it
-               }
+               .crossfade(durationMillis = 250)
                .build(),
             contentDescription = "Song thumbnail scaled",
             modifier = Modifier

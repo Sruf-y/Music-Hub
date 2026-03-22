@@ -26,8 +26,13 @@ import com.aacomposetest.MyApplication
 import com.aacomposetest.R
 import androidx.media.app.NotificationCompat.MediaStyle
 import com.aacomposetest.Activities.MainActivityView
+import com.aacomposetest.Classes.NotificationPoster.Companion.openMediaStoreUriPendingIntent
 import com.aacomposetest.Functions
+import com.aacomposetest.Log
 import com.aacomposetest.Logs
+import com.aacomposetest.MyApplication.Companion.allertPoster
+import com.aacomposetest.MyApplication.Companion.crashLogger
+import com.aacomposetest.tryTo
 import kotlinx.coroutines.launch
 
 class MusicService: LifecycleService() {
@@ -68,16 +73,38 @@ class MusicService: LifecycleService() {
       
    }
    
+   
    val playerListener = object : MyPlayerListener{
+      
+      
+      
+      
+      
       override fun onToggle(value: Boolean) {
-         playPauseLogic(value)
+      
+         
       }
       
       override fun onStart() {
-      
+         
+         if(currentLayerState != LayerState.Foreground){
+            sendToForeground()
+         }
+         
+         UpdateNotification(CreateNotification())
       }
       
       override fun onPause() {
+         
+         // if app is NOT active and the current state is Foreground
+         if(!isAppTaskStillExists() && currentLayerState == LayerState.Foreground){
+            sendToBackground()
+         }
+         
+         UpdateNotification(CreateNotification())
+      }
+      
+      override fun onPreSongSet() {
       
       }
       
@@ -86,6 +113,7 @@ class MusicService: LifecycleService() {
       }
       
       override fun onSeek() {
+         
          UpdateNotification(CreateNotification())
       }
       
@@ -151,6 +179,11 @@ class MusicService: LifecycleService() {
       }
       
       
+      lifecycleScope.launch {
+         myExoPlayer.isPlaying.collect {
+            UpdateNotification(CreateNotification())
+         }
+      }
       
       Log.i(Logs.SERVICE.name,"Called onCreate.")
    }
@@ -158,12 +191,11 @@ class MusicService: LifecycleService() {
    override fun onTaskRemoved(rootIntent: Intent?) {
       super.onTaskRemoved(rootIntent)
       
-      Log.i(Logs.SERVICE.name,"Task removed")
+      Log("Service noticed: [Task removed]",Logs.SERVICE.name)
       
-      
-      
-      if(!myExoPlayer.isPlaying.value)
+      if(!myExoPlayer.isPlaying.value) {
          sendToBackground()
+      }
       
    }
    
@@ -289,11 +321,34 @@ class MusicService: LifecycleService() {
    
    
    fun StartForegroundNotification(notification:Notification){
-      ServiceCompat.startForeground(this@MusicService,
-         notification_id,
-         notification,
-         ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-      )
+      tryTo(
+         {
+            val uri = MyApplication.crashLogger.writeCrashToFile(
+               throwable = it,
+               context = this,
+               headerDetails = "Thrown from StartForegroundNotification. Reason: probably tried to start foreground at a bad time. RETARDED error since i track this state manually."
+            )
+            
+            try {
+               MyApplication.allertPoster.postNotification(
+                  title = "Foreground error again",
+                  message = "Stacktrace was written to ${crashLogger.folder.path}",
+                  context = this,
+                  pendingIntent = openMediaStoreUriPendingIntent(this,uri)
+               )
+            }catch (ex: SecurityException){
+               ex.printStackTrace()
+            }
+            
+         }
+      ) {
+         ServiceCompat.startForeground(this@MusicService,
+            notification_id,
+            notification,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+         )
+      }
+      
    }
    
    fun UpdateNotification(notification:Notification){
@@ -301,31 +356,14 @@ class MusicService: LifecycleService() {
       notifManager.notify(notification_id,notification)
    }
    
-   
-   
-   
-   
-   
-   
-   
-   
-   fun playPauseLogic(isPlaying:Boolean = myExoPlayer.isPlaying.value){
-      
-      if ((isPlaying || isAppTaskStillExists()) && currentLayerState!= LayerState.Foreground) {
-         sendToForeground()
-      } else if(currentLayerState == LayerState.Foreground) {
-         sendToBackground()
-      }
-      
-      UpdateNotification(CreateNotification())
-   }
-   
    fun sendToForeground(){
+      Log("sendToForeground")
       StartForegroundNotification(CreateNotification())
       currentLayerState = LayerState.Foreground
    }
    
    fun sendToBackground(){
+      Log("sendToBackground")
       stopForeground(STOP_FOREGROUND_DETACH)
       currentLayerState = LayerState.BackGround
    }
@@ -383,10 +421,7 @@ class MusicService: LifecycleService() {
       fun isAppTaskStillExists(): Boolean {
          val activityManager = getSystemService(MyApplication.instance, ActivityManager::class.java) as ActivityManager
          val appTasks = activityManager.appTasks
-
-//            appTasks.forEach {
-//                Log(it.taskInfo.topActivity?.className?:"Nothing.")
-//            }
+         
          return appTasks.isNotEmpty()
       }
       

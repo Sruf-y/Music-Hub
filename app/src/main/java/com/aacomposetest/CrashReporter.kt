@@ -26,7 +26,7 @@ class CrashReporter(val foldername:String? = null) {
         ).getOrNull()?.path.toString()
     }
 
-    fun writeCrashToFile(throwable: Throwable,context: Context, folderName: String? = foldername,headerDetails:String? = null): String {
+    fun writeCrashToFile(throwable: Throwable,context: Context, folderName: String? = foldername,headerDetails:String? = null): Uri? {
         val crashText = """
         ===== CRASH REPORT =====
         Time: ${System.currentTimeMillis()}
@@ -56,7 +56,7 @@ class CrashReporter(val foldername:String? = null) {
             context = context,
             folderName = folderName,
             baseFilename = throwable::class.simpleName.toString()
-        ).getOrNull()?.path.toString()
+        ).getOrNull()
     }
 
     private fun getCauseChain(throwable: Throwable): String {
@@ -135,7 +135,7 @@ class CrashReporter(val foldername:String? = null) {
                 contentResolver.openOutputStream(uri)?.use { outputStream ->
                     outputStream.write(text.toByteArray())
                 }
-
+                
                 return Result.success(uri)
 
             } catch (e: Exception) {

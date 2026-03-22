@@ -15,6 +15,7 @@ import androidx.annotation.OptIn
 import androidx.compose.ui.util.fastForEach
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -34,9 +35,11 @@ import com.aacomposetest.MyApplication.Companion.JsonFormat
 import com.aacomposetest.tryTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -45,28 +48,34 @@ interface MyPlayerListener{
     fun onToggle(value:Boolean)
     fun onStart()
     fun onPause()
+    fun onPreSongSet()
     fun onSongSet()
     fun onSeek()
 }
 
-private fun ArrayList<MyPlayerListener>.dispatchStart() {
+private inline fun ArrayList<MyPlayerListener>.dispatchStart() {
     this.fastForEach {
         it.onStart()
         it.onToggle(true)
     }
 }
-private fun ArrayList<MyPlayerListener>.dispatchPause() {
+private inline fun ArrayList<MyPlayerListener>.dispatchPause() {
     this.fastForEach {
         it.onPause()
         it.onToggle(false)
     }
 }
-private fun ArrayList<MyPlayerListener>.dispatchSongSet() {
+private inline fun ArrayList<MyPlayerListener>.dispatchPreSongSet(){
+    this.forEach {
+        it.onPreSongSet()
+    }
+}
+private inline fun ArrayList<MyPlayerListener>.dispatchSongSet() {
     this.fastForEach {
         it.onSongSet()
     }
 }
-private fun ArrayList<MyPlayerListener>.dispatchSeek() {
+private inline fun ArrayList<MyPlayerListener>.dispatchSeek() {
     this.fastForEach {
         it.onSeek()
     }
@@ -94,9 +103,12 @@ object myExoPlayer {
     val playerSettings: PlayerSettings =
         PlayerSettings(shuffle = false)
     
+    // Player state tracking
+    private val _isPlaying = MutableStateFlow<Boolean>(value = false)
+    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
 
-
+    private val diskWriteFlow = AutoStateFlow<Long>(prefs?.getCursorValue(MyPrefs._prefs_LastSongPosition,0) ?: 0)
     // Handles song position saving.
     private val progressVM = DataObserverViewModel<Long>(
         delayMillis = 250,
@@ -116,15 +128,26 @@ object myExoPlayer {
             
             progress
         },
-        onValueChangeDelayMillis = 2000,
+        onValueChangeDelayMillis = 500,
         onValueChange = {
             
-            prefs?.edit(true){
-                Log.i(Logs.SHARED_PREFFERENCES.name,"PUT current song position Value [${it}]")
-                putCursorValue(MyPrefs._prefs_LastSongPosition,it)
-            }
+            diskWriteFlow.setValue(it)
         }
-    )
+    ).apply {
+        viewModelScope.launch {
+            diskWriteFlow.stateFlow
+                .collect {
+                    prefs?.edit(true){
+                        Log.i(Logs.SHARED_PREFFERENCES.name,"PUT current song position Value [${it}]")
+                        putCursorValue(MyPrefs._prefs_LastSongPosition,it)
+                    }
+                    
+                    if(isPlaying.value){
+                        delay(2000)
+                    }
+                }
+        }
+    }
 
 
     /**
@@ -152,9 +175,7 @@ object myExoPlayer {
         curPlaylistVM.changePlaylist(playlistTitle = title,context = context)
     }
 
-    // Player state tracking
-    private val _isPlaying = MutableStateFlow<Boolean>(value = false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+    
 
     @OptIn(UnstableApi::class)
     fun initializePlayer(context: Context, onInilialized:(()-> Unit)? = null) {
@@ -201,11 +222,11 @@ object myExoPlayer {
                             if(isPlaying){
                                 Log.i(Logs.EXOPLAYER.name,"Started exoPlayer progression updates")
                                 progressVM.startUpdates()
-                                myListeners.dispatchStart()
+                                
                             }else{
                                 progressVM.forceValue(exoPlayer!!.currentPosition)
                                 progressVM.stopUpdates()
-                                myListeners.dispatchPause()
+                                
                             }
                         }
 
@@ -393,15 +414,10 @@ object myExoPlayer {
      *
      * */
     fun setSong(song: Song?, startOnPrepared:Boolean=true, playlistTitle: String? =  null, initialPosition: Long = 0L){
-
-        Log.i(
-            Logs.EXOPLAYER.name,
-            """
-                Tried to set song with data:
-                id - [${song?.id}]
-                title - [${song?.title}]
-            """.trimIndent()
-        )
+        
+        // Dispatch pre-set
+        myListeners.dispatchPreSongSet()
+        
 
         setCurrentPlaylist(playlistTitle)
 
@@ -412,6 +428,7 @@ object myExoPlayer {
         song?.let {
             songsVM?.updateSong(it)
         }
+        // dispatch post-set
         myListeners.dispatchSongSet()
 
 
@@ -662,6 +679,7 @@ object myExoPlayer {
                     rewind()
                 } else {
                     exoPlayer?.play()
+                    myListeners.dispatchStart()
                 }
             }
             
@@ -676,6 +694,7 @@ object myExoPlayer {
         if(exoPlayer!= null && isPlaying.value) {
             currentlyPlayingSong.getValue?.let {
                 exoPlayer?.pause()
+                myListeners.dispatchPause()
             }
             
         }
@@ -735,6 +754,7 @@ object myExoPlayer {
     }
 
     private fun onDestroy_SaveLogic(){
+        Log("On destroy save logic")
         prefs?.edit(true) {
             putCursorValue(MyPrefs._prefs_LastSongPosition,getCurrentPosition())
             putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.getValue?.id?:-1)

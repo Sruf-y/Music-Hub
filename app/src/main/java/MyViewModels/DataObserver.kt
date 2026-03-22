@@ -20,16 +20,29 @@ class DataObserverViewModel<T>(
    val initialValue:T,
    var delayMillis: Long = 250,
    var onValueChangeDelayMillis:Long = 500,
+   var isStateful: Boolean = false,
    var onValueChange:(T)-> Unit = {
    
    }
 ): ViewModel()
 {
    
+   
+   
    private var valueChangeJob:Job? = null
    
    private val _progress = MutableStateFlow<T>(initialValue)
    val progress: StateFlow<T> = _progress.asStateFlow()
+   
+   fun handleBeingStateful(newValue:T,onPerformChange:()-> Unit){
+      if(isStateful){
+         if(_progress.value != newValue){
+            onPerformChange.invoke()
+         }
+      }else{
+         onPerformChange.invoke()
+      }
+   }
    
    var updaterJob:Job? = null
    private fun startUpdater(){
@@ -53,7 +66,12 @@ class DataObserverViewModel<T>(
    
    @OptIn(UnstableApi::class)
    private fun updateProgress() {
-      _progress.value = observingFunction.invoke()
+      
+      // Doesn't update if the same value is tried to be emitted
+      handleBeingStateful(observingFunction.invoke()){
+         _progress.value = observingFunction.invoke()
+      }
+      
    }
    
    fun forceValue(value:T){
