@@ -3,7 +3,7 @@ package com.aacomposetest.Activities
 import android.app.Activity
 import android.os.Bundle
 import android.util.Log
-import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Impl
+import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Open
 
 /**
  * Default Log tag is [ActivityHook]
@@ -13,7 +13,7 @@ fun hookActivity(
    onLifecycleEvent: (String) -> Unit = {
    Log.i("ActivityHook", it)
 }){
-   val callbacks = object:ActivityLifecycleCallbacks_Impl(){
+   val callbacks = object:ActivityLifecycleCallbacks_Open(){
       override fun onActivityResumed(activity: Activity) {
          super.onActivityResumed(activity)
          onLifecycleEvent.invoke("RESUMED")
@@ -50,12 +50,12 @@ fun hookActivity(
    activity.registerActivityLifecycleCallbacks(callbacks)
 }
 
-fun Activity.hook(
+fun Activity.hookLifecycle(
    onLifecycleEvent: (String) -> Unit = {
       Log.i("DefaultTag", it)
    }
 ) {
-   val callbacks = object:ActivityLifecycleCallbacks_Impl(){
+   val callbacks = object:ActivityLifecycleCallbacks_Open(){
       override fun onActivityResumed(activity: Activity) {
          super.onActivityResumed(activity)
          onLifecycleEvent.invoke("RESUMED")

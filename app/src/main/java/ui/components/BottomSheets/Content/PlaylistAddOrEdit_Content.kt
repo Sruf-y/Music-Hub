@@ -7,13 +7,13 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aacomposetest.Functions.rename
@@ -31,8 +32,9 @@ import com.aacomposetest.ui.theme.MyColor
 import com.composeunstyled.Text
 import kotlinx.coroutines.launch
 import ui.components.CancelConfirm
-import ui.components.CustomTextField
-import ui.components.PriorityBox
+import ui.components.Text.BasicTextFieldExpanded
+import ui.components.PriorityLayout
+import ui.components.Text.OutlinedTextFieldExpanded
 
 
 @Preview(
@@ -70,7 +72,7 @@ fun PlaylistAddOrEdit_Content(
    var myText by rememberSaveable { mutableStateOf(playlist?.title?:"") }
    
    
-   PriorityBox(
+   PriorityLayout(
       bottom = {
          CancelConfirm(
             onCancel = {
@@ -117,7 +119,7 @@ fun PlaylistAddOrEdit_Content(
          .fillMaxWidth(),
          contentAlignment = Alignment.Center
       ) {
-         PriorityBox(
+         PriorityLayout(
             modifier = Modifier
                .fillMaxWidth(0.75f)
                .padding(vertical = 30.dp),
@@ -127,18 +129,17 @@ fun PlaylistAddOrEdit_Content(
                }
             }
          ) {
-            CustomTextField(
-               hint = "Playlist title",
-               value = myText ,
+            BasicTextFieldExpanded(
+               value = myText,
                onValueChange = {
-                  myText = it.toString()
+                  myText = it
                },
                modifier = Modifier
                   .wrapContentHeight()
                   .border(2.dp, MyColor.TextColor(), RoundedCornerShape(10.dp))
                   .imePadding(),
-               color = MyColor.TextColor(),
-               contentPadding = PaddingValues(15.dp)
+               textStyle = TextStyle(color = MyColor.TextColor()),
+               
             )
          }
       }

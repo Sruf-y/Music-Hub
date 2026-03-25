@@ -72,10 +72,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.aacomposetest.Activities.FullScreenPlayerActivity
-import com.aacomposetest.Functions.clickableNoRipple
-import com.aacomposetest.Functions.invert
 import com.aacomposetest.Log
 import com.aacomposetest.R
+import com.aacomposetest.clickableNoRipple
+import com.aacomposetest.invert
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.BottomSheet

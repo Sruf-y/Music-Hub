@@ -17,7 +17,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-
+/**
+ * Returns a [PersistentState] pointer to the requested cursor value
+ * */
 inline fun <reified T : Any> accessCursorValue(
    defaultValue: T,
    key: String,

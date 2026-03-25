@@ -23,7 +23,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
-import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Impl
+import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Open
 import com.aacomposetest.Classes.ActivityLifecycleEffect
 import com.aacomposetest.Classes.CursorValue
 import com.aacomposetest.Classes.MyPrefs.open
@@ -62,7 +62,7 @@ fun NestedScrollingFront(
     // Handles saving the cursorValue
     ActivityLifecycleEffect(
         key = cursorValue,
-        callbacks = object : ActivityLifecycleCallbacks_Impl(){
+        callbacks = object : ActivityLifecycleCallbacks_Open(){
             override fun onActivityPaused(activity: Activity) {
                 cursorValue?.run {
                     val prefs = dir.open(contextRef)

@@ -4,6 +4,7 @@ package Presentation.FullscreenPlayer
 import ExoPlayer.myExoPlayer
 import MyViewModels.rememberLyricsManager
 import SrufComposeComponents.IconButton
+import android.text.style.LineHeightSpan
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -34,11 +35,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
-import ui.components.CustomTextField
+import ui.components.Text.BasicTextFieldExpanded
 
 @Composable
 internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle = TextStyle.Default){
@@ -114,32 +117,23 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
                )
             }
          }
-         if(false)
-         OutlinedTextField(
+         
+         BasicTextFieldExpanded(
             value = lyricsManager.lyrics.value?:"",
             onValueChange = {
-               lyricsManager.lyrics.value = it.toString()
+               lyricsManager.lyrics.value = it
             },
-            modifier = Modifier.fillMaxSize().weight(1f).imePadding(),
+            modifier = Modifier.weight(1f).fillMaxWidth().background(MyColor.Green),
             enabled = isEditing,
-            textStyle = TextStyle(textAlign = TextAlign.Left)
-         )
-         else
-         CustomTextField(
-            value = lyricsManager.lyrics.value,
-            onValueChange = {
-               lyricsManager.lyrics.value = it.toString()
-            },
-            modifier = Modifier.weight(1f).imePadding(),
-            enabled = isEditing,
-            textAlign = Alignment.TopStart,
-            color = MyColor.TextColor(),
-            lineSpacingMultiplier = 1.3f,
-            contentPadding = PaddingValues(10.dp)
+            textStyle = TextStyle(
+               color = MyColor.TextColor(),
+               fontSize = 24.sp
+            )
          )
          
         
       }
    }
 }
+
 

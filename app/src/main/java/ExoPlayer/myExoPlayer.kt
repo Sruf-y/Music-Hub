@@ -27,11 +27,11 @@ import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.MyPrefs.open
 import com.aacomposetest.Classes.getCursorValue
 import com.aacomposetest.Classes.putCursorValue
-import com.aacomposetest.Functions.getRandom
 import com.aacomposetest.Log
 import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
 import com.aacomposetest.MyApplication.Companion.JsonFormat
+import com.aacomposetest.getRandom
 import com.aacomposetest.tryTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

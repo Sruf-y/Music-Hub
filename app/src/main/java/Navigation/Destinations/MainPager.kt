@@ -46,6 +46,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -58,7 +59,8 @@ import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import ui.components.CustomTextField
+import ui.components.Text.BasicTextFieldExpanded
+import ui.components.Text.OutlinedTextFieldExpanded
 
 
 private val customIndicator =
@@ -234,12 +236,11 @@ object MainPager {
             LaunchedEffect(isFocused) {
                //focusRequester.requestFocus()
             }
-            CustomTextField(
+            OutlinedTextFieldExpanded(
                singleLine = true,
-               contentPadding = PaddingValues(start = 10.dp),
                value = searchWord,
                onValueChange = {
-                  ListFeedingVM.SortedSongs.setSearchWord(it.toString())
+                  ListFeedingVM.SortedSongs.setSearchWord(it)
                },
                modifier = Modifier
                   .fillMaxSize()
@@ -247,8 +248,10 @@ object MainPager {
                   .onFocusChanged {
                      focusState = it
                   },
-               hint = "Search",
-               trailingIcon = {
+               placeholder = @Composable {
+                  Text("Search")
+                             },
+               trailingIcon = @Composable {
                   IconButton(
                      modifier = iconModifier,
                      imageVector = Icons.Default.Close,
@@ -258,8 +261,7 @@ object MainPager {
                         shouldBeFocused = false
                      }
                   )
-               },
-               textAlign = Alignment.CenterStart
+               }, textStyle = TextStyle(color = MyColor.TextColor())
             )
             
          }

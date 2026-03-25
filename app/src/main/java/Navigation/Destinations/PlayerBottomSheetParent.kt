@@ -35,7 +35,7 @@ import androidx.core.content.edit
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Impl
+import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Open
 import com.aacomposetest.Classes.ActivityLifecycleEffect
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.PersistentState
@@ -107,7 +107,7 @@ object PlayerBottomSheetParent {
       // Save scroll position for the [All Songs] page
       ActivityLifecycleEffect(
          key = songsListState,
-         callbacks = object : ActivityLifecycleCallbacks_Impl(){
+         callbacks = object : ActivityLifecycleCallbacks_Open(){
             override fun onActivityPaused(activity: Activity) {
                prefs.edit(true) {
                   putCursorValue(
@@ -126,7 +126,7 @@ object PlayerBottomSheetParent {
       // Save scroll position for the [All Playlists] page
       ActivityLifecycleEffect(
          key = playlistsListState,
-         callbacks = object : ActivityLifecycleCallbacks_Impl(){
+         callbacks = object : ActivityLifecycleCallbacks_Open(){
             override fun onActivityPaused(activity: Activity) {
                prefs.edit(true) {
                   putCursorValue(

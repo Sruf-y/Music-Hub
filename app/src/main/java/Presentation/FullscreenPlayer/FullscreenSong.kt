@@ -33,8 +33,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.aacomposetest.Functions.clickableNoRipple
 import com.aacomposetest.R
+import com.aacomposetest.clickableNoRipple
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.Theme

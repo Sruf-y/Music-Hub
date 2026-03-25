@@ -19,8 +19,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.Database
 import com.aacomposetest.Functions
 import com.aacomposetest.Functions.Images
-import com.aacomposetest.Functions.concatenateWith
 import com.aacomposetest.Logs
+import com.aacomposetest.concatenateWith
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first

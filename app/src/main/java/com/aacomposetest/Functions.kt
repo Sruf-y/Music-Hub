@@ -14,6 +14,7 @@ import android.os.FileObserver
 import android.os.FileObserver.CLOSE_WRITE
 import android.os.FileObserver.MOVE_SELF
 import android.util.Log
+import android.util.Range
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.TextView
@@ -55,91 +56,7 @@ import kotlin.random.Random
 
 object Functions {
    
-   fun List<String>.concatenateWith(divider:String ="", exceptForElements:List<Int>):String{
-      val stringBuilder = StringBuilder(this.first())
-      
-      this.forEachIndexed { index,string->
-         if(!exceptForElements.contains(index) && index!=0) {
-            stringBuilder.append(divider)
-            stringBuilder.append(string)
-         }
-      }
-      return stringBuilder.toString()
-   }
    
-   /**
-    * Maps a list after the order given by another list.
-    *
-    * @sample mapAfterOrderOfExample
-    *
-    * */
-   
-   
-   inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
-      
-      // Create a lookup map first
-      val itemsMap = this.associateBy {
-         selector(it)
-      }
-      
-      // Then map in order
-      val sortedItems = orderList.mapNotNull { id -> itemsMap[id] }
-      return sortedItems
-   }
-   private fun mapAfterOrderOfExample() {
-      class Item(val id: Int, val name: String)
-      
-      val myOrder = listOf(1, 5, 3, 2, 4)
-      
-      val myItems = listOf(
-         Item(id = 1, name = "One"),
-         Item(id = 2, name = "Two"),
-         Item(id = 3, name = "Three"),
-         Item(id = 4, name = "Four"),
-         Item(id = 5, name = "Five")
-      )
-      
-      val orderedItemsList = myItems.mapAfterOrderOf(
-         orderList = myOrder,
-         selector = { it.id }
-      )
-   }
-   
-   fun <T> List<T>.getRandom(except:T? = null): T?{
-      
-      if(this.isEmpty()) return null
-      
-      if(this.size ==1 && indexOf(except) != -1) return null
-      
-      val exception = indexOf(except)
-      
-      var result = Random.nextInt(0,this.size)
-      
-      while (result == exception){
-         result = Random.nextInt(0,this.size)
-      }
-      
-      
-      return this[result]
-   }
-   
-   @Composable
-   fun Modifier.clickableNoRipple(enabled:Boolean = true, role: Role? = null, onClick:()-> Unit)
-      = this.clickable(enabled = enabled,role = role,interactionSource = remember { MutableInteractionSource() }, indication = null,onClick = onClick)
-   
-   /**
-    * @return [T] at the index specified. Index is wrapped around if over the list's [size] or if it is negative
-    * */
-   inline fun <T> List<T>.cyclicalGet(index:Int):T{
-      
-      val i = Math.floorMod(index,size)
-      return this.get(i)
-   }
-   
-   
-   fun MutableState<Boolean>.invert(){
-      this.value = !this.value
-   }
    
    
    
@@ -357,34 +274,6 @@ object Functions {
       }
    }
    
-   
-   
-   
-   /**
-    * Short wrapper for
-    *
-    *      with(density){calculation}
-    * */
-   fun Dp.toPx(density: Density):Float = with(density){
-      this@toPx.toPx()
-   }
-   /**
-    * Short wrapper for
-    *
-    *      with(density){calculation}
-    * */
-   fun Int.PxToDp(density: Density): Dp = with(density){
-      this@PxToDp.toDp()
-   }
-   /**
-    * Short wrapper for
-    *
-    *      with(density){calculation}
-    * */
-   fun Float.PxToDp(density: Density): Dp = with(density){
-      this@PxToDp.toDp()
-   }
-   
    /**
     * Will fill the max size of the calculation given.
     * */
@@ -478,8 +367,137 @@ object Functions {
    }
 }
 
+fun List<String>.concatenateWith(divider:String ="", exceptForElements:List<Int>):String{
+   val stringBuilder = StringBuilder(this.first())
+   
+   this.forEachIndexed { index,string->
+      if(!exceptForElements.contains(index) && index!=0) {
+         stringBuilder.append(divider)
+         stringBuilder.append(string)
+      }
+   }
+   return stringBuilder.toString()
+}
+
 /**
- * Copies a list N times.
+ * Maps a list after the order given by another list.
+ *
+ * @sample mapAfterOrderOfExample
+ *
+ * */
+
+
+inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
+   
+   // Create a lookup map first
+   val itemsMap = this.associateBy {
+      selector(it)
+   }
+   
+   // Then map in order
+   val sortedItems = orderList.mapNotNull { id -> itemsMap[id] }
+   return sortedItems
+}
+private fun mapAfterOrderOfExample() {
+   class Item(val id: Int, val name: String)
+   
+   val myOrder = listOf(1, 5, 3, 2, 4)
+   
+   val myItems = listOf(
+      Item(id = 1, name = "One"),
+      Item(id = 2, name = "Two"),
+      Item(id = 3, name = "Three"),
+      Item(id = 4, name = "Four"),
+      Item(id = 5, name = "Five")
+   )
+   
+   val orderedItemsList = myItems.mapAfterOrderOf(
+      orderList = myOrder,
+      selector = { it.id }
+   )
+}
+
+fun <T> List<T>.getRandom(except:T? = null): T?{
+   
+   if(this.isEmpty()) return null
+   
+   if(this.size ==1 && indexOf(except) != -1) return null
+   
+   val exception = indexOf(except)
+   
+   var result = Random.nextInt(0,this.size)
+   
+   while (result == exception){
+      result = Random.nextInt(0,this.size)
+   }
+   
+   
+   return this[result]
+}
+
+@Composable
+fun Modifier.clickableNoRipple(enabled:Boolean = true, role: Role? = null, onClick:()-> Unit)
+   = this.clickable(enabled = enabled,role = role,interactionSource = remember { MutableInteractionSource() }, indication = null,onClick = onClick)
+
+/**
+ * @return [T] at the index specified. Index is wrapped around if over the list's [size] or if it is negative
+ * */
+inline fun <T> List<T>.cyclicalGet(index:Int):T{
+   
+   val i = Math.floorMod(index,size)
+   return this.get(i)
+}
+
+
+fun MutableState<Boolean>.invert(){
+   this.value = !this.value
+}
+
+
+/**
+ * Maps a number from a known range to another known range
+ *
+ * @return a [Float] result of placing the number on the same fill factor on the desired range as it was on the original range
+ * */
+fun Float.map(in_min:Float, in_max:Float, out_min:Float, out_max:Float):Float {
+   return (this - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+}
+
+/**
+ * Maps a number from a known range to another known range
+ *
+ * @return a [Float] result of placing the number on the same fill factor on the desired range as it was on the original range
+ * */
+fun Float.map(in_range: Range<Float>,out_range:Range<Float>) :Float {
+   return (this - in_range.lower) * (out_range.upper - out_range.lower) / (in_range.upper - in_range.lower) + out_range.lower
+}
+
+/**
+ * Converts an [Int] to [Dp]
+ * */
+fun Int.toDp(density: Density): Dp{
+   return with(density) { this@toDp.toDp() }
+}
+
+/**
+ * Converts a [Float] to [Dp]
+ * */
+fun Float.toDp(density: Density): Dp{
+   return with(density) { this@toDp.toDp() }
+}
+
+/**
+ * Converts a [Dp] to [Float]
+ * */
+fun Dp.toPx(density: Density):Float = with(density){
+   this@toPx.toPx()
+}
+
+
+/**
+ * Copies a list N times over.
+ *
+ * Behaves like "StringInstance".repeat(N)
  *
  * @return if count<=0 it returns an empty list
  * @return [this] list repeated [count] times.
@@ -495,12 +513,17 @@ inline fun <T>List<T>.repeat(count:Int):List<T>{
    }
 }
 
-
+/**
+ * Asks the system if it is in dark mode currently.
+ *
+ * Note that the value returned is not stateful.
+ *
+ * @return [Boolean] true if the system is in dark mode, false otherwise.
+ * */
 fun Context.isDarkMode() = when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
    Configuration.UI_MODE_NIGHT_YES -> true
    else -> false
 }
-
 fun Context.buildSystemBarsStyle(lightMode:Int = MyColor.SemiTransparentLight.toArgb(),darkMode:Int = MyColor.SemiTransparentDark.toArgb()): SystemBarStyle{
    
    return if (isDarkMode()) {

@@ -54,9 +54,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aacomposetest.Classes.MyIcons
-import com.aacomposetest.Functions.mapAfterOrderOf
 import com.aacomposetest.MyApplication
 import com.aacomposetest.R
+import com.aacomposetest.mapAfterOrderOf
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.parcelize.Parcelize

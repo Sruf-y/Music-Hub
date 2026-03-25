@@ -7,21 +7,38 @@ import android.util.Log
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.aacomposetest.Log
 import io.ktor.util.reflect.instanceOf
 import okhttp3.internal.wait
 
 /**
- * @param callbacks use [ActivityLifecycleCallbacks_Impl] for an easier time overriding just the required functions.
+ * Allows a composable to listen to the lifecycle of the activity and perform actions based on the callback given.
+ *
+ * For an easier time overriding only the functions you want, extend the [ActivityLifecycleCallbacks_Open] class
+ *
+ * @param key any key a [LaunchedEffect] could take
+ * @param callbacks use [ActivityLifecycleCallbacks_Open] for an easier time overriding just the required functions.
+ *
+ * @sample com.sruf.licenta.Data.ActivityLifecycleEffect_Preview
  * */
+
 @Composable
-inline fun ActivityLifecycleEffect(
+fun ActivityLifecycleEffect(
    key:Any?,
-   callbacks: ActivityLifecycleCallbacks_Impl
+   callbacks: Application.ActivityLifecycleCallbacks
 ){
    val activity = LocalActivity.current
    
    LaunchedEffect(key) {
+      
+      if(activity == null){
+         Log.w("ActivityLifecycleEffect","There is no activity to tie the effect to.")
+      }
+      
       activity?.unregisterActivityLifecycleCallbacks(callbacks)
       
       activity?.registerActivityLifecycleCallbacks(callbacks)
@@ -31,7 +48,7 @@ inline fun ActivityLifecycleEffect(
 /**
  * Wrapper implementation made so i won't have to implement everything else besides exactly what i need.
  * */
-open class ActivityLifecycleCallbacks_Impl(): Application.ActivityLifecycleCallbacks{
+open class ActivityLifecycleCallbacks_Open(): Application.ActivityLifecycleCallbacks{
    override fun onActivityCreated(
       activity: Activity,
       savedInstanceState: Bundle?,
@@ -133,4 +150,28 @@ open class ActivityLifecycleCallbacks_Impl(): Application.ActivityLifecycleCallb
    override fun onActivityPreStarted(activity: Activity) {
       super.onActivityPreStarted(activity)
    }
+}
+
+
+@Composable
+private fun ActivityLifecycleEffect_Preview(){
+   
+   var isActivityInUse by remember { mutableStateOf(true) }
+   
+   ActivityLifecycleEffect(
+      key = Unit,
+      callbacks = object : ActivityLifecycleCallbacks_Open(){
+         
+         override fun onActivityResumed(activity: Activity) {
+            super.onActivityResumed(activity)
+            isActivityInUse = true
+         }
+         
+         override fun onActivityPaused(activity: Activity) {
+            super.onActivityPaused(activity)
+            isActivityInUse = false
+         }
+         
+      }
+   )
 }

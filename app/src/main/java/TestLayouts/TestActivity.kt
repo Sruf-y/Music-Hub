@@ -46,7 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusRequester
 import com.aacomposetest.Log
-import ui.components.CustomTextField
+import ui.components.Text.BasicTextFieldExpanded
 
 
 class TestActivity : ComponentActivity() {
@@ -78,7 +78,7 @@ class TestActivity : ComponentActivity() {
                             Log("Something happened")
                         }
                         
-                        CustomTextField(
+                        BasicTextFieldExpanded(
                             value = text,
                             onValueChange = {text = it.toString()},
                             modifier = Modifier.fillMaxWidth().weight(1f)
