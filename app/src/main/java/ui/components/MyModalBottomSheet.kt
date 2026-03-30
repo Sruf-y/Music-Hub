@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.lifecycle.ViewModel
+import com.aacomposetest.except
 import com.aacomposetest.ui.theme.MyColor
 import com.composables.core.BottomSheet
 import com.composables.core.BottomSheetScope
@@ -55,34 +56,42 @@ import kotlinx.coroutines.sync.withLock
 
 class SheetViewmodel(): ViewModel(){
    
-   internal val stack = mutableStateListOf<BottomSheetInstance>()
+   internal var stack by mutableStateOf(emptyList<BottomSheetInstance>())
    
    private val actionMutex = Mutex()
    
    fun addSheet(content: BottomSheetInstance){
-      stack.add(content)
+      stack = stack.plusElement(content)
    }
    
+   /**
+    * Clears the stack.
+    * */
    suspend fun dismissAll(){
       actionMutex.withLock {
          stack.fastForEachReversed {
             it.sheetState.animateTo(SheetDetent.Hidden)
             
          }
-         stack.clear()
+         stack = emptyList()
       }
-      
    }
    
+   /**
+    * Removes the last item in the stack.
+    * */
    suspend fun dismissCurrent(){
       actionMutex.withLock {
          if(stack.isNotEmpty()) {
             stack.last().sheetState.animateTo(SheetDetent.Hidden)
-            stack.removeLastOrNull()
+            stack = stack.subList(0,stack.lastIndex-1)
          }
       }
    }
    
+   private fun removeItemFromStack(item: BottomSheetInstance){
+      stack = stack.except(item)
+   }
    
    
    @Composable
@@ -125,7 +134,7 @@ class SheetViewmodel(): ViewModel(){
                   
                   if (it.sheetState.targetDetent == SheetDetent.Hidden && it.sheetState.progress == 1f && wasShown) {
                      // then it was hidden manually
-                     stack.remove(it)
+                     removeItemFromStack(it)
                   }
                }
                

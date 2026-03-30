@@ -123,8 +123,7 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
             },
             modifier = Modifier.weight(1f)
                .fillMaxWidth()
-               .verticalScroll(textScroll)
-               .background(MyColor.Green),
+               .verticalScroll(textScroll),
             enabled = isEditing,
             textStyle = TextStyle(
                color = MyColor.TextColor(),

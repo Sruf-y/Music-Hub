@@ -7,7 +7,6 @@ import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistWatcher
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
-import android.os.Parcelable
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
@@ -43,7 +42,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,10 +54,9 @@ import androidx.compose.ui.unit.dp
 import com.aacomposetest.Classes.MyIcons
 import com.aacomposetest.MyApplication
 import com.aacomposetest.R
-import com.aacomposetest.mapAfterOrderOf
+import com.aacomposetest.mapByOrderOf
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
-import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -115,7 +112,7 @@ data class Page_ViewPlaylist(val title: String) {
          val const_PlaylistSongs by remember {
             derivedStateOf {
                
-               allSongs.mapAfterOrderOf(playlist?.songsIdList ?: emptyList()) { it.id }
+               allSongs.mapByOrderOf(playlist?.songsIdList ?: emptyList()) { it.id }
                
             }
          }

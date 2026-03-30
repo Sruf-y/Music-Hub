@@ -1,7 +1,5 @@
 package com.aacomposetest
 
-import android.app.Activity
-import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
 import android.content.res.Configuration
@@ -9,26 +7,18 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.net.Uri
-import android.os.Bundle
-import android.os.FileObserver
-import android.os.FileObserver.CLOSE_WRITE
-import android.os.FileObserver.MOVE_SELF
 import android.util.Log
 import android.util.Range
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.TextView
 import androidx.activity.SystemBarStyle
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.semantics.Role
@@ -37,14 +27,11 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.ViewModel
 import com.aacomposetest.ui.theme.MyColor
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -382,12 +369,10 @@ fun List<String>.concatenateWith(divider:String ="", exceptForElements:List<Int>
 /**
  * Maps a list after the order given by another list.
  *
- * @sample mapAfterOrderOfExample
+ * @sample mapByOrderOfExample
  *
  * */
-
-
-inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
+inline fun <T,K>List<T>.mapByOrderOf(orderList:List<K>, selector:(T)->K):List<T>{
    
    // Create a lookup map first
    val itemsMap = this.associateBy {
@@ -398,7 +383,7 @@ inline fun <T,K>List<T>.mapAfterOrderOf(orderList:List<K>, selector:(T)->K):List
    val sortedItems = orderList.mapNotNull { id -> itemsMap[id] }
    return sortedItems
 }
-private fun mapAfterOrderOfExample() {
+private fun mapByOrderOfExample() {
    class Item(val id: Int, val name: String)
    
    val myOrder = listOf(1, 5, 3, 2, 4)
@@ -411,12 +396,37 @@ private fun mapAfterOrderOfExample() {
       Item(id = 5, name = "Five")
    )
    
-   val orderedItemsList = myItems.mapAfterOrderOf(
+   val orderedItemsList = myItems.mapByOrderOf(
       orderList = myOrder,
       selector = { it.id }
    )
 }
 
+/**
+ * Takes out the excepted items.
+ *
+ * @return the original list minus the list of exceptions.
+ * */
+fun <T>List<T>.except(vararg items:T): List<T>{
+   var result = this.toMutableList()
+   
+   items.forEach {
+      val index = this.indexOf(it)
+      
+      if(index!=-1){
+         result.remove(it)
+      }
+   }
+   
+   return result.toList()
+}
+
+/**
+ * Picks a random item in the list, except for a speciffic item
+ * (usually used for picking a random item except the current one)
+ *
+ * @return null if the excepted item is the only one in the list or if the list is empty, a new item pick otherwise
+ * */
 fun <T> List<T>.getRandom(except:T? = null): T?{
    
    if(this.isEmpty()) return null
@@ -435,6 +445,9 @@ fun <T> List<T>.getRandom(except:T? = null): T?{
    return this[result]
 }
 
+/**
+ * Wrapper for Modifier.clickable() that doesn't add a ripple.
+ * */
 @Composable
 fun Modifier.clickableNoRipple(enabled:Boolean = true, role: Role? = null, onClick:()-> Unit)
    = this.clickable(enabled = enabled,role = role,interactionSource = remember { MutableInteractionSource() }, indication = null,onClick = onClick)
