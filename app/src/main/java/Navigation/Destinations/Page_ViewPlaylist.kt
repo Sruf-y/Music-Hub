@@ -60,7 +60,6 @@ import com.aacomposetest.ui.theme.Theme
 import kotlinx.serialization.Serializable
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-import ui.components.BottomSheets.renderDefaultBackground
 import ui.components.SongItem
 
 @Serializable
@@ -79,7 +78,7 @@ data class Page_ViewPlaylist(val title: String) {
          plusButtonClick:(()-> Unit)? =null,
          onOptionsClickShowMenu: @Composable ((MutableState<Boolean>) -> Unit)? = null
       ) {
-         renderDefaultBackground()
+         Theme.RenderDefaultBackground()
          
          /**
           * Unused for now because Navigation is taking care of it.

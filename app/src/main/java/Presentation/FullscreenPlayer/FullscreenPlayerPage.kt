@@ -1,10 +1,8 @@
 package Presentation.FullscreenPlayer
 
-import android.content.res.Configuration
 import com.aacomposetest.Classes.PersistentState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -12,10 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import com.aacomposetest.Log
 import com.aacomposetest.ui.theme.MyColor
-import ui.components.BottomSheets.renderDefaultBackground
+import com.aacomposetest.ui.theme.Theme
 
 @Composable
 fun FullscreenPlayerPage(modifier: Modifier = Modifier,initialPage:Int? = null){
@@ -37,7 +33,7 @@ fun FullscreenPlayerPage(modifier: Modifier = Modifier,initialPage:Int? = null){
     }
     
     Box(modifier = modifier.background(MyColor.SeparatorGray)){
-        renderDefaultBackground(Modifier.fillMaxSize())
+        Theme.RenderDefaultBackground()
         
         
         HorizontalPager(

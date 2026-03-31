@@ -207,6 +207,7 @@ object myExoPlayer {
                         Player.STATE_READY -> {
                            isPrepared = true
                            if(equalizerController==null){
+                              /** Is initialized here because the audioSessionId is not valid until exoplayer is "prepared" */
                               equalizerController = EqualizerController(this@apply.audioSessionId)
                            }
                         }

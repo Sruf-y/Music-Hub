@@ -1,6 +1,5 @@
 package TestLayouts
 
-import Navigation.Destinations.FullscreenPlayer
 import Navigation.Destinations.MainPager
 import Navigation.NavExtensions.safeNavigate
 import Presentation.Navigation.MyNavigation

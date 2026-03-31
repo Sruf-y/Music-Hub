@@ -6,7 +6,6 @@ import ExoPlayer.myExoPlayer
 import androidx.annotation.DrawableRes
 import androidx.annotation.FloatRange
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -35,14 +34,10 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.aacomposetest.R
 import com.aacomposetest.clickableNoRipple
-import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.Theme
-import com.aacomposetest.ui.theme.Theme.DefaultBackground
 import ui.components.BottomSheets.PlayPauseButton
 import ui.components.BottomSheets.ResponsiveSlider
-import ui.components.BottomSheets.ScalingBackground
-import ui.components.BottomSheets.renderDefaultBackground
 import ui.components.LoopingText
 
 @Preview

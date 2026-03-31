@@ -1,17 +1,14 @@
 package com.aacomposetest.Activities
 
 import ExoPlayer.myExoPlayer
-import MyViewModels.ListFeedingVM
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
 import Navigation.Destinations.EqualizerDest_Temp
-import Navigation.Destinations.FullscreenPlayer
 import Navigation.Destinations.MainPager
 import Navigation.Destinations.PlayerBottomSheetParent
 import Navigation.Destinations.PlaylistAddSongsPage
 import Navigation.NavExtensions.safeNavigate
 import Navigation.SafeDrawer
-import Presentation.FullscreenPlayer.FullscreenPlayerPage
 import Presentation.Navigation.DrawerStandardLayout
 import Presentation.Navigation.MyNavigation
 import Presentation.Settings.EqualizerPage
@@ -30,25 +27,19 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -80,7 +71,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
-import ui.components.BottomSheets.renderDefaultBackground
 import ui.components.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
 import ui.components.SheetViewmodel
@@ -231,7 +221,7 @@ class MainActivityView : CustomComponentActivity() {
       
       setContent {
          SrufTheme {
-            renderDefaultBackground()
+            Theme.RenderDefaultBackground()
                
             MainView()
             
@@ -309,7 +299,7 @@ private fun ParentContainer(
    ) {
       
       val drawerState = rememberViewDrawerState(initialValue = ViewDrawerValue.Closed)
-      val allSongs by ListFeedingVM.allSongs.collectAsState()
+      //val allSongs by ListFeedingVM.allSongs.collectAsState()
       
       val navController = rememberNavController()
       
@@ -337,6 +327,7 @@ private fun ParentContainer(
                   // Your item content
                   Button({
                      navController.safeNavigate(EqualizerDest_Temp)
+                     drawerState.close()
                   }) {
                      Text("Open Equalizer")
                   }
@@ -405,44 +396,20 @@ private fun ParentContainer(
                      )
                   }
                   
-                  // DO NOT RENDER THIS because i moved the FullScreenPlayerPage to its own activity
-                  if(false)
-                  composable<FullscreenPlayer>(
-                     enterTransition = {
-                        val duration = 250
-                        slideIntoContainer(
-                           AnimatedContentTransitionScope.SlideDirection.Up,
-                           animationSpec = tween(duration, easing = EaseInOut)
-                        )
-                     },
-                     popExitTransition = {
-                        val duration = 250
-                        slideOutOfContainer(
-                           AnimatedContentTransitionScope.SlideDirection.Down,
-                           animationSpec = tween(duration, easing = EaseInOut)
-                        )
-                     }
-                  ) {
-                     
-                     FullscreenPlayerPage(
-                        modifier = Modifier
-                           .fillMaxSize()
-                           .safeDrawingPadding()
-                     )
-                     
-                  }
+                  
+                  
                   composable<EqualizerDest_Temp>(
                      enterTransition = {
                         val duration = 250
                         slideIntoContainer(
-                           AnimatedContentTransitionScope.SlideDirection.Up,
+                           AnimatedContentTransitionScope.SlideDirection.Left,
                            animationSpec = tween(duration, easing = EaseInOut)
                         )
                      },
                      popExitTransition = {
                         val duration = 250
                         slideOutOfContainer(
-                           AnimatedContentTransitionScope.SlideDirection.Down,
+                           AnimatedContentTransitionScope.SlideDirection.Right,
                            animationSpec = tween(duration, easing = EaseInOut)
                         )
                      }

@@ -4,16 +4,13 @@ import MyViewModels.SongsViewModel
 import Presentation.FullscreenPlayer.FullscreenPlayerPage
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.aacomposetest.Classes.CustomComponentActivity
 import com.aacomposetest.MyApplication
-import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.SrufTheme
-import ui.components.BottomSheets.renderDefaultBackground
+import com.aacomposetest.ui.theme.Theme
 
 class FullScreenPlayerActivity : CustomComponentActivity(){
    
@@ -30,7 +27,7 @@ class FullScreenPlayerActivity : CustomComponentActivity(){
       setContent {
          SrufTheme {
             
-            renderDefaultBackground()
+            Theme.RenderDefaultBackground()
             
             FullscreenPlayerPage(
                modifier = Modifier

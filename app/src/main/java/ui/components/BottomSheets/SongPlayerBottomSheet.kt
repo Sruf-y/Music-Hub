@@ -6,7 +6,6 @@ import ExoPlayer.myExoPlayer
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.app.Activity
-import android.content.Intent
 import android.text.format.DateUtils
 import android.view.View
 import androidx.activity.compose.LocalActivity
@@ -50,7 +49,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -71,8 +69,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.aacomposetest.Activities.FullScreenPlayerActivity
-import com.aacomposetest.Log
 import com.aacomposetest.R
 import com.aacomposetest.clickableNoRipple
 import com.aacomposetest.invert
@@ -84,8 +80,6 @@ import com.composables.core.SheetDetent
 import kotlinx.coroutines.delay
 import ui.components.LoopingText
 import java.io.File
-import kotlin.compareTo
-import kotlin.invoke
 import kotlin.math.roundToInt
 
 
@@ -214,16 +208,7 @@ fun ScalingBackground(
    
 }
 
-@Composable
-fun renderDefaultBackground(modifier: Modifier = Modifier.fillMaxSize(),@DrawableRes id:Int = Theme.DefaultBackground()){
-   AsyncImage(ImageRequest.Builder(LocalContext.current)
-      .data(id)
-      .build(),
-      modifier = modifier,
-      contentDescription = null,
-      contentScale = ContentScale.Crop // CenterCrop
-   )
-}
+
 
 @Composable
 private fun ButtonsRow(

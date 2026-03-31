@@ -1,9 +1,11 @@
 package com.aacomposetest.ui.theme
 
 import android.annotation.SuppressLint
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -17,16 +19,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.aacomposetest.ui.theme.MyColor.Black
-import com.aacomposetest.ui.theme.MyColor.White
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.valentinilk.shimmer.LocalShimmerTheme
 import com.valentinilk.shimmer.defaultShimmerTheme
 import com.valentinilk.shimmer.shimmer
-import ui.components.BottomSheets.renderDefaultBackground
 import ui.components.SongItem
 
 object Theme{
@@ -147,7 +148,16 @@ object Theme{
    
    
    
-   
+   @Composable
+   fun RenderDefaultBackground(modifier: Modifier = Modifier.fillMaxSize(), @DrawableRes id:Int = Theme.DefaultBackground()){
+      AsyncImage(ImageRequest.Builder(LocalContext.current)
+         .data(id)
+         .build(),
+         modifier = modifier,
+         contentDescription = null,
+         contentScale = ContentScale.Crop // CenterCrop
+      )
+   }
 }
 
 abstract class ThemeSourceSet{

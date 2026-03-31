@@ -12,35 +12,46 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aacomposetest.Log
 import com.aacomposetest.ui.theme.MyColor
+import com.aacomposetest.ui.theme.Theme
 
 @Composable
 fun EqualizerPage(modifier: Modifier = Modifier.fillMaxSize()) {
    
    val state = rememberLazyListState()
    
-   LaunchedEffect(Unit) {
-      Log("Equalizer presets are ${myExoPlayer.equalizerController?.presets?.size}")
-   }
+   // Background
+   Theme.RenderDefaultBackground()
    
    LazyColumn(
       state = state,
       modifier = Modifier.fillMaxSize()
    ) {
       
+      // a header
       item {
-         myExoPlayer.equalizerController?.currentPreset?.let {
-            Text(
-               myExoPlayer.equalizerController?.presets?.get(it)?:"nothing",
-               modifier = Modifier
+         myExoPlayer.equalizerController?.let {equalizer->
+            Box(modifier = Modifier
                .fillMaxWidth()
+               .wrapContentHeight()
                .background(MyColor.Red)
-            )
+            ){
+               Text(
+                  myExoPlayer.equalizerController?.presets?.get(equalizer.currentPreset)?:"nothing",
+                  modifier = Modifier.align(Alignment.CenterStart)
+               )
+               
+               Switch(equalizer.enabled, onCheckedChange = {equalizer.enable(it)},modifier = Modifier.align(Alignment.CenterEnd))
+            }
+            
          }
       }
       

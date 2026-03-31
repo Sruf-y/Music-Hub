@@ -30,6 +30,15 @@ class EqualizerController(sessionId: Int){
    var currentPreset by mutableIntStateOf(0)
       private set
    
+   
+   var enabled by mutableStateOf(false)
+      private set
+   
+   fun enable(value:Boolean){
+      equalizer.enabled = value
+      enabled = equalizer.enabled
+   }
+   
    fun updateCurrentPreset(){
       currentPreset = equalizer.currentPreset.toInt()
    }
@@ -86,5 +95,6 @@ class EqualizerController(sessionId: Int){
    
    }
    
+   //TODO: Add logic for checking if a song has an entry in the equalizer config SQL table and update the settings based on that.
    
 }
