@@ -321,6 +321,9 @@ class MusicService: LifecycleService() {
    
    
    fun StartForegroundNotification(notification:Notification){
+      /** It seems after testing that this now passes without throwing an exception, but keeping the exception
+       * handling is preffered as one can still be thrown at a random time.
+       * */
       tryTo(
          {
             val uri = MyApplication.crashLogger.writeCrashToFile(
