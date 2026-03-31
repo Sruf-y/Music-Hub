@@ -11,6 +11,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.database.ContentObserver
+import android.media.audiofx.Equalizer
 import android.os.Process
 import android.provider.MediaStore
 import android.util.Log
@@ -204,6 +205,10 @@ class MyApplication: Application(), ImageLoaderFactory {
         const val id = "music channel"
         const val name = "Music Player"
 
+    }
+    
+    fun aa(){
+    
     }
     
     

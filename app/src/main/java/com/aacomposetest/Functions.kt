@@ -558,3 +558,26 @@ fun Constraints.of(placeable: Placeable): Constraints{
 
 
 
+/**
+ * Append a callback to a callback
+ * */
+fun <T>((T)->Unit).append(block:(T)->Unit):(T)-> Unit{
+   
+   return {
+      this.invoke(it)
+      block.invoke(it)
+   }
+}
+
+/**
+ * Append a callback to a callback
+ * */
+fun (()->Unit).append(block:()->Unit):()-> Unit{
+   
+   return {
+      this.invoke()
+      block.invoke()
+   }
+}
+
+

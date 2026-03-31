@@ -4,6 +4,7 @@ import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
+import Navigation.Destinations.EqualizerDest_Temp
 import Navigation.Destinations.FullscreenPlayer
 import Navigation.Destinations.MainPager
 import Navigation.Destinations.PlayerBottomSheetParent
@@ -13,11 +14,13 @@ import Navigation.SafeDrawer
 import Presentation.FullscreenPlayer.FullscreenPlayerPage
 import Presentation.Navigation.DrawerStandardLayout
 import Presentation.Navigation.MyNavigation
+import Presentation.Settings.EqualizerPage
 import SrufComposeComponents.Text
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -38,6 +41,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -329,17 +333,12 @@ private fun ParentContainer(
                      top = 10.dp
                   )
             ) {
-               items(
-                  items = allSongs,
-                  key = { item -> item.id }  // Only item, no index
-               ) { song ->
+               item(key = "equalizer"){
                   // Your item content
-                  Row() {
-                     Text("${song.id}|")
-                     
-                     Text("${song.timesPlayed}|")
-                     
-                     Text(song.title)
+                  Button({
+                     navController.safeNavigate(EqualizerDest_Temp)
+                  }) {
+                     Text("Open Equalizer")
                   }
                }
             }
@@ -431,6 +430,28 @@ private fun ParentContainer(
                            .safeDrawingPadding()
                      )
                      
+                  }
+                  composable<EqualizerDest_Temp>(
+                     enterTransition = {
+                        val duration = 250
+                        slideIntoContainer(
+                           AnimatedContentTransitionScope.SlideDirection.Up,
+                           animationSpec = tween(duration, easing = EaseInOut)
+                        )
+                     },
+                     popExitTransition = {
+                        val duration = 250
+                        slideOutOfContainer(
+                           AnimatedContentTransitionScope.SlideDirection.Down,
+                           animationSpec = tween(duration, easing = EaseInOut)
+                        )
+                     }
+                  ) {
+                     EqualizerPage()
+                     
+                     BackHandler {
+                        navController.popBackStack()
+                     }
                   }
                   
                   
