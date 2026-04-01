@@ -408,17 +408,15 @@ private fun mapByOrderOfExample() {
  * @return the original list minus the list of exceptions.
  * */
 fun <T>List<T>.except(vararg items:T): List<T>{
-   var result = this.toMutableList()
-   
-   items.forEach {
-      val index = this.indexOf(it)
-      
-      if(index!=-1){
-         result.remove(it)
-      }
-   }
-   
-   return result.toList()
+   return this.filter { it !in items }
+}
+/**
+ * Takes out the excepted items.
+ *
+ * @return the original list minus the list of exceptions.
+ * */
+fun <T>List<T>.except( items:List<T>): List<T>{
+   return this.filter { it !in items }
 }
 
 /**
