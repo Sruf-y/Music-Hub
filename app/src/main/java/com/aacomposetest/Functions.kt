@@ -5,30 +5,67 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
+import androidx.compose.ui.graphics.Color
+import android.graphics.RenderNode
 import android.net.Uri
+import android.os.Build
+import android.util.AttributeSet
 import android.util.Log
 import android.util.Range
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewTreeObserver
+import android.widget.EdgeEffect
 import android.widget.TextView
 import androidx.activity.SystemBarStyle
+import androidx.annotation.ColorInt
+import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
+import androidx.compose.foundation.OverscrollEffect
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.NativeCanvas
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.draw
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.node.DelegatableNode
+import androidx.compose.ui.node.DelegatingNode
+import androidx.compose.ui.node.DrawModifierNode
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import com.aacomposetest.Classes.AndroidEdgeEffectOverscrollEffect
+import com.aacomposetest.Classes.EdgeEffectDefaults
 import com.aacomposetest.ui.theme.MyColor
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
@@ -41,6 +78,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import kotlin.math.abs
+import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -55,7 +95,7 @@ object Functions {
       fun getBitmapFromDrawable(context:Context,drawableResId: Int): Bitmap {
          val drawable = ContextCompat.getDrawable(context, drawableResId)!!
          val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
-         val canvas = Canvas(bitmap)
+         val canvas = android.graphics.Canvas(bitmap)
          drawable.setBounds(0, 0, canvas.width, canvas.height)
          drawable.draw(canvas)
          return bitmap
@@ -585,3 +625,22 @@ fun (()->Unit).append(block:()->Unit):()-> Unit{
 fun Offset.roundToIntOffset(): IntOffset {
    return IntOffset(this.x.roundToInt(),this.y.roundToInt())
 }
+
+
+
+@Composable
+fun rememberDefaultOverscrollEffect(): OverscrollEffect{
+   val context = LocalContext.current
+   val density = LocalDensity.current
+   return remember {
+      AndroidEdgeEffectOverscrollEffect(
+         context, density,
+         EdgeEffectDefaults.DefaultGlowColor,
+         EdgeEffectDefaults.DefaultGlowPaddingValues
+      )
+   }
+}
+
+
+
+

@@ -1,6 +1,7 @@
 package SrufComposeComponents.Experimental
 
 
+import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.MutatePriority
@@ -25,6 +26,7 @@ import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -32,6 +34,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSizeIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,22 +42,24 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.progressSemantics
+import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -68,6 +73,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -112,6 +118,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastFirst
+import androidx.compose.ui.util.fastZip
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.util.packFloats
 import androidx.compose.ui.util.unpackFloat1
@@ -127,8 +134,11 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import java.util.ArrayList
 
 /**
  * #DISCLAIMER
@@ -375,7 +385,7 @@ fun Slider(
    },
    track: @Composable (SliderState) -> Unit = { sliderState ->
       SliderDefaults.Track(colors = colors, enabled = enabled, sliderState = sliderState)
-   },
+   }
 ) {
    
    SliderImpl(
@@ -384,7 +394,7 @@ fun Slider(
       enabled = enabled,
       interactionSource = interactionSource,
       thumb = thumb,
-      track = track,
+      track = track
    )
 }
 
@@ -454,7 +464,7 @@ fun VerticalSlider(
       enabled = enabled,
       interactionSource = interactionSource,
       thumb = thumb,
-      track = track,
+      track = track
    )
 }
 
@@ -758,7 +768,7 @@ private fun SliderImpl(
    state.isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
    val reverseDirection =
       (state.orientation == Horizontal && state.isRtl) ||
-         (state.orientation == Vertical && state.reverseVerticalDirection)
+      (state.orientation == Vertical && state.reverseVerticalDirection)
    val press = Modifier.sliderTapModifier(state, interactionSource, enabled)
    val drag =
       Modifier.draggable(
@@ -1287,6 +1297,8 @@ object SliderDefaults {
       },
       thumbTrackGapSize: Dp = ThumbTrackGapSize,
       trackInsideCornerSize: Dp = TrackInsideCornerSize,
+      orientation: Orientation = Horizontal,
+      reverseDirection: Boolean = LocalLayoutDirection.current == LayoutDirection.Rtl
    ) {
       TrackImpl(
          sliderState = sliderState,
@@ -1294,12 +1306,12 @@ object SliderDefaults {
          modifier = modifier,
          enabled = enabled,
          colors = colors,
-         drawStopIndicator = drawStopIndicator,
-         drawTick = drawTick,
          thumbTrackGapSize = thumbTrackGapSize,
          trackInsideCornerSize = trackInsideCornerSize,
          enableCornerShrinking = false,
          isCentered = false,
+         orientation = orientation,
+         reverseDirection = reverseDirection
       )
    }
    
@@ -1331,18 +1343,10 @@ object SliderDefaults {
       modifier: Modifier = Modifier,
       enabled: Boolean = true,
       colors: SliderColors = colors(),
-      drawStopIndicator: (DrawScope.(Offset) -> Unit)? = {
-         drawStopIndicator(
-            offset = it,
-            color = colors.trackColor(enabled, active = true),
-            size = TrackStopIndicatorSize,
-         )
-      },
-      drawTick: DrawScope.(Offset, Color) -> Unit = { offset, color ->
-         drawStopIndicator(offset = offset, color = color, size = TickSize)
-      },
       thumbTrackGapSize: Dp = ThumbTrackGapSize,
       trackInsideCornerSize: Dp = TrackInsideCornerSize,
+      orientation: Orientation = Horizontal,
+      reverseDirection: Boolean = LocalLayoutDirection.current == LayoutDirection.Rtl
    ) {
       TrackImpl(
          sliderState = sliderState,
@@ -1350,12 +1354,12 @@ object SliderDefaults {
          modifier = modifier,
          enabled = enabled,
          colors = colors,
-         drawStopIndicator = drawStopIndicator,
-         drawTick = drawTick,
          thumbTrackGapSize = thumbTrackGapSize,
          trackInsideCornerSize = trackInsideCornerSize,
          enableCornerShrinking = true,
          isCentered = false,
+         orientation = orientation,
+         reverseDirection = reverseDirection
       )
    }
    
@@ -1405,12 +1409,12 @@ object SliderDefaults {
          modifier = modifier,
          enabled = enabled,
          colors = colors,
-         drawStopIndicator = drawStopIndicator,
-         drawTick = drawTick,
          thumbTrackGapSize = thumbTrackGapSize,
          trackInsideCornerSize = trackInsideCornerSize,
          enableCornerShrinking = true,
          isCentered = true,
+         orientation = Horizontal,
+         reverseDirection = LocalLayoutDirection.current == LayoutDirection.Rtl
       )
    }
    
@@ -1422,21 +1426,20 @@ object SliderDefaults {
       modifier: Modifier,
       enabled: Boolean,
       colors: SliderColors,
-      drawStopIndicator: (DrawScope.(Offset) -> Unit)?,
-      drawTick: DrawScope.(Offset, Color) -> Unit,
       thumbTrackGapSize: Dp,
       trackInsideCornerSize: Dp,
       enableCornerShrinking: Boolean,
       isCentered: Boolean,
+      orientation:Orientation,
+      reverseDirection:Boolean
    ) {
+      
       val inactiveTrackColor = colors.trackColor(enabled = enabled, active = false)
       val activeTrackColor = colors.trackColor(enabled = enabled, active = true)
-      val inactiveTickColor = colors.tickColor(enabled = enabled, active = false)
-      val activeTickColor = colors.tickColor(enabled = enabled, active = true)
       Canvas(
-         if (sliderState.orientation == Vertical) {
+         if (orientation == Vertical) {
             modifier.width(TrackHeight).fillMaxHeight().let {
-               if (sliderState.reverseVerticalDirection) it.scale(1f, -1f) else it
+               if (reverseDirection) it.scale(1f, -1f) else it
             }
          } else {
             modifier
@@ -1448,7 +1451,7 @@ object SliderDefaults {
                   val placeable = measurable.measure(constraints)
                   val cornerSize =
                      if (trackCornerSize == Dp.Unspecified) {
-                        if (sliderState.orientation == Vertical) {
+                        if (orientation == Vertical) {
                            placeable.width / 2
                         } else {
                            placeable.height / 2
@@ -1468,7 +1471,7 @@ object SliderDefaults {
       ) {
          val cornerSize: Float =
             if (trackCornerSize == Dp.Unspecified) {
-               if (sliderState.orientation == Vertical) {
+               if (orientation == Vertical) {
                   size.width / 2
                } else {
                   size.height / 2
@@ -1481,8 +1484,6 @@ object SliderDefaults {
             activeRangeEnd = sliderState.coercedValueAsFraction,
             inactiveTrackColor = inactiveTrackColor,
             activeTrackColor = activeTrackColor,
-            inactiveTickColor = inactiveTickColor,
-            activeTickColor = activeTickColor,
             startThumbWidth = 0.toDp(),
             startThumbHeight = 0.toDp(),
             endThumbWidth = sliderState.thumbWidth.toDp(),
@@ -1490,8 +1491,6 @@ object SliderDefaults {
             thumbTrackGapSize = thumbTrackGapSize,
             trackInsideCornerSize = trackInsideCornerSize,
             trackCornerSize = cornerSize.toDp(),
-            drawStopIndicator = drawStopIndicator,
-            drawTick = drawTick,
             isRangeSlider = false,
             enableCornerShrinking = enableCornerShrinking,
             orientation = sliderState.orientation,
@@ -1545,7 +1544,6 @@ object SliderDefaults {
          enabled = enabled,
          colors = colors,
          drawStopIndicator = drawStopIndicator,
-         drawTick = drawTick,
          thumbTrackGapSize = thumbTrackGapSize,
          trackInsideCornerSize = trackInsideCornerSize,
       )
@@ -1596,7 +1594,6 @@ object SliderDefaults {
          enabled = enabled,
          colors = colors,
          drawStopIndicator = drawStopIndicator,
-         drawTick = drawTick,
          thumbTrackGapSize = thumbTrackGapSize,
          trackInsideCornerSize = trackInsideCornerSize,
       )
@@ -1611,14 +1608,11 @@ object SliderDefaults {
       enabled: Boolean,
       colors: SliderColors,
       drawStopIndicator: (DrawScope.(Offset) -> Unit)?,
-      drawTick: DrawScope.(Offset, Color) -> Unit,
       thumbTrackGapSize: Dp,
       trackInsideCornerSize: Dp,
    ) {
       val inactiveTrackColor = colors.trackColor(enabled, active = false)
       val activeTrackColor = colors.trackColor(enabled, active = true)
-      val inactiveTickColor = colors.tickColor(enabled, active = false)
-      val activeTickColor = colors.tickColor(enabled, active = true)
       Canvas(
          modifier
             .fillMaxWidth()
@@ -1646,8 +1640,6 @@ object SliderDefaults {
             activeRangeEnd = rangeSliderState.coercedActiveRangeEndAsFraction,
             inactiveTrackColor = inactiveTrackColor,
             activeTrackColor = activeTrackColor,
-            inactiveTickColor = inactiveTickColor,
-            activeTickColor = activeTickColor,
             startThumbWidth = rangeSliderState.startThumbWidth.toDp(),
             startThumbHeight = rangeSliderState.startThumbHeight.toDp(),
             endThumbWidth = rangeSliderState.endThumbWidth.toDp(),
@@ -1655,8 +1647,6 @@ object SliderDefaults {
             thumbTrackGapSize = thumbTrackGapSize,
             trackInsideCornerSize = trackInsideCornerSize,
             trackCornerSize = cornerSize.toDp(),
-            drawStopIndicator = drawStopIndicator,
-            drawTick = drawTick,
             isRangeSlider = true,
          )
       }
@@ -1667,8 +1657,6 @@ object SliderDefaults {
       activeRangeEnd: Float,
       inactiveTrackColor: Color,
       activeTrackColor: Color,
-      inactiveTickColor: Color,
-      activeTickColor: Color,
       startThumbWidth: Dp,
       startThumbHeight: Dp,
       endThumbWidth: Dp,
@@ -1676,15 +1664,14 @@ object SliderDefaults {
       thumbTrackGapSize: Dp,
       trackInsideCornerSize: Dp,
       trackCornerSize: Dp,
-      drawStopIndicator: (DrawScope.(Offset) -> Unit)?,
-      drawTick: DrawScope.(Offset, Color) -> Unit,
       isRangeSlider: Boolean,
       enableCornerShrinking: Boolean = false,
       orientation: Orientation = Horizontal,
       isCentered: Boolean = false,
+      reverseDirection:Boolean = layoutDirection == LayoutDirection.Rtl
    ) {
       val isVertical = orientation == Vertical
-      val isRtl = layoutDirection == LayoutDirection.Rtl
+      val isRtl = reverseDirection
       val isRtlHorizontal = isRtl && !isVertical
       val cornerSize = trackCornerSize.toPx()
       val sliderStart = 0f
@@ -1746,15 +1733,7 @@ object SliderDefaults {
             startCornerRadius,
             endCornerRadius,
          )
-         val stopIndicatorOffset =
-            if (isVertical) {
-               Offset(center.x, start + cornerSize)
-            } else if (isRtl) {
-               Offset(size.width - start - cornerSize, center.y)
-            } else {
-               Offset(start + cornerSize, center.y)
-            }
-         drawStopIndicator?.invoke(this, stopIndicatorOffset)
+         
       }
       // inactive track
       var inactiveTrackThreshold = sliderEnd - endGap
@@ -2489,8 +2468,8 @@ open class SliderState(
    internal var isRtl = false
    internal var thumbWidth by mutableIntStateOf(0)
    internal var thumbHeight by mutableIntStateOf(0)
-   internal var orientation = Horizontal
-   internal var reverseVerticalDirection = false
+   internal var orientation by mutableStateOf( Horizontal)
+   internal var reverseVerticalDirection by mutableStateOf(false)
    
    /** The fraction of the track that the thumb currently is in. */
    val coercedValueAsFraction: Float
@@ -2921,18 +2900,58 @@ internal fun ViewConfiguration.pointerSlop(pointerType: PointerType): Float {
 
 @OptIn(ExperimentalMaterial3Api::class)
 class SliderGroupState(
-   vararg val states: SliderState
+   orientation: Orientation,
+   reverseDirection: Boolean,
+   vararg states: SliderState
 ){
-
+   
+   var job:Job? = null
+   val scope = CoroutineScope(Dispatchers.Default)
+   
+   var states:List<SliderState> by mutableStateOf(states.toList())
+      private set
+   
+   var orientation by mutableStateOf(orientation)
+      private set
+   
+   fun updateOrientation(orientation:Orientation){
+      job?.cancel()
+      job = scope.launch {
+         states = ArrayList(states).apply { this.forEach { it.orientation = orientation } }
+         this@SliderGroupState.orientation = orientation
+      }
+   }
+   
+   
+   var reverseVerticalDirection by mutableStateOf(reverseDirection)
+      private set
+   fun updateVerticalDirection(reverseDirection:Boolean){
+      job?.cancel()
+      job = scope.launch {
+         states = ArrayList(states).apply { this.forEach { it.reverseVerticalDirection = reverseDirection } }
+         this@SliderGroupState.reverseVerticalDirection = reverseDirection
+      }
+   }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun rememberSliderGroupState(
-   @IntRange(from = 0) count:Int
+   @IntRange(from = 0) count:Int,
+   orientation:Orientation = Vertical,
+   reverseVerticalDirection:Boolean = false
 ): SliderGroupState{
    
-   return remember { SliderGroupState(*List(count){ SliderState() }.toTypedArray()) }
+   return remember {
+      SliderGroupState(
+         orientation,
+         reverseVerticalDirection,
+      *List(count){
+         SliderState().apply {
+            this.reverseVerticalDirection = reverseVerticalDirection
+         }
+      }.toTypedArray())
+   }
 }
 
 
@@ -2942,19 +2961,17 @@ fun rememberSliderGroupState(
 @Composable
 fun SliderGroup(
    state: SliderGroupState,
-   rowModifier:Modifier = Modifier,
-   sliderModifier:Modifier = Modifier,
+   modifier: Modifier = Modifier,
    enabled: Boolean = true,
-   reverseDirection: Boolean = true,
-   orientation: Orientation = Vertical,
    colors: SliderColors = SliderDefaults.colors(),
-   thumb: @Composable (SliderState,) -> Unit = { sliderState ->
+   thumb: @Composable (SliderState, Modifier) -> Unit = { sliderState, modifier ->
       SliderDefaults.Thumb(
-         interactionSource = remember{ MutableInteractionSource() },
+         interactionSource = remember { MutableInteractionSource() },
          sliderState = sliderState,
          colors = colors,
          enabled = enabled,
          thumbSize = VerticalThumbSize,
+         modifier = modifier
       )
    },
    track: @Composable (SliderState) -> Unit = { sliderState ->
@@ -2963,38 +2980,138 @@ fun SliderGroup(
          colors = colors,
          enabled = enabled,
          sliderState = sliderState,
-         trackCornerSize = Dp.Unspecified
+         trackCornerSize = Dp.Unspecified,
+         orientation = state.orientation,
+         reverseDirection = state.reverseVerticalDirection
       )
    },
+   startEndGap: Dp = 10.dp,
+   spacing:Dp = 5.dp
+) {
    
-){
-   LazyRow(modifier = rowModifier) {
+   Box(
+      modifier
+         
+         .clipToBounds()
+   ) {
+      val scroll = rememberScrollState()
       
-      itemsIndexed(
-         items = state.states.toList(),
-         key = {index,state->
-            index
+      var childLayoutCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+      
+      // Content
+      when (state.orientation) {
+         Vertical -> {
+            Row(
+               modifier = Modifier
+                  .matchParentSize()
+                  .horizontalScroll(scroll, overscrollEffect = null)
+                  .onGloballyPositioned {
+                     childLayoutCoords = it
+                  }
+            ) {
+               
+               
+               Spacer(
+                  Modifier
+                     .fillMaxHeight()
+                     .width(startEndGap)
+               )
+               
+               
+               state.states.forEachIndexed { index, internalState ->
+                  
+                  VerticalSlider(
+                     state = internalState,
+                     reverseDirection = state.reverseVerticalDirection,
+                     enabled = enabled,
+                     colors = colors,
+                     thumb = {
+                        thumb.invoke(
+                           it,
+                           Modifier
+                        )
+                     },
+                     track = track
+                  )
+                  
+                  // Render gap
+                  if (index != state.states.lastIndex) {
+                     Spacer(
+                        Modifier
+                           .fillMaxHeight()
+                           .width(spacing)
+                     )
+                  }
+                  
+               }
+               
+               
+               Spacer(
+                  Modifier
+                     .fillMaxHeight()
+                     .width(startEndGap)
+               )
+               
+            }
+            
          }
-      ) {index,state->
          
-         if(orientation == Vertical){
-            VerticalSlider(
-               state = state,
-               reverseDirection = reverseDirection,
-               enabled = enabled,
-               colors = colors,
-               thumb = {
-                  thumb.invoke(it)
-               },
-               track = track,
-               modifier = sliderModifier
-            )
-         }else{
-         
+         Horizontal -> {
+            Column(
+               Modifier
+                  .matchParentSize()
+                  .verticalScroll(scroll, overscrollEffect = null)
+                  .onGloballyPositioned {
+                     childLayoutCoords = it
+                  }
+            ) {
+               
+               Spacer(
+                  Modifier
+                     .fillMaxWidth()
+                     .height(startEndGap)
+               )
+               
+               state.states.forEachIndexed { index, itemState ->
+                  // Doesn't require reverseDirection since it handles RTL by itself
+                  Slider(
+                     state = itemState,
+                     enabled = enabled,
+                     colors = colors,
+                     thumb = {
+                        thumb.invoke(
+                           it,
+                           Modifier
+                        )
+                     },
+                     track = track
+                  )
+                  
+                  // Render Gap
+                  if (index != state.states.lastIndex) {
+                     Spacer(
+                        Modifier
+                           .fillMaxWidth()
+                           .height(spacing)
+                     )
+                  }
+                  
+               }
+               
+               Spacer(
+                  Modifier
+                     .fillMaxWidth()
+                     .height(startEndGap)
+               )
+               
+            }
+            
+            
          }
-         
       }
+      
    }
+   
 }
 
 fun countIf(vararg expr:Boolean): Int{
@@ -3015,18 +3132,16 @@ fun countIf(vararg expr:Boolean): Int{
 @Composable
 fun ConnectedSliderGroup(
    state: SliderGroupState,
-   modifier:Modifier = Modifier,
+   modifier: Modifier = Modifier,
    enabled: Boolean = true,
-   reverseDirection: Boolean = true,
-   orientation: Orientation = Vertical,
    colors: SliderColors = SliderDefaults.colors(),
-   thumb: @Composable (SliderState, Modifier) -> Unit = { sliderState,modifier ->
+   thumb: @Composable (SliderState, Modifier) -> Unit = { sliderState, modifier ->
       SliderDefaults.Thumb(
-         interactionSource = remember{ MutableInteractionSource() },
+         interactionSource = remember { MutableInteractionSource() },
          sliderState = sliderState,
          colors = colors,
          enabled = enabled,
-         thumbSize = VerticalThumbSize,
+         thumbSize = if(state.orientation == Vertical) VerticalThumbSize else ThumbSize,
          modifier = modifier
       )
    },
@@ -3036,132 +3151,268 @@ fun ConnectedSliderGroup(
          colors = colors,
          enabled = enabled,
          sliderState = sliderState,
-         trackCornerSize = Dp.Unspecified
+         trackCornerSize = Dp.Unspecified,
+         orientation = state.orientation,
+         reverseDirection = state.reverseVerticalDirection
       )
    },
-   lineStartValue:Float? = 0.5f,
-   lineEndValue:Float? = 0.5f,
-   lineColor:Color = Color.Blue,
-   lineWidth:Dp = Dp.Hairline,
-   startEndGap:Dp = 10.dp
-   ){
+   lineStartValue: Float? = 0.5f,
+   lineEndValue: Float? = 0.5f,
+   lineColor: Color = Color.Blue,
+   lineWidth: Dp = Dp.Hairline,
+   startEndGap: Dp = 10.dp,
+   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor1X:Float = 0.275f,
+   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor1Y:Float = 0.1f,
+   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor2X:Float = 0.725f,
+   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor2Y:Float = 0.9f,
+   spacing:Dp = 5.dp
+) {
    var parentCoords: LayoutCoordinates? by remember { mutableStateOf(null) }
    
-   val points = remember { SnapshotStateList<Offset>(
-      state.states.size+
-         countIf(lineStartValue!=null,lineEndValue!=null)
-   ){Offset.Zero}
+   val points = remember {
+      SnapshotStateList<Offset>(
+         state.states.size +
+            countIf(lineStartValue != null, lineEndValue != null)
+      ) { Offset.Zero }
    }
-  
-   Box(Modifier.onGloballyPositioned{
-      parentCoords = it
-      
-      if(lineStartValue!=null){
-         points[0] = Offset(
-            0f,
-            if(reverseDirection){
-            it.size.height*(1f-lineStartValue)
-            }else{
-               it.size.height*lineStartValue
-            }
-            )
-      }
-      
-      if(lineEndValue!=null){
-         points[points.size-1] = Offset(
-            it.size.width.toFloat(),
-            if(reverseDirection){
-               it.size.height*(1f-lineEndValue)
-            }else{
-               it.size.height*lineEndValue
-            }
-         )
-      }
-      
-   }
-   ){
-      
-      val scroll = rememberScrollState()
-      
-      // keep scroll parity for the last and first items in case that baginning and ends exist
-      LaunchedEffect(scroll.value) {
-         if(lineStartValue!=null){
-            when(orientation){
-               Vertical->{
-                  points[0] = points[0].copy(x = (scroll.value*-1).toFloat())
-               }
-               Horizontal->{
-                  points[0] = points[0].copy(y = (scroll.value*-1).toFloat())
-               }
-            }
+   
+   val layoutDirection = LocalLayoutDirection.current
+   val isRtl = layoutDirection == LayoutDirection.Rtl
+   
+   
+   val scroll = rememberScrollState()
+   var childLayoutCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+   
+   Box(
+      modifier
+         .onGloballyPositioned {
+            parentCoords = it
             
-         }
-         
-         if(lineEndValue!=null){
-            when(orientation){
-               Vertical->{
-                  points[points.lastIndex] = points[points.lastIndex].copy(
-                     x = scroll.viewportSize.toFloat()
-                  )
-               }
-               Horizontal->{
-                  points[points.lastIndex] = points[points.lastIndex].copy(
-                     y = scroll.viewportSize.toFloat()
-                  )
-               }
-            }
-            
-         }
-      }
-      
-      Row(modifier = modifier.horizontalScroll(scroll)) {
-         
-         if(lineStartValue!=null){
-            Box(Modifier.fillMaxHeight().width(startEndGap))
-         }
-         
-         state.states.forEachIndexed{index,state->
-            
-            if(orientation == Vertical){
-               VerticalSlider(
-                  state = state,
-                  reverseDirection = reverseDirection,
-                  enabled = enabled,
-                  colors = colors,
-                  thumb = {
-                     thumb.invoke(
-                        it,
-                        Modifier.onGloballyPositioned {
-                           points[index+countIf(lineStartValue!=null)] =
-                              parentCoords?.localPositionOf(it)
-                                 .let {off->
-                                    if(off!=null){
-                                       Offset(off.x+it.size.width/2,off.y+it.size.height/2)
-                                    }else{
-                                       off
-                                    }
-                                    
-                                 }
-                                 ?: Offset.Zero
+            if (lineStartValue != null) {
+               when (state.orientation) {
+                  Vertical -> {
+                     points[0] = Offset(
+                        0f,
+                        when (state.reverseVerticalDirection) {
+                           // Cases for vertical orientation
+                           true -> {
+                              it.size.height * (1f - lineStartValue)
+                           }
+                           
+                           false -> {
+                              it.size.height * lineStartValue
+                           }
                         }
-                        )
-                  },
-                  track = track
-               )
-            }else{
+                     )
+                  }
+                  
+                  Horizontal -> {
+                     points[0] = Offset(
+                        when (isRtl) {
+                           false -> {
+                              it.size.width * lineStartValue
+                           }
+                           
+                           true -> {
+                              it.size.width * (1f - lineStartValue)
+                           }
+                        },
+                        0f
+                     )
+                  }
+               }
+            }
             
+            
+            if (lineEndValue != null) {
+               when (state.orientation) {
+                  Vertical -> {
+                     points[0] = Offset(
+                        it.size.width.toFloat(),
+                        when (state.reverseVerticalDirection) {
+                           // Cases for vertical orientation
+                           true -> {
+                              it.size.height * (1f - lineEndValue)
+                           }
+                           
+                           false -> {
+                              it.size.height * lineEndValue
+                           }
+                        }
+                     )
+                  }
+                  
+                  Horizontal -> {
+                     points[0] = Offset(
+                        when (isRtl) {
+                           false -> {
+                              it.size.width * lineEndValue
+                           }
+                           
+                           true -> {
+                              it.size.width * (1f - lineEndValue)
+                           }
+                        },
+                        it.size.height.toFloat()
+                     )
+                  }
+               }
+            }
+            
+         }
+         .clipToBounds()
+   ) {
+      
+      
+      // Content
+      when (state.orientation) {
+         Vertical -> {
+            Row(
+               modifier = Modifier
+                  .matchParentSize()
+                  .horizontalScroll(scroll, overscrollEffect = null)
+                  .onGloballyPositioned {
+                     childLayoutCoords = it
+                  }
+            ) {
+               
+               if (lineStartValue != null) {
+                  Spacer(
+                     Modifier
+                        .fillMaxHeight()
+                        .width(startEndGap)
+                  )
+               }
+               
+               state.states.forEachIndexed { index, internalState ->
+                  
+                  VerticalSlider(
+                     state = internalState,
+                     reverseDirection = state.reverseVerticalDirection,
+                     enabled = enabled,
+                     colors = colors,
+                     thumb = {
+                        thumb.invoke(
+                           it,
+                           Modifier.onGloballyPositioned {
+                              points[index + countIf(lineStartValue != null)] =
+                                 parentCoords?.localPositionOf(it)
+                                    .let { off ->
+                                       if (off != null) {
+                                          Offset(
+                                             off.x + it.size.width / 2,
+                                             off.y + it.size.height / 2
+                                          )
+                                       } else {
+                                          off
+                                       }
+                                       
+                                    }
+                                    ?: Offset.Zero
+                           }
+                        )
+                     },
+                     track = track
+                  )
+                  
+                  // Render gap
+                  if(index!=state.states.lastIndex){
+                     Spacer(Modifier
+                        .fillMaxHeight()
+                        .width(spacing)
+                     )
+                  }
+                  
+               }
+               
+               if (lineEndValue != null) {
+                  Spacer(
+                     Modifier
+                        .fillMaxHeight()
+                        .width(startEndGap)
+                  )
+               }
             }
             
          }
          
-         if(lineEndValue!=null){
-            Box(Modifier.fillMaxHeight().width(startEndGap))
+         Horizontal -> {
+            Column(
+               Modifier
+                  .matchParentSize()
+                  .verticalScroll(scroll, overscrollEffect = null)
+                  .onGloballyPositioned {
+                     childLayoutCoords = it
+                  }
+            ) {
+               
+               if (lineStartValue != null) {
+                  Spacer(
+                     Modifier
+                        .fillMaxWidth()
+                        .height(startEndGap)
+                  )
+               }
+               
+               state.states.forEachIndexed { index, itemState ->
+                  // Doesn't require reverseDirection since it handles RTL by itself
+                  Slider(
+                     state = itemState,
+                     enabled = enabled,
+                     colors = colors,
+                     thumb = {
+                        thumb.invoke(
+                           it,
+                           Modifier.onGloballyPositioned {
+                              points[index + countIf(lineStartValue != null)] =
+                                 parentCoords?.localPositionOf(it)
+                                    .let { off ->
+                                       if (off != null) {
+                                          Offset(
+                                             off.x + it.size.width / 2,
+                                             off.y + it.size.height / 2
+                                          )
+                                       } else {
+                                          off
+                                       }
+                                       
+                                    }
+                                    ?: Offset.Zero
+                           }
+                        )
+                     },
+                     track = track
+                  )
+                  
+                  // Render Gap
+                  if(index!=state.states.lastIndex){
+                     Spacer(Modifier
+                        .fillMaxWidth()
+                        .height(spacing)
+                     )
+                  }
+                  
+               }
+               
+               if (lineEndValue != null) {
+                  Spacer(
+                     Modifier
+                        .fillMaxWidth()
+                        .height(startEndGap)
+                  )
+               }
+               
+            }
+            
+            
          }
-         
       }
-      
       Canvas(modifier = Modifier.matchParentSize()) {
-         if (points.isEmpty() || points.size <1+countIf(lineStartValue!=null,lineEndValue!=null)) return@Canvas
+         if (points.isEmpty() || points.size < 1 + countIf(
+               lineStartValue != null,
+               lineEndValue != null
+            )
+         ) return@Canvas
          
          val path = Path()
          
@@ -3169,17 +3420,35 @@ fun ConnectedSliderGroup(
          path.moveTo(points[0].x, points[0].y)
          
          // Generate smooth curve through all points
-         for(i in 1..<points.size){
-            
-            path.cubicTo(
-               lerp(points[i-1].x,points[i].x,0.25f),
-               points[i-1].y,
-               lerp(points[i-1].x,points[i].x,0.75f),
-               points[i].y,
-               points[i].x,
-               points[i].y
-            )
+         when(state.orientation){
+            Vertical->{
+               for(i in 1..<points.size) {
+                  
+                  path.cubicTo(
+                     x1 = lerp(points[i - 1].x, points[i].x, cubicControlFactor1X),
+                     y1 = lerp(points[i-1].y,points[i].y,cubicControlFactor1Y),//points[i - 1].y,
+                     x2 = lerp(points[i - 1].x, points[i].x, cubicControlFactor2X),
+                     y2 = lerp(points[i-1].y,points[i].y,cubicControlFactor2Y),//points[i].y,
+                     x3 = points[i].x,
+                     y3 = points[i].y
+                  )
+               }
+            }
+            Horizontal->{
+               for(i in 1..<points.size) {
+                  
+                  path.cubicTo(
+                     x1 = lerp(points[i - 1].x, points[i].x, cubicControlFactor1Y),
+                     y1 = lerp(points[i-1].y,points[i].y,cubicControlFactor1X),
+                     x2 = lerp(points[i - 1].x, points[i].x, cubicControlFactor2Y),
+                     y2 = lerp(points[i-1].y,points[i].y,cubicControlFactor2X),
+                     x3 = points[i].x,
+                     y3 = points[i].y
+                  )
+               }
+            }
          }
+         
          
          
          
@@ -3189,6 +3458,93 @@ fun ConnectedSliderGroup(
             style = Stroke(width = lineWidth.toPx())
          )
       }
+      
+   }
+   
+   // keep scroll parity for the last and first items in case that beginning and ends exist
+   LaunchedEffect(scroll.value,state.orientation,childLayoutCoords) {
+      if(childLayoutCoords!=null){
+         if (lineStartValue != null) {
+            when (state.orientation) {
+               Vertical -> {
+                  points[0] = points[0].copy(
+                     x = (scroll.value * -1).toFloat(),
+                     y = childLayoutCoords?.let {
+                        when (state.reverseVerticalDirection) {
+                           // Cases for vertical orientation
+                           true -> {
+                              it.size.height * (1f - lineStartValue)
+                           }
+                           
+                           false -> {
+                              it.size.height * lineStartValue
+                           }
+                        }
+                     } ?: 0f
+                  )
+               }
+               
+               Horizontal -> {
+                  points[0] = points[0].copy(
+                     y = (scroll.value * -1).toFloat(),
+                     x = childLayoutCoords?.let {
+                        when (isRtl) {
+                           false -> {
+                              it.size.width * lineStartValue
+                           }
+                           
+                           true -> {
+                              it.size.width * (1f - lineStartValue)
+                           }
+                        }
+                     } ?: 0f
+                  )
+                  
+               }
+            }
+         }
+         
+         if (lineEndValue != null) {
+            when (state.orientation) {
+               Vertical -> {
+                  points[points.lastIndex] = points[points.lastIndex].copy(
+                     x = childLayoutCoords!!.size.width.toFloat()-scroll.value,
+                     y = childLayoutCoords?.let {
+                        when (state.reverseVerticalDirection) {
+                           // Cases for vertical orientation
+                           true -> {
+                              it.size.height * (1f - lineEndValue)
+                           }
+                           
+                           false -> {
+                              it.size.height * lineEndValue
+                           }
+                        }
+                     } ?: 0f
+                  )
+               }
+               
+               Horizontal -> {
+                  points[points.lastIndex] = points[points.lastIndex].copy(
+                     y = childLayoutCoords!!.size.height.toFloat()-scroll.value,
+                     x = childLayoutCoords?.let {
+                        when (isRtl) {
+                           false -> {
+                              it.size.width * lineEndValue
+                           }
+                           
+                           true -> {
+                              it.size.width * (1f - lineEndValue)
+                           }
+                        }
+                     } ?: 0f
+                  )
+               }
+               
+            }
+         }
+      }
+      
    }
    
    
@@ -3203,7 +3559,9 @@ fun ConnectedSliderGroup(
 private fun Preview(){
    var parentCoords: LayoutCoordinates? by remember { mutableStateOf(null) }
    
-   Box(modifier = Modifier.fillMaxSize().onGloballyPositioned { parentCoords = it }){
+   Box(modifier = Modifier
+      .fillMaxSize()
+      .onGloballyPositioned { parentCoords = it }){
       var auxOffset by remember { mutableFloatStateOf(0f) }
       
       val state = rememberSliderState(value = 0f).apply {
@@ -3270,8 +3628,10 @@ private fun Preview1(){
    
    val state = rememberSliderGroupState(3)
    
-   Box(Modifier.fillMaxSize().background(MyColor.White)){
-      SliderGroup(state, sliderModifier = Modifier)
+   Box(Modifier
+      .fillMaxSize()
+      .background(MyColor.White)){
+      SliderGroup(state, modifier = Modifier)
    }
 }
 
@@ -3280,21 +3640,51 @@ private fun Preview1(){
 @Composable
 private fun Preview2(){
    
-   val state = rememberSliderGroupState(12)
+   val state = rememberSliderGroupState(12, orientation = Horizontal, reverseVerticalDirection = true)
    
-   Box(Modifier.fillMaxSize().background(MyColor.White)){
+  
+   
+   Box(Modifier
+      .fillMaxSize()
+      .background(MyColor.White)){
       ConnectedSliderGroup(state,
          lineWidth = 5.dp,
          lineColor = Color.Green,
-         thumb = {state,modifier->
-         Spacer(
-            modifier
-               .size(15.dp)
-               .background(Color.Green, CircleShape)
-         )
-      },
-         modifier = Modifier.fillMaxHeight(0.5f)
+         thumb = { state, modifier ->
+            Spacer(
+               modifier
+                  .size(15.dp)
+                  .background(Color.Green, CircleShape)
+            )
+         },
+         modifier = Modifier
+            .fillMaxHeight(0.5f)
+            .fillMaxWidth(),
+         lineStartValue = 0.5f,
+         lineEndValue = 0.5f
       )
+      
+      Switch(state.reverseVerticalDirection,
+         onCheckedChange = {
+            state.updateVerticalDirection(it)
+         },
+         modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = 200.dp)
+      )
+      Button(modifier = Modifier.align(Alignment.BottomCenter),
+         onClick = {
+            state.updateOrientation(if(state.orientation == Horizontal)Vertical else Horizontal)
+            
+         }
+      ) {
+         Text("Change Orientation from ${state.orientation.name}")
+      }
+      
+      LaunchedEffect(Unit) {
+         state.states[0].value = 0.3f
+         state.states[1].value = 0.5f
+      }
    }
 }
 
