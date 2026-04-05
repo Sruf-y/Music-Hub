@@ -1,5 +1,4 @@
-package SrufComposeComponents.Experimental
-
+package ui.components
 
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
@@ -123,6 +122,7 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.util.packFloats
 import androidx.compose.ui.util.unpackFloat1
 import androidx.compose.ui.util.unpackFloat2
+import com.aacomposetest.Log
 import com.aacomposetest.append
 import com.aacomposetest.roundToIntOffset
 import com.aacomposetest.ui.theme.MyColor
@@ -768,7 +768,7 @@ private fun SliderImpl(
    state.isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
    val reverseDirection =
       (state.orientation == Horizontal && state.isRtl) ||
-      (state.orientation == Vertical && state.reverseVerticalDirection)
+         (state.orientation == Vertical && state.reverseVerticalDirection)
    val press = Modifier.sliderTapModifier(state, interactionSource, enabled)
    val drag =
       Modifier.draggable(
@@ -2946,11 +2946,11 @@ fun rememberSliderGroupState(
       SliderGroupState(
          orientation,
          reverseVerticalDirection,
-      *List(count){
-         SliderState().apply {
-            this.reverseVerticalDirection = reverseVerticalDirection
-         }
-      }.toTypedArray())
+         *List(count){
+            SliderState().apply {
+               this.reverseVerticalDirection = reverseVerticalDirection
+            }
+         }.toTypedArray())
    }
 }
 
@@ -3146,7 +3146,6 @@ fun ConnectedSliderGroup(
       )
    },
    track: @Composable (SliderState) -> Unit = { sliderState ->
-      
       SliderDefaults.Track(
          colors = colors,
          enabled = enabled,
@@ -3187,7 +3186,7 @@ fun ConnectedSliderGroup(
       modifier
          .onGloballyPositioned {
             parentCoords = it
-            
+           
             if (lineStartValue != null) {
                when (state.orientation) {
                   Vertical -> {
@@ -3227,7 +3226,7 @@ fun ConnectedSliderGroup(
             if (lineEndValue != null) {
                when (state.orientation) {
                   Vertical -> {
-                     points[0] = Offset(
+                     points[points.size-1] = Offset(
                         it.size.width.toFloat(),
                         when (state.reverseVerticalDirection) {
                            // Cases for vertical orientation
@@ -3243,7 +3242,7 @@ fun ConnectedSliderGroup(
                   }
                   
                   Horizontal -> {
-                     points[0] = Offset(
+                     points[points.size-1] = Offset(
                         when (isRtl) {
                            false -> {
                               it.size.width * lineEndValue
@@ -3417,7 +3416,8 @@ fun ConnectedSliderGroup(
          val path = Path()
          
          // Start at first point
-         path.moveTo(points[0].x, points[0].y)
+         path.moveTo(points[0].x,points[0].y)
+         
          
          // Generate smooth curve through all points
          when(state.orientation){
@@ -3445,6 +3445,7 @@ fun ConnectedSliderGroup(
                      x3 = points[i].x,
                      y3 = points[i].y
                   )
+                  Log("X${i-1} = ${points[i-1].x}")
                }
             }
          }
@@ -3457,18 +3458,25 @@ fun ConnectedSliderGroup(
             color = lineColor,
             style = Stroke(width = lineWidth.toPx())
          )
+         path.rewind()
       }
       
    }
    
    // keep scroll parity for the last and first items in case that beginning and ends exist
+   if(false)
    LaunchedEffect(scroll.value,state.orientation,childLayoutCoords) {
       if(childLayoutCoords!=null){
+         
+         // pre-calculate for RTL behaviour
+         val zeroX = (scroll.value * -1).toFloat()
+         val maxX = childLayoutCoords!!.size.width.toFloat()-scroll.value
+         
          if (lineStartValue != null) {
             when (state.orientation) {
                Vertical -> {
                   points[0] = points[0].copy(
-                     x = (scroll.value * -1).toFloat(),
+                     x = if(!isRtl) zeroX else maxX,
                      y = childLayoutCoords?.let {
                         when (state.reverseVerticalDirection) {
                            // Cases for vertical orientation
@@ -3508,7 +3516,7 @@ fun ConnectedSliderGroup(
             when (state.orientation) {
                Vertical -> {
                   points[points.lastIndex] = points[points.lastIndex].copy(
-                     x = childLayoutCoords!!.size.width.toFloat()-scroll.value,
+                     x = if(!isRtl) maxX else zeroX,
                      y = childLayoutCoords?.let {
                         when (state.reverseVerticalDirection) {
                            // Cases for vertical orientation
@@ -3586,7 +3594,7 @@ private fun Preview(){
             SliderDefaults.Track(
                sliderState = state,
                modifier = Modifier
-               
+            
             )
          },
          thumb = {
@@ -3642,11 +3650,12 @@ private fun Preview2(){
    
    val state = rememberSliderGroupState(12, orientation = Horizontal, reverseVerticalDirection = true)
    
-  
+   
    
    Box(Modifier
       .fillMaxSize()
-      .background(MyColor.White)){
+      .background(MyColor.White)
+   ){
       ConnectedSliderGroup(state,
          lineWidth = 5.dp,
          lineColor = Color.Green,
@@ -3664,22 +3673,32 @@ private fun Preview2(){
          lineEndValue = 0.5f
       )
       
-      Switch(state.reverseVerticalDirection,
-         onCheckedChange = {
-            state.updateVerticalDirection(it)
-         },
-         modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .padding(bottom = 200.dp)
-      )
-      Button(modifier = Modifier.align(Alignment.BottomCenter),
-         onClick = {
-            state.updateOrientation(if(state.orientation == Horizontal)Vertical else Horizontal)
-            
+      // Controlls for testing
+      Column(Modifier.align(Alignment.BottomCenter), horizontalAlignment = Alignment.CenterHorizontally) {
+         Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("ReverseVertical")
+            Spacer(Modifier.width(10.dp))
+            Switch(
+               state.reverseVerticalDirection,
+               onCheckedChange = {
+                  state.updateVerticalDirection(it)
+               }
+            )
          }
-      ) {
-         Text("Change Orientation from ${state.orientation.name}")
+         Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Horizontal Orientation")
+            Spacer(Modifier.width(10.dp))
+            Switch(
+               state.orientation == Horizontal,
+               onCheckedChange = {
+                  state.updateOrientation(if(it) Horizontal else Vertical)
+               }
+            )
+         }
+         
       }
+      
+      
       
       LaunchedEffect(Unit) {
          state.states[0].value = 0.3f
