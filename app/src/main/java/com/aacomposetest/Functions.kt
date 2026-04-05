@@ -19,12 +19,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import com.aacomposetest.ui.theme.MyColor
@@ -39,6 +41,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 object Functions {
@@ -579,3 +582,6 @@ fun (()->Unit).append(block:()->Unit):()-> Unit{
 }
 
 
+fun Offset.roundToIntOffset(): IntOffset {
+   return IntOffset(this.x.roundToInt(),this.y.roundToInt())
+}
