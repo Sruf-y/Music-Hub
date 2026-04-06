@@ -1,10 +1,12 @@
 package ui.components
 
+import android.util.Log
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.MutatorMutex
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.DragScope
@@ -33,21 +35,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSizeIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.progressSemantics
-import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -59,6 +56,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -117,7 +115,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastFirst
-import androidx.compose.ui.util.fastZip
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.util.packFloats
 import androidx.compose.ui.util.unpackFloat1
@@ -3128,6 +3125,124 @@ fun countIf(vararg expr:Boolean): Int{
    return a
 }
 
+
+
+private fun calcStartX(scrollState: Int):Float{
+   return (scrollState * -1).toFloat()
+}
+private fun calcEndX(childLayoutCoords: LayoutCoordinates?, scrollState: Int):Float{
+   return childLayoutCoords?.let { it.size.width.toFloat()-scrollState }?:0f
+}
+private fun calcEndY(childLayoutCoords: LayoutCoordinates?, scrollState: Int):Float{
+   return childLayoutCoords?.let { it.size.height.toFloat()-scrollState }?:0f
+}
+@OptIn(ExperimentalMaterial3Api::class)
+private fun calculateStartPoint(
+   startX: Float,
+   endX: Float,
+   childLayoutCoords: LayoutCoordinates?,
+   lineStartValue: Float?,
+   isRtl: Boolean,
+   sliderGroupState: SliderGroupState,
+):Offset?{
+   return if(childLayoutCoords!=null) {
+      
+      if (lineStartValue != null) {
+         when (sliderGroupState.orientation) {
+            Vertical -> {
+               Offset(
+                  x = if (!isRtl) startX else endX,
+                  y = childLayoutCoords.let {
+                     when (sliderGroupState.reverseVerticalDirection) {
+                        // Cases for vertical orientation
+                        true -> {
+                           it.size.height * (1f - lineStartValue)
+                        }
+                        
+                        false -> {
+                           it.size.height * lineStartValue
+                        }
+                     }
+                  }
+               )
+            }
+            
+            Horizontal -> {
+               Offset(
+                  y = startX,
+                  x = childLayoutCoords.let {
+                     when (isRtl) {
+                        false -> {
+                           it.size.width * lineStartValue
+                        }
+                        
+                        true -> {
+                           it.size.width * (1f - lineStartValue)
+                        }
+                     }
+                  }
+               )
+               
+            }
+         }
+      }else {null}
+   } else {null}
+}
+@OptIn(ExperimentalMaterial3Api::class)
+private fun calculateEndPoint(
+   startX: Float,
+   endX: Float,
+   endY:Float,
+   childLayoutCoords: LayoutCoordinates?,
+   lineEndValue: Float?,
+   isRtl: Boolean,
+   sliderGroupState: SliderGroupState,
+):Offset?{
+   return if(childLayoutCoords!=null){
+      
+      
+      if (lineEndValue != null) {
+         when (sliderGroupState.orientation) {
+            Vertical -> {
+               Offset(
+                  x = if(!isRtl) endX else startX,
+                  y = childLayoutCoords?.let {
+                     when (sliderGroupState.reverseVerticalDirection) {
+                        // Cases for vertical orientation
+                        true -> {
+                           it.size.height * (1f - lineEndValue)
+                        }
+                        
+                        false -> {
+                           it.size.height * lineEndValue
+                        }
+                     }
+                  } ?: 0f
+               )
+            }
+            
+            Horizontal -> {
+               Offset(
+                  y = endY,
+                  x = childLayoutCoords?.let {
+                     when (isRtl) {
+                        false -> {
+                           it.size.width * lineEndValue
+                        }
+                        
+                        true -> {
+                           it.size.width * (1f - lineEndValue)
+                        }
+                     }
+                  } ?: 0f
+               )
+            }
+            
+         }
+      }else {null}
+   }else {null}
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConnectedSliderGroup(
@@ -3170,8 +3285,7 @@ fun ConnectedSliderGroup(
    
    val points = remember {
       SnapshotStateList<Offset>(
-         state.states.size +
-            countIf(lineStartValue != null, lineEndValue != null)
+         state.states.size
       ) { Offset.Zero }
    }
    
@@ -3182,82 +3296,64 @@ fun ConnectedSliderGroup(
    val scroll = rememberScrollState()
    var childLayoutCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
    
+   val startX by remember {
+      derivedStateOf {
+         calcStartX(scroll.value)
+      }
+   }
+   
+   val endX by remember {
+      derivedStateOf {
+         calcEndX(childLayoutCoords,scroll.value)
+      }
+   }
+   val endY by remember {
+      derivedStateOf {
+         calcEndY(childLayoutCoords,scroll.value)
+      }
+   }
+   
+   
+   val startPointOffset by remember(startX,endX) {
+      derivedStateOf {
+         if (childLayoutCoords != null && lineStartValue != null) {
+            
+            calculateStartPoint(
+               startX = startX,
+               endX = endX,
+               childLayoutCoords = childLayoutCoords,
+               lineStartValue = lineStartValue,
+               isRtl = isRtl,
+               sliderGroupState = state
+            )
+         } else null
+      }
+   }
+   
+   val endPointOffset by remember(startX,endX) {
+      derivedStateOf {
+         if (childLayoutCoords != null && lineEndValue != null) {
+            
+            calculateEndPoint(
+               startX = startX,
+               endX = endX,
+               endY,
+               childLayoutCoords = childLayoutCoords,
+               lineEndValue = lineEndValue,
+               isRtl = isRtl,
+               sliderGroupState = state
+            )
+         } else null
+      }.apply {
+         Log(this.value?.y.toString())
+      }
+   }
+   
+   
    Box(
       modifier
          .onGloballyPositioned {
             parentCoords = it
-           
-            if (lineStartValue != null) {
-               when (state.orientation) {
-                  Vertical -> {
-                     points[0] = Offset(
-                        0f,
-                        when (state.reverseVerticalDirection) {
-                           // Cases for vertical orientation
-                           true -> {
-                              it.size.height * (1f - lineStartValue)
-                           }
-                           
-                           false -> {
-                              it.size.height * lineStartValue
-                           }
-                        }
-                     )
-                  }
-                  
-                  Horizontal -> {
-                     points[0] = Offset(
-                        when (isRtl) {
-                           false -> {
-                              it.size.width * lineStartValue
-                           }
-                           
-                           true -> {
-                              it.size.width * (1f - lineStartValue)
-                           }
-                        },
-                        0f
-                     )
-                  }
-               }
-            }
-            
-            
-            if (lineEndValue != null) {
-               when (state.orientation) {
-                  Vertical -> {
-                     points[points.size-1] = Offset(
-                        it.size.width.toFloat(),
-                        when (state.reverseVerticalDirection) {
-                           // Cases for vertical orientation
-                           true -> {
-                              it.size.height * (1f - lineEndValue)
-                           }
-                           
-                           false -> {
-                              it.size.height * lineEndValue
-                           }
-                        }
-                     )
-                  }
-                  
-                  Horizontal -> {
-                     points[points.size-1] = Offset(
-                        when (isRtl) {
-                           false -> {
-                              it.size.width * lineEndValue
-                           }
-                           
-                           true -> {
-                              it.size.width * (1f - lineEndValue)
-                           }
-                        },
-                        it.size.height.toFloat()
-                     )
-                  }
-               }
-            }
-            
          }
          .clipToBounds()
    ) {
@@ -3275,13 +3371,13 @@ fun ConnectedSliderGroup(
                   }
             ) {
                
-               if (lineStartValue != null) {
+               
                   Spacer(
                      Modifier
                         .fillMaxHeight()
                         .width(startEndGap)
                   )
-               }
+               
                
                state.states.forEachIndexed { index, internalState ->
                   
@@ -3294,7 +3390,7 @@ fun ConnectedSliderGroup(
                         thumb.invoke(
                            it,
                            Modifier.onGloballyPositioned {
-                              points[index + countIf(lineStartValue != null)] =
+                              points[index] =
                                  parentCoords?.localPositionOf(it)
                                     .let { off ->
                                        if (off != null) {
@@ -3321,16 +3417,15 @@ fun ConnectedSliderGroup(
                         .width(spacing)
                      )
                   }
-                  
                }
                
-               if (lineEndValue != null) {
-                  Spacer(
-                     Modifier
-                        .fillMaxHeight()
-                        .width(startEndGap)
-                  )
-               }
+               
+               Spacer(
+                  Modifier
+                     .fillMaxHeight()
+                     .width(startEndGap)
+               )
+               
             }
             
          }
@@ -3345,13 +3440,13 @@ fun ConnectedSliderGroup(
                   }
             ) {
                
-               if (lineStartValue != null) {
+               
                   Spacer(
                      Modifier
                         .fillMaxWidth()
                         .height(startEndGap)
                   )
-               }
+               
                
                state.states.forEachIndexed { index, itemState ->
                   // Doesn't require reverseDirection since it handles RTL by itself
@@ -3363,7 +3458,7 @@ fun ConnectedSliderGroup(
                         thumb.invoke(
                            it,
                            Modifier.onGloballyPositioned {
-                              points[index + countIf(lineStartValue != null)] =
+                              points[index] =
                                  parentCoords?.localPositionOf(it)
                                     .let { off ->
                                        if (off != null) {
@@ -3393,13 +3488,13 @@ fun ConnectedSliderGroup(
                   
                }
                
-               if (lineEndValue != null) {
+               
                   Spacer(
                      Modifier
                         .fillMaxWidth()
                         .height(startEndGap)
                   )
-               }
+               
                
             }
             
@@ -3415,42 +3510,69 @@ fun ConnectedSliderGroup(
          
          val path = Path()
          
+         
+         
          // Start at first point
-         path.moveTo(points[0].x,points[0].y)
+         if(startPointOffset!=null){
+            startPointOffset?.apply {
+               path.moveTo(this.x,this.y)
+               path.cubicTo(
+                  x1 = lerp(this.x, points[0].x, cubicControlFactor1X),
+                  y1 = lerp(this.y,points[0].y,cubicControlFactor1Y),
+                  x2 = lerp(this.x, points[0].x, cubicControlFactor2X),
+                  y2 = lerp(this.y,points[0].y,cubicControlFactor2Y),
+                  x3 = points[0].x,
+                  y3 = points[0].y
+               )
+            }
+         }else{
+            path.moveTo(points[0].x,points[0].y)
+         }
+         
+         
+         
          
          
          // Generate smooth curve through all points
          when(state.orientation){
             Vertical->{
-               for(i in 1..<points.size) {
+               for(i in 0..<points.lastIndex) {
                   
                   path.cubicTo(
-                     x1 = lerp(points[i - 1].x, points[i].x, cubicControlFactor1X),
-                     y1 = lerp(points[i-1].y,points[i].y,cubicControlFactor1Y),//points[i - 1].y,
-                     x2 = lerp(points[i - 1].x, points[i].x, cubicControlFactor2X),
-                     y2 = lerp(points[i-1].y,points[i].y,cubicControlFactor2Y),//points[i].y,
-                     x3 = points[i].x,
-                     y3 = points[i].y
+                     x1 = lerp(points[i].x, points[i + 1].x, cubicControlFactor1X),
+                     y1 = lerp(points[i].y,points[i + 1].y,cubicControlFactor1Y),
+                     x2 = lerp(points[i].x, points[i + 1].x, cubicControlFactor2X),
+                     y2 = lerp(points[i].y,points[i + 1].y,cubicControlFactor2Y),
+                     x3 = points[i + 1].x,
+                     y3 = points[i + 1].y
                   )
                }
             }
             Horizontal->{
-               for(i in 1..<points.size) {
+               for(i in 0..<points.lastIndex) {
                   
                   path.cubicTo(
-                     x1 = lerp(points[i - 1].x, points[i].x, cubicControlFactor1Y),
-                     y1 = lerp(points[i-1].y,points[i].y,cubicControlFactor1X),
-                     x2 = lerp(points[i - 1].x, points[i].x, cubicControlFactor2Y),
-                     y2 = lerp(points[i-1].y,points[i].y,cubicControlFactor2X),
-                     x3 = points[i].x,
-                     y3 = points[i].y
+                     x1 = lerp(points[i].x, points[i + 1].x, cubicControlFactor1Y),
+                     y1 = lerp(points[i].y,points[i + 1].y,cubicControlFactor1X),
+                     x2 = lerp(points[i].x, points[i + 1].x, cubicControlFactor2Y),
+                     y2 = lerp(points[i].y,points[i + 1].y,cubicControlFactor2X),
+                     x3 = points[i + 1].x,
+                     y3 = points[i + 1].y
                   )
-                  Log("X${i-1} = ${points[i-1].x}")
                }
             }
          }
          
-         
+         endPointOffset?.apply {
+            path.cubicTo(
+               x1 = lerp(points[points.lastIndex].x,this.x,  cubicControlFactor1X),
+               y1 = lerp(points[points.lastIndex].y,this.y,cubicControlFactor1Y),
+               x2 = lerp(points[points.lastIndex].x,this.x, cubicControlFactor2X),
+               y2 = lerp(points[points.lastIndex].y,this.y,cubicControlFactor2Y),
+               x3 = this.x,
+               y3 = this.y
+            )
+         }
          
          
          drawPath(
@@ -3463,7 +3585,9 @@ fun ConnectedSliderGroup(
       
    }
    
+   
    // keep scroll parity for the last and first items in case that beginning and ends exist
+   // Basically keep start line at start and end line at end.
    if(false)
    LaunchedEffect(scroll.value,state.orientation,childLayoutCoords) {
       if(childLayoutCoords!=null){
