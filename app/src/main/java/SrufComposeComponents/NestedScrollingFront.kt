@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -30,11 +31,15 @@ import com.aacomposetest.Classes.MyPrefs.open
 import com.aacomposetest.tryValue
 import kotlin.math.roundToInt
 
+/**
+ * @param cursorValue cursorValue to save the position to on activity pause
+ * */
 @Composable
 fun NestedScrollingFront(
     appbar: @Composable () -> Unit,
     tabRow: @Composable () -> Unit,
     pager: @Composable () -> Unit,
+    modifier: Modifier = Modifier.fillMaxSize(),
     cursorValue: CursorValue<Float>? = null,
 ) {
     
@@ -100,9 +105,9 @@ fun NestedScrollingFront(
 
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .nestedScroll(nestedScrollConnection)
+            
     ) {
         val appbarScrollState = rememberScrollState()
 

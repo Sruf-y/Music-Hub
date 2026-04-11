@@ -1,12 +1,10 @@
 package ui.components
 
-import android.util.Log
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.MutatorMutex
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.DragScope
@@ -36,6 +34,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredSizeIn
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -108,7 +107,6 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
@@ -121,6 +119,7 @@ import androidx.compose.ui.util.unpackFloat1
 import androidx.compose.ui.util.unpackFloat2
 import com.aacomposetest.Log
 import com.aacomposetest.append
+import com.aacomposetest.countIf
 import com.aacomposetest.roundToIntOffset
 import com.aacomposetest.ui.theme.MyColor
 import kotlin.jvm.JvmInline
@@ -135,6 +134,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import ui.components.Text.OutlinedTextFieldExpanded
 import java.util.ArrayList
 
 /**
@@ -2900,7 +2900,8 @@ class SliderGroupState(
    orientation: Orientation,
    reverseDirection: Boolean,
    vararg states: SliderState
-){
+)
+{
    
    var job:Job? = null
    val scope = CoroutineScope(Dispatchers.Default)
@@ -2910,15 +2911,17 @@ class SliderGroupState(
    
    var orientation by mutableStateOf(orientation)
       private set
-   
    fun updateOrientation(orientation:Orientation){
       job?.cancel()
       job = scope.launch {
+         // here i use apply because i need to work with a snapshot of
+         // the list of states. To not produce an error in case the list has been replaced mid-iteration
          states = ArrayList(states).apply { this.forEach { it.orientation = orientation } }
          this@SliderGroupState.orientation = orientation
+         
+         job = null
       }
    }
-   
    
    var reverseVerticalDirection by mutableStateOf(reverseDirection)
       private set
@@ -2927,8 +2930,11 @@ class SliderGroupState(
       job = scope.launch {
          states = ArrayList(states).apply { this.forEach { it.reverseVerticalDirection = reverseDirection } }
          this@SliderGroupState.reverseVerticalDirection = reverseDirection
+         
+         job = null
       }
    }
+   
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -3111,19 +3117,7 @@ fun SliderGroup(
    
 }
 
-fun countIf(vararg expr:Boolean): Int{
-   
-   if(expr.isEmpty())
-      return 0
-   
-   var a = 0;
-   
-   for(i in 0..<expr.size){
-      if(expr[i])
-         a++
-   }
-   return a
-}
+
 
 
 
@@ -3243,6 +3237,42 @@ private fun calculateEndPoint(
    }else {null}
 }
 
+
+/**
+ *  Displays a group of sliders in a row or column depending on the
+ *  desired orientation. A line will be drawn across the component, passsing
+ *  through all track thumbs and optionally continue to the edges of the component.
+ *
+ *  @param state [SliderGroupState] which contains the values for all sliders peresent in this group
+ *  @param modifier Modifier for the encompassing box containing the actual content. This can be used for constraining the size on screen
+ *  @param enabled wether the component is enabled or not
+ *  @param colors colors used by the sliders by default
+ *  @param thumb thumb composable drawn at the state values of sliders
+ *  @param track track drawn behind sliders
+ *  @param lineStartValue what position at the START edge of the component to start the connecting line. Set to NULL to disable this functionality
+ *  @param lineEndValue what position at the END edge of the component to end the connecting line. Set to NULL to disable this functionality
+ *  @param lineColor color of the connecting line in [Dp]
+ *  @param lineWidth width of the connecting linein [Dp]
+ *  @param startEndGap gap at the start and end of the composable in [Dp]
+ *  @param spacing spacing between sliders except for the start and end in [Dp]
+ *  @param cubicControlFactor1X control factor for first the X coordinate of the first point relative between any thumb1 and thumb2
+ *  @param cubicControlFactor1Y control factor for first the Y coordinate of the first point relative between any thumb1 and thumb2
+ *  @param cubicControlFactor2X control factor for first the X coordinate of the second point relative between any thumb1 and thumb2
+ *  @param cubicControlFactor2Y control factor for first the Y coordinate of the second point relative between any thumb1 and thumb2
+ *
+ *  Visual example for deciding control factors:
+ *
+ *       A--(x1,y1)
+ *                \
+ *                 \
+ *                  |
+ *                  |
+ *                  \
+ *                   \
+ *                   (x2,y2)-- B
+ *
+ * @sample ConnectedSliderGroupPreview
+ * */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConnectedSliderGroup(
@@ -3270,16 +3300,17 @@ fun ConnectedSliderGroup(
          reverseDirection = state.reverseVerticalDirection
       )
    },
-   lineStartValue: Float? = 0.5f,
-   lineEndValue: Float? = 0.5f,
+   @FloatRange(from = 0.0,to = 1.0) lineStartValue: Float? = 0.5f,
+   @FloatRange(from = 0.0,to = 1.0) lineEndValue: Float? = 0.5f,
    lineColor: Color = Color.Blue,
    lineWidth: Dp = Dp.Hairline,
    startEndGap: Dp = 10.dp,
-   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor1X:Float = 0.275f,
+   spacing:Dp = 5.dp,
+   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor1X:Float = 0.3f,
    @FloatRange(from = 0.0,to = 1.0) cubicControlFactor1Y:Float = 0.1f,
-   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor2X:Float = 0.725f,
-   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor2Y:Float = 0.9f,
-   spacing:Dp = 5.dp
+   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor2X:Float = 0.7f,
+   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor2Y:Float = 0.9f
+   
 ) {
    var parentCoords: LayoutCoordinates? by remember { mutableStateOf(null) }
    
@@ -3588,10 +3619,10 @@ fun ConnectedSliderGroup(
 }
 
 
+
 // Preview the workings of after-frame computation. This COULD be made zero-frame but i'd have to
 // use more math and by this point i think a few frames of delay won't do any bad.
 @OptIn(ExperimentalMaterial3Api::class)
-//@Preview
 @Composable
 private fun Preview(){
    var parentCoords: LayoutCoordinates? by remember { mutableStateOf(null) }
@@ -3649,6 +3680,8 @@ private fun Preview(){
             .background(MyColor.Yellow)
       )
       
+      
+      
       Text(state.value.toString(), color = MyColor.Green, modifier = Modifier.align(Alignment.TopStart))
       
       Text(auxOffset.toString(), color = MyColor.Green, modifier = Modifier.align(Alignment.BottomCenter))
@@ -3657,9 +3690,7 @@ private fun Preview(){
    }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
-//@Preview
 @Composable
 private fun Preview1(){
    
@@ -3673,18 +3704,25 @@ private fun Preview1(){
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
-private fun Preview2(){
+internal fun ConnectedSliderGroupPreview(){
    
    val state = rememberSliderGroupState(12, orientation = Horizontal, reverseVerticalDirection = true)
    
+   var x1 by remember { mutableFloatStateOf(0.3f) }
+   var y1 by remember { mutableFloatStateOf(0.1f) }
+   var x2 by remember { mutableFloatStateOf(0.7f) }
+   var y2 by remember { mutableFloatStateOf(0.9f) }
    
-   
-   Box(Modifier
+   val scrollstate = rememberScrollState()
+   Column(Modifier
       .fillMaxSize()
+      .safeDrawingPadding()
       .background(MyColor.White)
-   ){
+      .verticalScroll(scrollstate),
+      horizontalAlignment = Alignment.CenterHorizontally
+   ) {
+      
       ConnectedSliderGroup(state,
          lineWidth = 5.dp,
          lineColor = Color.Green,
@@ -3696,14 +3734,23 @@ private fun Preview2(){
             )
          },
          modifier = Modifier
-            .fillMaxHeight(0.5f)
+            .height(500.dp)
             .fillMaxWidth(),
          lineStartValue = 0.5f,
-         lineEndValue = 0.5f
+         lineEndValue = 0.5f,
+         cubicControlFactor1X = x1,
+         cubicControlFactor1Y = y1,
+         cubicControlFactor2X = x2,
+         cubicControlFactor2Y = y2
       )
       
       // Controlls for testing
-      Column(Modifier.align(Alignment.BottomCenter), horizontalAlignment = Alignment.CenterHorizontally) {
+         OutlinedTextFieldExpanded(x1.toString(),{x1 = it.toFloatOrNull()?:0f}, label = {Text("x1")})
+         OutlinedTextFieldExpanded(y1.toString(),{y1 = it.toFloatOrNull()?:0f}, label = {Text("y1")})
+         OutlinedTextFieldExpanded(x2.toString(),{x2 = it.toFloatOrNull()?:0f}, label = {Text("x2")})
+         OutlinedTextFieldExpanded(y2.toString(),{y2 = it.toFloatOrNull()?:0f}, label = {Text("y2")})
+         
+         
          Row(verticalAlignment = Alignment.CenterVertically) {
             Text("ReverseVertical")
             Spacer(Modifier.width(10.dp))
@@ -3733,6 +3780,6 @@ private fun Preview2(){
          state.states[0].value = 0.3f
          state.states[1].value = 0.5f
       }
-   }
+   
 }
 

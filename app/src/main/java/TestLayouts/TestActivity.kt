@@ -33,6 +33,8 @@ import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.launch
 import SrufComposeComponents.NestedScrollingFront
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -46,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusRequester
 import com.aacomposetest.Log
+import com.aacomposetest.TestSource
 import ui.components.Text.BasicTextFieldExpanded
 
 
@@ -56,155 +59,46 @@ class TestActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-
-
+        val intentData = intent.extras?.getString("test")
+        
+        val test = try {
+            TestSource.Sources.valueOf(intentData!!)
+        }catch (ex: Exception){
+            null
+        }
+        
         setContent {
-            SrufTheme {
-
-                Surface(modifier = Modifier
-                    .fillMaxSize()
-                    .safeDrawingPadding(), color = MyColor.SemiTransparentBackground) {
-                    Column(Modifier.fillMaxSize()) {
-                        val focusRequester = remember { FocusRequester() }
-                        Button({
-                            focusRequester.requestFocus()
-                        }) {Text("Request Focus") }
-                        Button({
-                            focusRequester.freeFocus()
-                        }) {Text("Lose Focus") }
-                        var text by remember { mutableStateOf("") }
-                        
-                        LaunchedEffect(focusRequester) {
-                            Log("Something happened")
-                        }
-                        
-                        BasicTextFieldExpanded(
-                            value = text,
-                            onValueChange = {text = it.toString()},
-                            modifier = Modifier.fillMaxWidth().weight(1f)
-                        )
+            if(test!=null){
+                TestSource.TestSwitch(test)
+            }else{
+                SrufTheme {
+                    Box(Modifier
+                            .fillMaxSize()
+                            .background(Color.Red),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No test found", color = Color.White)
                     }
                 }
-                
             }
+            
         }
 
+    }
+    
+    companion object{
+        fun newInstance(test: TestSource.Sources,context: Context): Intent {
+            
+            
+            return Intent(context,TestActivity::class.java).apply {
+                this.putExtra("test",test.name)
+            }
+        }
     }
 }
 
 
-@Composable
-private fun NestedScrollTest(){
-    val songsList =
-        List(100) { index -> Song.emptySong(id = index.toLong(), title = "Song ${index}") }
 
-    val pagerState = rememberPagerState( initialPage = 0){3}
-    NestedScrollingFront(
-        appbar = {
-            Text("Hello appbar",modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(MyColor.Green)
-            )
-        },
-        tabRow = {
-            val scope = rememberCoroutineScope()
-            TabRow(
-                selectedTabIndex = pagerState.currentPage,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-            ) {
-                listOf("Tab 1", "Tab 2", "Tab 3").forEachIndexed { index, title ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(index)
-                            }
-                        },
-                        text = { Text(title) }
-                    )
-                }
-            }
-        },
-        pager = {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxSize()
-            ) { page ->
-                when (page) {
-                    0 -> MyPagerPage(songsList)
-                    1 -> MySecondPage(songsList)
-                    2 -> MyThirdPage()
-                }
-            }
-        }
-    )
-}
-
-@Composable
-fun MyPagerPage(a:List<Song>){
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MyColor.SelectedGold),
-        contentPadding = PaddingValues(bottom = 16.dp)
-    ) {
-
-        items(items = a, key = { it.id }) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-
-            ) {
-                Text(text = it.title, Modifier
-                    .align(Alignment.CenterStart)
-                    .background(MyColor.Pink40))
-            }
-        }
-
-    }
-}
-
-@Composable
-fun MySecondPage(a:List<Song>){
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MyColor.Blue),
-        contentPadding = PaddingValues(bottom = 16.dp)
-    ) {
-
-        items(items = a, key = { it.id }) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .background(MyColor.Pink40)
-            ) {
-                Text(text = it.title, Modifier.align(Alignment.CenterStart), color = Color.Red)
-            }
-        }
-
-    }
-}
-
-@Composable
-fun MyThirdPage(){
-    val scrollState = rememberScrollState()
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Yellow)
-            .verticalScroll(scrollState) // Add scroll capability
-    ) {
-        // Your content
-        Text("Third Page", modifier = Modifier.align(Alignment.Center))
-    }
-}
 
 
 

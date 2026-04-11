@@ -3,7 +3,7 @@ package com.aacomposetest.Activities
 import ExoPlayer.myExoPlayer
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
-import Navigation.Destinations.EqualizerDest_Temp
+import Navigation.Destinations.EqualizerTemporaryDestination
 import Navigation.Destinations.MainPager
 import Navigation.Destinations.PlayerBottomSheetParent
 import Navigation.Destinations.PlaylistAddSongsPage
@@ -13,6 +13,7 @@ import Presentation.Navigation.DrawerStandardLayout
 import Presentation.Navigation.MyNavigation
 import Presentation.Settings.EqualizerPage
 import SrufComposeComponents.Text
+import TestLayouts.TestActivityCore
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
@@ -326,11 +327,21 @@ private fun ParentContainer(
                item(key = "equalizer"){
                   // Your item content
                   Button({
-                     navController.safeNavigate(EqualizerDest_Temp)
+                     navController.safeNavigate(EqualizerTemporaryDestination)
                      drawerState.close()
                   }) {
                      Text("Open Equalizer")
                   }
+               }
+               
+               item(key = "Tests") {
+                  Button({
+                     val intent = Intent(contextRef, TestActivityCore::class.java)
+                     contextRef.startActivity(intent)
+                  }){
+                     Text("Tests")
+                  }
+                  
                }
             }
          },
@@ -398,7 +409,7 @@ private fun ParentContainer(
                   
                   
                   
-                  composable<EqualizerDest_Temp>(
+                  composable<EqualizerTemporaryDestination>(
                      enterTransition = {
                         val duration = 250
                         slideIntoContainer(

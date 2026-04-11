@@ -626,19 +626,18 @@ fun Offset.roundToIntOffset(): IntOffset {
    return IntOffset(this.x.roundToInt(),this.y.roundToInt())
 }
 
-
-
-@Composable
-fun rememberDefaultOverscrollEffect(): OverscrollEffect{
-   val context = LocalContext.current
-   val density = LocalDensity.current
-   return remember {
-      AndroidEdgeEffectOverscrollEffect(
-         context, density,
-         EdgeEffectDefaults.DefaultGlowColor,
-         EdgeEffectDefaults.DefaultGlowPaddingValues
-      )
+fun countIf(vararg expr:Boolean): Int{
+   
+   if(expr.isEmpty())
+      return 0
+   
+   var a = 0;
+   
+   for(i in 0..<expr.size){
+      if(expr[i])
+         a++
    }
+   return a
 }
 
 
