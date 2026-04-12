@@ -25,6 +25,7 @@ import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,6 +58,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.internal.composableLambda
+import androidx.compose.runtime.internal.rememberComposableLambda
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -113,6 +116,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastFirst
+import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.util.packFloats
 import androidx.compose.ui.util.unpackFloat1
@@ -136,6 +140,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import ui.components.Text.OutlinedTextFieldExpanded
 import java.util.ArrayList
+import kotlin.jvm.Throws
 
 /**
  * #DISCLAIMER
@@ -2896,20 +2901,36 @@ internal fun ViewConfiguration.pointerSlop(pointerType: PointerType): Float {
 
 
 @OptIn(ExperimentalMaterial3Api::class)
-class SliderGroupState(
-   orientation: Orientation,
-   reverseDirection: Boolean,
-   vararg states: SliderState
-)
+class SliderGroupState // no empty constructor()
 {
+   constructor(
+      orientation: Orientation,
+      reverseDirection: Boolean,
+      vararg states: SliderState
+   ){
+      this.orientation = orientation
+      this.reverseVerticalDirection = reverseDirection
+      this.states = states.toList()
+   }
+   
+   constructor(
+      orientation: Orientation,
+      reverseDirection: Boolean,
+      states:List<SliderState>
+   ){
+      this.orientation = orientation
+      this.reverseVerticalDirection = reverseDirection
+      this.states = states.toList()
+   }
+   
    
    var job:Job? = null
    val scope = CoroutineScope(Dispatchers.Default)
    
-   var states:List<SliderState> by mutableStateOf(states.toList())
+   var states:List<SliderState> by mutableStateOf(emptyList())
       private set
    
-   var orientation by mutableStateOf(orientation)
+   var orientation by mutableStateOf(Orientation.Vertical)
       private set
    fun updateOrientation(orientation:Orientation){
       job?.cancel()
@@ -2923,7 +2944,7 @@ class SliderGroupState(
       }
    }
    
-   var reverseVerticalDirection by mutableStateOf(reverseDirection)
+   var reverseVerticalDirection by mutableStateOf(false)
       private set
    fun updateVerticalDirection(reverseDirection:Boolean){
       job?.cancel()
@@ -2935,6 +2956,18 @@ class SliderGroupState(
       }
    }
    
+   /**
+    * Manually override current values
+    *
+    * @throws IndexOutOfBoundsException if the provided calculation list's size is not equal to the size of the list of previous values
+    * */
+   fun setValues(calculation:(previousValues:List<Float>)->List<Float>){
+      val valuesList = calculation.invoke(states.map { it.value })
+      states.fastForEachIndexed { index,it->
+         it.value = valuesList[index]
+      }
+   }
+   
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -2942,10 +2975,9 @@ class SliderGroupState(
 fun rememberSliderGroupState(
    @IntRange(from = 0) count:Int,
    orientation:Orientation = Vertical,
-   reverseVerticalDirection:Boolean = false
+   reverseVerticalDirection:Boolean = true
 ): SliderGroupState{
-   
-   return remember {
+   return remember(count) {
       SliderGroupState(
          orientation,
          reverseVerticalDirection,
@@ -2954,6 +2986,25 @@ fun rememberSliderGroupState(
                this.reverseVerticalDirection = reverseVerticalDirection
             }
          }.toTypedArray())
+   }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun rememberSliderGroupState(
+   @FloatRange(from = 0.0,to = 1.0) values:List< Float>,
+   orientation:Orientation = Vertical,
+   reverseVerticalDirection:Boolean = true
+): SliderGroupState{
+   return remember(values) {
+      SliderGroupState(
+         orientation,
+         reverseVerticalDirection,
+            values.map { value->
+               SliderState(value = value).apply{
+               this.reverseVerticalDirection = reverseVerticalDirection
+            } }
+         )
    }
 }
 
@@ -3312,6 +3363,9 @@ fun ConnectedSliderGroup(
    @FloatRange(from = 0.0,to = 1.0) cubicControlFactor2Y:Float = 0.9f
    
 ) {
+   
+   
+   
    var parentCoords: LayoutCoordinates? by remember { mutableStateOf(null) }
    
    val points = remember {
@@ -3381,238 +3435,245 @@ fun ConnectedSliderGroup(
    }
    
    
-   Box(
+   BoxWithConstraints(
       modifier
          .onGloballyPositioned {
             parentCoords = it
          }
          .clipToBounds()
+         
    ) {
       
       
-      // Content
-      when (state.orientation) {
-         Vertical -> {
-            Row(
-               modifier = Modifier
-                  .matchParentSize()
-                  .horizontalScroll(scroll, overscrollEffect = null)
-                  .onGloballyPositioned {
-                     childLayoutCoords = it
-                  }
-            ) {
-               
-               
-                  Spacer(
-                     Modifier
-                        .fillMaxHeight()
-                        .width(startEndGap)
+         Overlay(
+            modifier = Modifier,
+            overlay = {
+            Canvas(modifier = Modifier.matchParentSize()) {
+               if (points.isEmpty() || points.size < 1 + countIf(
+                     lineStartValue != null,
+                     lineEndValue != null
                   )
+               ) return@Canvas
+               
+               val path = Path()
                
                
-               state.states.forEachIndexed { index, internalState ->
-                  
-                  VerticalSlider(
-                     state = internalState,
-                     reverseDirection = state.reverseVerticalDirection,
-                     enabled = enabled,
-                     colors = colors,
-                     thumb = {
-                        thumb.invoke(
-                           it,
-                           Modifier.onGloballyPositioned {
-                              points[index] =
-                                 parentCoords?.localPositionOf(it)
-                                    .let { off ->
-                                       if (off != null) {
-                                          Offset(
-                                             off.x + it.size.width / 2,
-                                             off.y + it.size.height / 2
-                                          )
-                                       } else {
-                                          off
-                                       }
-                                       
-                                    }
-                                    ?: Offset.Zero
-                           }
-                        )
-                     },
-                     track = track
-                  )
-                  
-                  // Render gap
-                  if(index!=state.states.lastIndex){
-                     Spacer(Modifier
-                        .fillMaxHeight()
-                        .width(spacing)
+               
+               // Start at first point
+               if(startPointOffset!=null){
+                  startPointOffset?.apply {
+                     path.moveTo(this.x,this.y)
+                     path.cubicTo(
+                        x1 = lerp(this.x, points[0].x, cubicControlFactor1X),
+                        y1 = lerp(this.y,points[0].y,cubicControlFactor1Y),
+                        x2 = lerp(this.x, points[0].x, cubicControlFactor2X),
+                        y2 = lerp(this.y,points[0].y,cubicControlFactor2Y),
+                        x3 = points[0].x,
+                        y3 = points[0].y
                      )
                   }
+               }else{
+                  path.moveTo(points[0].x,points[0].y)
                }
                
                
-               Spacer(
-                  Modifier
-                     .fillMaxHeight()
-                     .width(startEndGap)
-               )
-               
-            }
-            
-         }
-         
-         Horizontal -> {
-            Column(
-               Modifier
-                  .matchParentSize()
-                  .verticalScroll(scroll, overscrollEffect = null)
-                  .onGloballyPositioned {
-                     childLayoutCoords = it
-                  }
-            ) {
                
                
-                  Spacer(
-                     Modifier
-                        .fillMaxWidth()
-                        .height(startEndGap)
-                  )
                
-               
-               state.states.forEachIndexed { index, itemState ->
-                  // Doesn't require reverseDirection since it handles RTL by itself
-                  Slider(
-                     state = itemState,
-                     enabled = enabled,
-                     colors = colors,
-                     thumb = {
-                        thumb.invoke(
-                           it,
-                           Modifier.onGloballyPositioned {
-                              points[index] =
-                                 parentCoords?.localPositionOf(it)
-                                    .let { off ->
-                                       if (off != null) {
-                                          Offset(
-                                             off.x + it.size.width / 2,
-                                             off.y + it.size.height / 2
-                                          )
-                                       } else {
-                                          off
-                                       }
-                                       
-                                    }
-                                    ?: Offset.Zero
-                           }
+               // Generate smooth curve through all points
+               when(state.orientation){
+                  Vertical->{
+                     for(i in 0..<points.lastIndex) {
+                        
+                        path.cubicTo(
+                           x1 = lerp(points[i].x, points[i + 1].x, cubicControlFactor1X),
+                           y1 = lerp(points[i].y,points[i + 1].y,cubicControlFactor1Y),
+                           x2 = lerp(points[i].x, points[i + 1].x, cubicControlFactor2X),
+                           y2 = lerp(points[i].y,points[i + 1].y,cubicControlFactor2Y),
+                           x3 = points[i + 1].x,
+                           y3 = points[i + 1].y
                         )
-                     },
-                     track = track
+                     }
+                  }
+                  Horizontal->{
+                     for(i in 0..<points.lastIndex) {
+                        
+                        path.cubicTo(
+                           x1 = lerp(points[i].x, points[i + 1].x, cubicControlFactor1Y),
+                           y1 = lerp(points[i].y,points[i + 1].y,cubicControlFactor1X),
+                           x2 = lerp(points[i].x, points[i + 1].x, cubicControlFactor2Y),
+                           y2 = lerp(points[i].y,points[i + 1].y,cubicControlFactor2X),
+                           x3 = points[i + 1].x,
+                           y3 = points[i + 1].y
+                        )
+                     }
+                  }
+               }
+               
+               endPointOffset?.apply {
+                  path.cubicTo(
+                     x1 = lerp(points[points.lastIndex].x,this.x,  cubicControlFactor1X),
+                     y1 = lerp(points[points.lastIndex].y,this.y,cubicControlFactor1Y),
+                     x2 = lerp(points[points.lastIndex].x,this.x, cubicControlFactor2X),
+                     y2 = lerp(points[points.lastIndex].y,this.y,cubicControlFactor2Y),
+                     x3 = this.x,
+                     y3 = this.y
                   )
-                  
-                  // Render Gap
-                  if(index!=state.states.lastIndex){
-                     Spacer(Modifier
-                        .fillMaxWidth()
-                        .height(spacing)
+               }
+               
+               
+               drawPath(
+                  path = path,
+                  color = lineColor,
+                  style = Stroke(width = lineWidth.toPx())
+               )
+               path.rewind()
+            }
+         }
+         ) {
+            when (state.orientation) {
+               Vertical -> {
+                  Row(
+                     modifier = Modifier
+                        .horizontalScroll(scroll, overscrollEffect = null)
+                        .onGloballyPositioned {
+                           childLayoutCoords = it
+                        }
+                  ) {
+                     
+                     
+                     Spacer(
+                        Modifier
+                           .fillMaxHeight()
+                           .width(startEndGap)
                      )
+                     
+                     
+                     state.states.forEachIndexed { index, internalState ->
+                        
+                        VerticalSlider(
+                           state = internalState,
+                           reverseDirection = state.reverseVerticalDirection,
+                           enabled = enabled,
+                           colors = colors,
+                           thumb = {
+                              thumb.invoke(
+                                 it,
+                                 Modifier.onGloballyPositioned {
+                                    points[index] =
+                                       parentCoords?.localPositionOf(it)
+                                          .let { off ->
+                                             if (off != null) {
+                                                Offset(
+                                                   off.x + it.size.width / 2,
+                                                   off.y + it.size.height / 2
+                                                )
+                                             } else {
+                                                off
+                                             }
+                                             
+                                          }
+                                          ?: Offset.Zero
+                                 }
+                              )
+                           },
+                           track = track
+                        )
+                        
+                        // Render gap
+                        if(index!=state.states.lastIndex){
+                           Spacer(Modifier
+                              .fillMaxHeight()
+                              .width(spacing)
+                           )
+                        }
+                     }
+                     
+                     
+                     Spacer(
+                        Modifier
+                           .fillMaxHeight()
+                           .width(startEndGap)
+                     )
+                     
                   }
                   
                }
                
-               
-                  Spacer(
+               Horizontal -> {
+                  Column(
                      Modifier
-                        .fillMaxWidth()
-                        .height(startEndGap)
-                  )
-               
-               
-            }
-            
-            
-         }
-      }
-      Canvas(modifier = Modifier.matchParentSize()) {
-         if (points.isEmpty() || points.size < 1 + countIf(
-               lineStartValue != null,
-               lineEndValue != null
-            )
-         ) return@Canvas
-         
-         val path = Path()
-         
-         
-         
-         // Start at first point
-         if(startPointOffset!=null){
-            startPointOffset?.apply {
-               path.moveTo(this.x,this.y)
-               path.cubicTo(
-                  x1 = lerp(this.x, points[0].x, cubicControlFactor1X),
-                  y1 = lerp(this.y,points[0].y,cubicControlFactor1Y),
-                  x2 = lerp(this.x, points[0].x, cubicControlFactor2X),
-                  y2 = lerp(this.y,points[0].y,cubicControlFactor2Y),
-                  x3 = points[0].x,
-                  y3 = points[0].y
-               )
-            }
-         }else{
-            path.moveTo(points[0].x,points[0].y)
-         }
-         
-         
-         
-         
-         
-         // Generate smooth curve through all points
-         when(state.orientation){
-            Vertical->{
-               for(i in 0..<points.lastIndex) {
+                        .verticalScroll(scroll, overscrollEffect = null)
+                        .onGloballyPositioned {
+                           childLayoutCoords = it
+                        }
+                  ) {
+                     
+                     
+                     Spacer(
+                        Modifier
+                           .fillMaxWidth()
+                           .height(startEndGap)
+                     )
+                     
+                     
+                     state.states.forEachIndexed { index, itemState ->
+                        // Doesn't require reverseDirection since it handles RTL by itself
+                        Slider(
+                           state = itemState,
+                           enabled = enabled,
+                           colors = colors,
+                           thumb = {
+                              thumb.invoke(
+                                 it,
+                                 Modifier.onGloballyPositioned {
+                                    points[index] =
+                                       parentCoords?.localPositionOf(it)
+                                          .let { off ->
+                                             if (off != null) {
+                                                Offset(
+                                                   off.x + it.size.width / 2,
+                                                   off.y + it.size.height / 2
+                                                )
+                                             } else {
+                                                off
+                                             }
+                                             
+                                          }
+                                          ?: Offset.Zero
+                                 }
+                              )
+                           },
+                           track = track
+                        )
+                        
+                        // Render Gap
+                        if(index!=state.states.lastIndex){
+                           Spacer(Modifier
+                              .fillMaxWidth()
+                              .height(spacing)
+                           )
+                        }
+                        
+                     }
+                     
+                     
+                     Spacer(
+                        Modifier
+                           .fillMaxWidth()
+                           .height(startEndGap)
+                     )
+                     
+                     
+                  }
                   
-                  path.cubicTo(
-                     x1 = lerp(points[i].x, points[i + 1].x, cubicControlFactor1X),
-                     y1 = lerp(points[i].y,points[i + 1].y,cubicControlFactor1Y),
-                     x2 = lerp(points[i].x, points[i + 1].x, cubicControlFactor2X),
-                     y2 = lerp(points[i].y,points[i + 1].y,cubicControlFactor2Y),
-                     x3 = points[i + 1].x,
-                     y3 = points[i + 1].y
-                  )
-               }
-            }
-            Horizontal->{
-               for(i in 0..<points.lastIndex) {
                   
-                  path.cubicTo(
-                     x1 = lerp(points[i].x, points[i + 1].x, cubicControlFactor1Y),
-                     y1 = lerp(points[i].y,points[i + 1].y,cubicControlFactor1X),
-                     x2 = lerp(points[i].x, points[i + 1].x, cubicControlFactor2Y),
-                     y2 = lerp(points[i].y,points[i + 1].y,cubicControlFactor2X),
-                     x3 = points[i + 1].x,
-                     y3 = points[i + 1].y
-                  )
                }
             }
          }
          
-         endPointOffset?.apply {
-            path.cubicTo(
-               x1 = lerp(points[points.lastIndex].x,this.x,  cubicControlFactor1X),
-               y1 = lerp(points[points.lastIndex].y,this.y,cubicControlFactor1Y),
-               x2 = lerp(points[points.lastIndex].x,this.x, cubicControlFactor2X),
-               y2 = lerp(points[points.lastIndex].y,this.y,cubicControlFactor2Y),
-               x3 = this.x,
-               y3 = this.y
-            )
-         }
-         
-         
-         drawPath(
-            path = path,
-            color = lineColor,
-            style = Stroke(width = lineWidth.toPx())
-         )
-         path.rewind()
-      }
+      
+      
       
    }
    

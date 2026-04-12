@@ -1,5 +1,6 @@
 package com.aacomposetest
 
+import ExoPlayer.EqualizerController
 import TestLayouts.NestedScrollTest
 import androidx.compose.runtime.Composable
 import ui.components.ConnectedSliderGroupPreview
@@ -8,7 +9,8 @@ object TestSource {
    
    enum class Sources{
       ConnnectedSlider,
-      NestedScrolling
+      NestedScrolling,
+      EqualizerBands
    }
    
    
@@ -26,6 +28,10 @@ object TestSource {
          
          Sources.NestedScrolling -> {
             NestedScrollTest()
+         }
+         
+         Sources.EqualizerBands -> {
+            EqualizerController.BandsTestPreview()
          }
       }
    }

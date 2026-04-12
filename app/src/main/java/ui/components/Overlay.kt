@@ -34,7 +34,7 @@ private val defaultClickableOverlay: @Composable (Modifier) -> Unit = {modifier-
       then modifier
    )
 }
-
+@Deprecated("Uses static modifier", replaceWith = ReplaceWith("Overlay"))
 @Composable
 fun Overlay(
    overlay: @Composable ()->Unit = defaultOverlay,
@@ -59,6 +59,32 @@ fun Overlay(
       }
    }
 }
+@Composable
+fun Overlay(
+   modifier: Modifier = Modifier,
+   overlay: @Composable ()->Unit = defaultOverlay,
+   content: @Composable ()->Unit
+){
+   SubcomposeLayout(modifier = modifier) {constraints->
+      
+      val primaryPlaceable = subcompose("primary") {
+         content.invoke()
+      }.first().measure(constraints)
+      
+      val secondaryPlaceable = subcompose("overlay") {
+         overlay.invoke()
+      }.first().measure(
+         constraints.of(primaryPlaceable)
+      )
+      
+      
+      layout(primaryPlaceable.width,primaryPlaceable.height) {
+         primaryPlaceable.place(0,0,)
+         secondaryPlaceable.place(0,0,1f)
+      }
+   }
+}
+
 
 @Composable
 fun Overlay(
