@@ -3795,7 +3795,7 @@ internal fun ConnectedSliderGroupPreview(){
             )
          },
          modifier = Modifier
-            .height(500.dp)
+            .height(300.dp)
             .fillMaxWidth(),
          lineStartValue = 0.5f,
          lineEndValue = 0.5f,
