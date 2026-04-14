@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 
 /**
@@ -29,11 +30,10 @@ import androidx.compose.ui.unit.dp
  * */
 @Composable
 fun PriorityLayout(
-   modifier:Modifier = Modifier,
-   bottom: @Composable ()-> Unit = {},
-   content: @Composable ()-> Unit
-){
-   
+   modifier: Modifier = Modifier,
+   bottom: @Composable () -> Unit = {},
+   content: @Composable () -> Unit
+) {
    Layout(
       modifier = modifier,
       content = {
@@ -42,67 +42,77 @@ fun PriorityLayout(
       }
    ) { measurables, constraints ->
       
-      if(measurables.isNotEmpty()) {
-         val content = measurables[0]
+      if (measurables.isNotEmpty()) {
+         val contentMeasurable = measurables[0]
          
          if (measurables.size > 1) {
-            val bottom = measurables[1]
+            val bottomMeasurable = measurables[1]
             
+            // Measure bottom with full constraints
+            val bottomPlaceable = bottomMeasurable.measure(constraints)
             
-            val bottomPlaceable = bottom.measure(constraints)
-            
-            // if height is unbounded due to being in a Column, the component needs to be passed that unbounded height. Otherwise, use the maxHeight constrained.
-            val contentPlaceable = content.measure(
-               constraints.copy(
-                  maxHeight = if(constraints.hasBoundedHeight) {
-                     (constraints.maxHeight - bottomPlaceable.height).coerceAtLeast(
-                        constraints.minHeight.coerceAtLeast(0)
-                     )
-                     
-                  }else{
-                     constraints.maxHeight
-                  },
-                  maxWidth = if(constraints.hasBoundedWidth) {
-                     (constraints.maxWidth - bottomPlaceable.width).coerceAtLeast(
-                        constraints.minWidth.coerceAtLeast(0)
-                     )
-                     
-                  }else{
-                     constraints.maxWidth
-                  }
-               )
+            // Calculate remaining space for content
+            val contentConstraints = Constraints(
+               minWidth = constraints.minWidth.coerceAtLeast(0),
+               maxWidth = if (constraints.hasBoundedWidth) {
+                  constraints.maxWidth.coerceAtLeast(constraints.minWidth)
+               } else {
+                  Constraints.Infinity
+               },
+               minHeight = constraints.minHeight.coerceAtLeast(0),
+               maxHeight = if (constraints.hasBoundedHeight) {
+                  (constraints.maxHeight - bottomPlaceable.height)
+                     .coerceAtLeast(constraints.minHeight)
+               } else {
+                  Constraints.Infinity
+               }
             )
             
-            val totalHeight = (bottomPlaceable.height+contentPlaceable.height).coerceAtMost(constraints.maxHeight)
-            val totalWidth = maxOf(bottomPlaceable.width, contentPlaceable.width).coerceAtMost(constraints.maxWidth)
+            // Measure content with remaining space
+            val contentPlaceable = contentMeasurable.measure(contentConstraints)
             
-            // +1 pixel due to possible rounding error along the way
-            layout(totalWidth, totalHeight+1){
-               contentPlaceable.placeRelative(0,0)
+            // Calculate total dimensions respecting max constraints
+            val totalWidth = maxOf(bottomPlaceable.width, contentPlaceable.width)
+               .coerceIn(constraints.minWidth, constraints.maxWidth)
+            
+            val totalHeight = (bottomPlaceable.height + contentPlaceable.height)
+               .coerceIn(constraints.minHeight, constraints.maxHeight)
+            
+            layout(totalWidth, totalHeight) {
+               // Place content at top
+               contentPlaceable.placeRelative(0, 0)
                
-               bottomPlaceable.placeRelative(0,contentPlaceable.height)
+               // Place bottom after content, but ensure it stays within bounds
+               val bottomY = contentPlaceable.height.coerceAtMost(totalHeight)
+               bottomPlaceable.placeRelative(0, bottomY)
+            }
+         } else {
+            // Only content exists - respect max constraints fully
+            val contentPlaceable = contentMeasurable.measure(constraints)
+            
+            val width = contentPlaceable.width.coerceIn(constraints.minWidth, constraints.maxWidth)
+            val height = contentPlaceable.height.coerceIn(constraints.minHeight, constraints.maxHeight)
+            
+            layout(width, height) {
+               contentPlaceable.placeRelative(0, 0)
             }
          }
-         // Layout with only one placeable detected -> assume it's the content placeable
-         else{
-            val contentPlaceable = content.measure(constraints)
-            layout(contentPlaceable.width,contentPlaceable.height){
-               contentPlaceable.placeRelative(0,0)
-            }
+      } else {
+         // Empty layout - respect constraints
+         val width = if (constraints.hasBoundedWidth) {
+            constraints.maxWidth.coerceAtLeast(constraints.minWidth)
+         } else {
+            constraints.minWidth
          }
          
+         val height = if (constraints.hasBoundedHeight) {
+            constraints.maxHeight.coerceAtLeast(constraints.minHeight)
+         } else {
+            constraints.minHeight
+         }
          
-         
+         layout(width, height) {}
       }
-      // Empty layout
-      else{
-         layout(constraints.maxWidth,constraints.maxHeight) {  }
-      }
-      
-      
-      
-      
-      
    }
 }
 

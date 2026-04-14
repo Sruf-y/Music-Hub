@@ -1,4 +1,4 @@
-package ui.components
+package MyViewModels
 
 
 import androidx.activity.compose.BackHandler
@@ -25,13 +25,11 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
@@ -42,7 +40,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.lifecycle.ViewModel
-import com.aacomposetest.except
+import com.aacomposetest.exceptIndex
 import com.aacomposetest.ui.theme.MyColor
 import com.composables.core.BottomSheet
 import com.composables.core.BottomSheetScope
@@ -83,14 +81,29 @@ class SheetViewmodel(): ViewModel(){
    suspend fun dismissCurrent(){
       actionMutex.withLock {
          if(stack.isNotEmpty()) {
+            // synchronously animate and THEN drop the last item from the stack,
+            // if there is one to be dropped
+            
             stack.last().sheetState.animateTo(SheetDetent.Hidden)
-            stack = stack.subList(0,stack.lastIndex-1)
+            stack = stack.dropLast(1)
          }
       }
    }
-   
-   private fun removeItemFromStack(item: BottomSheetInstance){
-      stack = stack.except(item)
+   // TODO: replace the entire SheetState class with a copied and modifier version of my own from AOSP
+   // TODO: It does work for now but i'd REALLY like to get this done sometime
+   private suspend fun removeItemFromStack(item: BottomSheetInstance){
+      actionMutex.withLock {
+         if(stack.isNotEmpty()) {
+            // synchronously animate and THEN drop the last item from the stack,
+            // if there is one to be dropped
+            stack.indexOf(item).let {
+               if(it!=-1){
+                  stack[it].sheetState.animateTo(SheetDetent.Hidden)
+                  stack = stack.exceptIndex(it)
+               }
+            }
+         }
+      }
    }
    
    
@@ -108,7 +121,7 @@ class SheetViewmodel(): ViewModel(){
          .displayCutoutPadding()
          .navigationBarsPadding()
          .imePadding()
-         .onSizeChanged(){
+         .onSizeChanged() {
             parentHeight = it.height
          }
       ){
@@ -129,19 +142,28 @@ class SheetViewmodel(): ViewModel(){
                LaunchedEffect(it.sheetState.targetDetent, it.sheetState.currentDetent) {
                   
                   if (it.sheetState.currentDetent == SheetDetent.FullyExpanded && wasShown == false) {
+                     // buffer for wasShown, in order to not automatically dismiss itself when this launched effect runs for the first time
                      wasShown = true
                   }
                   
                   if (it.sheetState.targetDetent == SheetDetent.Hidden && it.sheetState.progress == 1f && wasShown) {
-                     // then it was hidden manually
+                     // if it was fully shown AND it has been hidden, but this will brick the logic if the user gets a hold of
+                     // the sheet before it reached full height
+                     removeItemFromStack(it)
+                  }else if(it.sheetState.targetDetent == SheetDetent.Hidden && wasShown == false && it.sheetState.progress == 1f){
+                     // Handles the issue introduced by the above IF statement by checking if the sheet is heading towards HIDDEN without ever being fully shown or fully expanded (same thing)
                      removeItemFromStack(it)
                   }
+                  
+                  
+                  
                }
                
                var intHeight by remember { mutableIntStateOf(0) }
                val density = LocalDensity.current
                
                // Clickable Invisible Overlay
+               if(!(it.sheetState.targetDetent == SheetDetent.Hidden && it.sheetState.progress >=0.5f))
                Box(
                   modifier = Modifier
                      .fillMaxWidth()
@@ -201,6 +223,9 @@ internal fun BlackBackground(
       }
    )
 
+/**
+ * Composable holding the stack of sheets.
+ * */
 @Composable
 fun MyModalBottomSheet(
    modifier:Modifier = Modifier,
@@ -250,14 +275,14 @@ fun MyModalBottomSheet(
    
 }
 
-class SheetConfig private constructor() {
+class SheetConfig {
    
    var backgroundColor: Color = Color.Unspecified
    lateinit var contentPadding: PaddingValues
    lateinit var shape: Shape
    
    
-   private fun initialize(
+   private constructor(
       backgroundColor: Color = MyColor.SurfaceDark,
       contentPadding: PaddingValues = PaddingValues(0.dp),
       shape: Shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
@@ -274,19 +299,20 @@ class SheetConfig private constructor() {
          shape: Shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
       ): SheetConfig {
          return remember(backgroundColor,contentPadding,shape){
-            SheetConfig().apply {
-               initialize(
-                  backgroundColor = backgroundColor,
-                  contentPadding = contentPadding,
-                  shape = shape
+            SheetConfig(
+               backgroundColor = backgroundColor,
+               contentPadding = contentPadding,
+               shape = shape
             )
          }
-         }
       }
+      
    }
 }
 
-
+/**
+ * An instance of a visible bottom sheet.
+ * */
 @OptIn(ExperimentalMaterial3Api::class)
 data class BottomSheetInstance(
    var sheetState: BottomSheetState,

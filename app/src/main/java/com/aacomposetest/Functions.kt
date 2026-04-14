@@ -64,8 +64,6 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
-import com.aacomposetest.Classes.AndroidEdgeEffectOverscrollEffect
-import com.aacomposetest.Classes.EdgeEffectDefaults
 import com.aacomposetest.ui.theme.MyColor
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
@@ -452,6 +450,14 @@ private fun mapByOrderOfExample() {
  * */
 fun <T>List<T>.except(vararg items:T): List<T>{
    return this.filter { it !in items }
+}
+/**
+ * Takes out the excepted items at the given indexes.
+ *
+ * @return the original list minus the list of exceptions.
+ * */
+fun <T>List<T>.exceptIndex(vararg index:Int):List<T>{
+   return this.filterIndexed { _index,it-> _index !in index }
 }
 /**
  * Takes out the excepted items.

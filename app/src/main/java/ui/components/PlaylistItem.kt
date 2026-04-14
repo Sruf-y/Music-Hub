@@ -1,6 +1,7 @@
 package ui.components
 
 import AppDatabase.PlaylistRelated.Playlist
+import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -16,16 +17,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +30,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aacomposetest.Classes.DropdownMenuState
+import com.aacomposetest.Classes.DropdownMenuState.Companion.rememberDropdownMenu
 import com.aacomposetest.ui.theme.SrufTheme
 
 @Composable
@@ -45,7 +44,7 @@ fun PlaylistItem(
     thumbNailSize:Dp = 45.dp,
     textPadding: PaddingValues = PaddingValues(10.dp,0.dp),
     optionsSize: Dp = 45.dp,
-    onOptionsClick: @Composable (MutableState<Boolean>) -> Unit = {},
+    optionsDropdownMenu:DropdownMenuState = rememberDropdownMenu(),
     onClick:((Playlist)->Unit)? = null
 ) {
 
@@ -80,35 +79,21 @@ fun PlaylistItem(
         }
 
 
-        var menuIsExpanded = remember { mutableStateOf(false) }
+        
         // Playlist More options
         Box(contentAlignment = Alignment.Center){
-
-            Button(
-                onClick = {
-                    menuIsExpanded.value = true
-                },
-                colors = ButtonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = Color.White,
-                    disabledContentColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent
-                ),
+            
+            IconButton(
+                imageVector = Icons.Default.MoreVert,
+                onClick = optionsDropdownMenu.onOpen,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(optionsSize)
-            ) {
-
-            }
-
-            Icon(imageVector = Icons.Default.MoreVert,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(optionsSize / 1.5f),
+                .size(optionsSize),
+                iconSize = Size(0.66f,0.66f),
                 tint = iconTint
             )
 
-            onOptionsClick.invoke(menuIsExpanded)
+            optionsDropdownMenu.content.invoke()
         }
     }
 }

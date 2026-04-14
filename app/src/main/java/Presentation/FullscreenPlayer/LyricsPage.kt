@@ -74,7 +74,7 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
                // Confirm button
                IconButton(
                   imageVector = Icons.Default.Check,
-                  onclick = {
+                  onClick = {
                      isEditing = false
                      
                      if(lyricsManager.lyrics.value !=null){
@@ -88,7 +88,7 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
                // Close Button
                IconButton(
                   imageVector = Icons.Default.Close,
-                  onclick = {
+                  onClick = {
                      isEditing = false
                      scope.launch {
                         lyricsManager.loadLyricsForSong(curSong?.id,contextRef)
@@ -101,13 +101,13 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
                Spacer(modifier = Modifier.weight(1f))
                IconButton(
                   imageVector = Icons.Default.Build,
-                  onclick = {
+                  onClick = {
                      isEditing = true
                   }
                )
                IconButton(
                   imageVector = Icons.Default.Settings,
-                  onclick = {
+                  onClick = {
                   
                   }
                )

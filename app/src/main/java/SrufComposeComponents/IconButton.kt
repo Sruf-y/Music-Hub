@@ -5,19 +5,12 @@ import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Indication
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -29,8 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.aacomposetest.Log
-import com.aacomposetest.ui.theme.MyColor
+import com.aacomposetest.ui.theme.Theme
 
 @Composable
 fun IconButton(
@@ -38,8 +30,8 @@ fun IconButton(
     modifier: Modifier = IconButtonDefaults.modifier,
     /**Float scalar. Must be between 0f and 1f*/
     iconSize:Size = IconButtonDefaults.iconSize,
-    iconTint:Color = IconButtonDefaults.iconTint(),
-    ripple:Indication? = ripple(bounded = false),
+    tint:Color = IconButtonDefaults.iconTint(),
+    ripple:Indication? = IconButtonDefaults.ripple(),
     enabled:Boolean = true,
     onclick:(()->Unit)
 ) {
@@ -47,7 +39,7 @@ fun IconButton(
         data = resId,
         modifier = modifier,
         iconSize= iconSize,
-        iconTint = iconTint,
+        iconTint = tint,
         ripple = ripple,
         enabled = enabled,
         onclick = onclick
@@ -61,19 +53,19 @@ fun IconButton(
     modifier: Modifier = IconButtonDefaults.modifier,
     /**Float scalar. Must be between 0f and 1f*/
     iconSize:Size = IconButtonDefaults.iconSize,
-    iconTint:Color = IconButtonDefaults.iconTint(),
-    ripple:Indication? = ripple(bounded = false),
+    tint:Color = IconButtonDefaults.iconTint(),
+    ripple:Indication? = IconButtonDefaults.ripple(),
     enabled:Boolean = true,
-    onclick:(()->Unit)
+    onClick:(()->Unit)
 ) {
     _baseIconButton(
         data = imageVector,
         modifier = modifier,
         iconSize= iconSize,
-        iconTint = iconTint,
+        iconTint = tint,
         ripple = ripple,
         enabled = enabled,
-        onclick = onclick
+        onclick = onClick
     )
 }
 
@@ -101,40 +93,48 @@ private fun _baseIconButton(
                 }
             }, contentAlignment = Alignment.Center
     ) {
-        when {
-            data is ImageVector -> {
-                Icon(
-                    imageVector = data,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth(iconSize.width)
-                        .fillMaxHeight(iconSize.height)
-                        .align(Alignment.Center),
-                    tint = iconTint
-                )
-            }
-            
-            data is Int -> {
-                Icon(
-                    painter = painterResource(data),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth(iconSize.width)
-                        .fillMaxHeight(iconSize.height),
-                    tint = iconTint
-                )
-            }
-        }
+       when (data) {
+          is ImageVector -> {
+             Icon(
+                imageVector = data,
+                contentDescription = null,
+                modifier = Modifier
+                   .fillMaxWidth(iconSize.width)
+                   .fillMaxHeight(iconSize.height)
+                   .align(Alignment.Center),
+                tint = iconTint
+             )
+          }
+          
+          is Int -> {
+             Icon(
+                painter = painterResource(data),
+                contentDescription = null,
+                modifier = Modifier
+                   .fillMaxWidth(iconSize.width)
+                   .fillMaxHeight(iconSize.height),
+                tint = iconTint
+             )
+          }
+       }
         
     }
 }
 
 object IconButtonDefaults{
 
-    val modifier =Modifier.size(45.dp,45.dp)
+    val modifier = Modifier.size(45.dp,45.dp)
 
     val iconSize:Size = Size(1f,1f)
+    
+    @Composable
+    fun rippleColor() = Theme.IconTint()
+    
+    @Composable
+    fun ripple(): Indication{
+        return ripple(bounded = false,color = rippleColor())
+    }
 
     @Composable
-    fun iconTint():Color = if(isSystemInDarkTheme()) Color.White else Color.Black
+    fun iconTint():Color = Theme.IconTint()
 }

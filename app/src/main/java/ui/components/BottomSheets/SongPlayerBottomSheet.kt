@@ -634,13 +634,13 @@ private fun SmallPlayer(
             IconButton(
                imageVector = Icons.Default.LocationOn,
                modifier = Modifier.size(iconSize),
-               onclick = {
+               onClick = {
                   currentSong?.let {
                      gotoSong.invoke()
                   }
                },
                iconSize = Size(0.8f, 0.8f),
-               iconTint = MyColor.White,
+               tint = MyColor.White,
                enabled = isMinimizedEnabled
             )
          }
@@ -696,9 +696,9 @@ private fun BigPlayer(
                      .size(60.dp)
                      .align(Alignment.TopEnd),
                   iconSize = Size(0.7f,0.7f),
-                  iconTint = MyColor.White,
+                  tint = MyColor.White,
                   enabled = isExpandedEnabled,
-                  onclick = {
+                  onClick = {
                      onShuffle.invoke()
                   }
                )
@@ -740,9 +740,9 @@ private fun BigPlayer(
                      .size(60.dp)
                      .align(Alignment.TopEnd),
                   iconSize = Size(0.7f,0.7f),
-                  iconTint = MyColor.White,
+                  tint = MyColor.White,
                   enabled = isExpandedEnabled,
-                  onclick = {
+                  onClick = {
                      onShuffle.invoke()
                   }
                )

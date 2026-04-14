@@ -6,18 +6,15 @@ import MyViewModels.RefreshState
 import Navigation.NavExtensions.safeNavigate
 import Presentation.Navigation.MyNavigation
 import Presentation.SongsPage.MainSongsColumn
-import ui.components.SheetViewmodel
-import SrufComposeComponents.Text
+import MyViewModels.SheetViewmodel
 import android.app.Activity
-import ui.components.rememberBottomSheetInstance
+import MyViewModels.rememberBottomSheetInstance
 import android.content.SharedPreferences
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
@@ -47,7 +44,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
-import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.BottomSheets.ResponsivePlayerBS
 import ui.components.BottomSheets.rememberBottomSheetConfig
 import ui.components.Pages.PlaylistsPage
@@ -191,7 +187,6 @@ object PlayerBottomSheetParent {
                            scope.launch {
                               globalBottomSheetVM.dismissCurrent()
                            }
-                           
                         }
                         PlaylistAddOrEdit_Content(
                            allPlaylists,
@@ -209,35 +204,7 @@ object PlayerBottomSheetParent {
                            globalBottomSheetVM
                               .addSheet(plusClickContent)
                         },
-                        onPlaylistOptionsClick = { playlist, menuIsOpen ->
-                           DropdownMenu(
-                              expanded = menuIsOpen.value,
-                              onDismissRequest = {
-                                 menuIsOpen.value = false
-                              }
-                           ) {
-                              
-                              val deleteItemContent = rememberBottomSheetInstance {
-                                 PlaylistDelete_Content(
-                                    playlist = playlist,
-                                    bottomSheetVM = globalBottomSheetVM
-                                 )
-                              }
-                              
-                              DropdownMenuItem(
-                                 text = { Text("Delete") },
-                                 onClick = {
-                                    
-                                    globalBottomSheetVM
-                                       .addSheet (deleteItemContent)
-                                    
-                                    menuIsOpen.value = false
-                                 }
-                              )
-                              
-                           }
-                           
-                        }
+                        globalBottomSheetViewModel = globalBottomSheetVM
                      )
                   }
                }

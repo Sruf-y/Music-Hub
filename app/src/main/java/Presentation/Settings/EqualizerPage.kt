@@ -33,7 +33,7 @@ fun EqualizerPage(modifier: Modifier = Modifier.fillMaxSize()) {
    
    LazyColumn(
       state = state,
-      modifier = Modifier.fillMaxSize()
+      modifier = modifier
    ) {
       
       // a header

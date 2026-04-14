@@ -1,12 +1,11 @@
 package ui.components.Pages
 
 import AppDatabase.PlaylistRelated.Playlist
+import MyViewModels.SheetViewmodel
+import MyViewModels.rememberBottomSheetInstance
+import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
-import TestLayouts.TestActivity
-import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.res.Configuration
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,10 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,12 +33,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aacomposetest.MyApplication
+import com.aacomposetest.Classes.DropdownMenuState
+import com.aacomposetest.Classes.DropdownMenuState.Companion.rememberDropdownMenu
+import com.aacomposetest.Classes.SimpleDropdownMenuState
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
@@ -59,10 +58,10 @@ fun PlaylistsPage(
     modifier: Modifier = Modifier.fillMaxSize(),
     playlists: List<Playlist>,
     bottomPadding: Dp = 70.dp,
-    onPlusClick: (() -> Unit)? = null,
-    onOptionsClick:(()->Unit)? = null,
+    onPlusClick: (()-> Unit)? = null,
+    optionsButtonMenu:SimpleDropdownMenuState? = null,
     onPlaylistClick: ((Playlist) -> Unit)? = null,
-    onPlaylistOptionsClick: @Composable ((it:Playlist, menuIsOpen:MutableState<Boolean>)->Unit)? = null
+    globalBottomSheetViewModel: SheetViewmodel
 ) {
 
 
@@ -75,7 +74,7 @@ fun PlaylistsPage(
             TopBar(
                 playlistsList = playlists,
                 onPlusClick = onPlusClick,
-                onOptionsClick = onOptionsClick
+                optionsButtonMenu = optionsButtonMenu
             )
             //Separator
             HorizontalSeparator(color = MyColor.SeparatorGray)
@@ -89,14 +88,49 @@ fun PlaylistsPage(
             ) {
                 items(items = playlists) { thisPlaylist ->
 
+                    var menuIsOpen by remember { mutableStateOf(false) }
+                    
                     PlaylistItem(
                         playlist = thisPlaylist,
                         onClick = onPlaylistClick,
-                        onOptionsClick = { menuIsOpen ->
-
-                            onPlaylistOptionsClick?.invoke(thisPlaylist,menuIsOpen)
-
-                        }
+                        optionsDropdownMenu = rememberDropdownMenu(
+                            
+                            onOpen = {
+                                
+                            },
+                            onDismiss = {
+                                
+                            },
+                            content = {
+                                DropdownMenu(
+                                    expanded = menuIsOpen,
+                                    onDismissRequest = {
+                                        menuIsOpen = false
+                                    }
+                                ) {
+                                    
+                                    val deleteItemContent = rememberBottomSheetInstance {
+                                        PlaylistDelete_Content(
+                                            playlist = thisPlaylist,
+                                            bottomSheetVM = globalBottomSheetViewModel
+                                        )
+                                    }
+                                    
+                                    DropdownMenuItem(
+                                        text = { Text("Delete") },
+                                        onClick = {
+                                            globalBottomSheetViewModel.addSheet(
+                                                deleteItemContent
+                                            )
+                                            
+                                            menuIsOpen = false
+                                        }
+                                    )
+                                    
+                                }
+                            }
+                        )
+                        
                     )
 
                 }
@@ -110,8 +144,8 @@ fun PlaylistsPage(
 @Composable
 private fun TopBar(
     playlistsList: List<Playlist>,
-    onPlusClick:(()-> Unit)? = null,
-    onOptionsClick:(()->Unit)? = null
+    onPlusClick:(()->Unit)? = null,
+    optionsButtonMenu: SimpleDropdownMenuState? = null
 ) {
 
 
@@ -135,48 +169,34 @@ private fun TopBar(
                 .wrapContentSize()
                 .align(Alignment.CenterEnd)
         ) {
-
+            
             // PLUS ICON
-            Icon(
-                painter = painterResource(R.drawable.ic_add),
-                contentDescription = null,
+            IconButton(
+                resId = R.drawable.ic_add,
                 tint = Theme.colorScheme().inverseSurface,
                 modifier = Modifier
-                    .size((buttonsSize / 1.25f))
-                    .clip(CircleShape)
-                    .clickable(
-                        onClick = {
-                            onPlusClick?.invoke()
-                        }
-                    )
-            )
+                    .size(buttonsSize)
+                    .clip(CircleShape),
+                iconSize = Size(0.75f, 0.75f)
+            ) {
+                onPlusClick?.invoke()
+            }
+            
+            
 
             // MORE ICON
             Box{
-                var isExpanded by remember { mutableStateOf(false) }
-                Icon(
+                IconButton(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = null,
                     tint = Theme.colorScheme().inverseSurface,
                     modifier = Modifier
-                        .size((buttonsSize / 1.25f))
-                        .clip(CircleShape)
-                        .clickable(onClick = {
-                            onOptionsClick?.invoke()
-
-                            isExpanded = true
-                        }
-                        )
-                )
-
-
-
-                DropdownMenu(isExpanded,{isExpanded = false}) {
-                    DropdownMenuItem(text = {Text("Launch testLayout1")}, onClick = {
-                        MyApplication.instance.startActivity(Intent(MyApplication.instance,TestActivity::class.java).apply { flags = FLAG_ACTIVITY_NEW_TASK })
-                        isExpanded = false
-                    })
+                        .size(buttonsSize)
+                        .clip(CircleShape),
+                    iconSize = Size(0.75f,0.75f)
+                ){
+                    optionsButtonMenu?.state = true
                 }
+                optionsButtonMenu?.content?.invoke()
             }
 
         }

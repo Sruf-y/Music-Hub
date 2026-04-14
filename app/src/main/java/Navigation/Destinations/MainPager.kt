@@ -4,14 +4,13 @@ import MyViewModels.ListFeedingVM
 import com.aacomposetest.Classes.PersistentState
 import SrufComposeComponents.CustomPagerTab
 import SrufComposeComponents.IconButton
-import SrufComposeComponents.NestedScrollingFront
+import Presentation.NestedScrollingFront
 import SrufComposeComponents.TabRowIndicator
 import SrufComposeComponents.Text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,7 +58,6 @@ import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import ui.components.Text.BasicTextFieldExpanded
 import ui.components.Text.OutlinedTextFieldExpanded
 
 
@@ -225,7 +223,7 @@ object MainPager {
             
             IconButton(modifier = iconModifier.align(Alignment.CenterEnd),
                imageVector = Icons.Default.Search,
-               onclick = {
+               onClick = {
                   shouldBeFocused = true
                   
                }
@@ -255,7 +253,7 @@ object MainPager {
                   IconButton(
                      modifier = iconModifier,
                      imageVector = Icons.Default.Close,
-                     onclick = {
+                     onClick = {
                         focusManager.clearFocus()
                         ListFeedingVM.SortedSongs.setSearchWord("")
                         shouldBeFocused = false

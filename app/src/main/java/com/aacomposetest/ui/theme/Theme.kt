@@ -36,13 +36,13 @@ object Theme{
 
      var DarkColorScheme = darkColorScheme(
         primary = MyColor.Myprimary,
-         secondary = MyColor.Inactive,
-         inversePrimary = MyColor.Inactive
+        secondary = MyColor.Inactive,
+        inversePrimary = MyColor.Inactive
      )
-
-     var LightColorScheme = lightColorScheme(
-         primary = MyColor.Myprimary
-    )
+   
+   var LightColorScheme = lightColorScheme(
+      primary = MyColor.Myprimary
+   )
 
     @Composable
     fun colorScheme(forceDarkMode: Boolean = false) = if(isSystemInDarkTheme() || forceDarkMode) DarkColorScheme else LightColorScheme
@@ -205,7 +205,7 @@ fun SrufTheme(
 
 @Composable
 @Preview
-private fun Preview(){
+private fun ShimmerPreview(){
    SrufTheme {
          Box(
             modifier = Modifier

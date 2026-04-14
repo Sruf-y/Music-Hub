@@ -1,22 +1,26 @@
 package ui.components.BottomSheets.Content
 
 import AppDatabase.PlaylistRelated.Playlist
-import ui.components.SheetViewmodel
+import MyViewModels.SheetViewmodel
+import SrufComposeComponents.Text
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -29,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import com.aacomposetest.Functions.rename
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
-import com.composeunstyled.Text
 import kotlinx.coroutines.launch
+import ui.components.BottomSheets.Content.BottomSheetContentDefaults.VerticalPadding
 import ui.components.CancelConfirm
 import ui.components.Text.BasicTextFieldExpanded
 import ui.components.PriorityLayout
@@ -64,15 +68,15 @@ fun PlaylistAddOrEdit_Content(
    bottomSheetVM: SheetViewmodel? = null,
    playlist: Playlist? = null
 ) {
-   
    val contextRef = LocalContext.current
    val scope = rememberCoroutineScope()
    
-   
-   var myText by rememberSaveable { mutableStateOf(playlist?.title?:"") }
-   
+   var myText by rememberSaveable { mutableStateOf(playlist?.title ?: "") }
    
    PriorityLayout(
+      modifier = Modifier.fillMaxWidth()
+         .wrapContentHeight()
+         .padding(vertical = VerticalPadding),
       bottom = {
          CancelConfirm(
             onCancel = {
@@ -112,38 +116,61 @@ fun PlaylistAddOrEdit_Content(
                }
             }
          )
-      }
+   }
    ) {
+      var hasBegunWritting by remember { mutableStateOf(false) }
       Box(Modifier
          .wrapContentHeight()
-         .fillMaxWidth(),
+         .fillMaxWidth(0.75f)
+         .padding(bottom = VerticalPadding),
          contentAlignment = Alignment.Center
-      ) {
-         PriorityLayout(
-            modifier = Modifier
-               .fillMaxWidth(0.75f)
-               .padding(vertical = 30.dp),
-            bottom = {
-               if (myText.isNotEmpty()) {
-                  Text("Text is not empty!", color = MyColor.Green)
+      ){
+         val errorText by remember {
+            derivedStateOf {
+               if (myText.isEmpty() && hasBegunWritting) {
+                  "Title cannot be blank!"
+               } else if(existingPlaylists?.map { it.title }?.contains(myText) == true){
+                  "Playlist already exists!"
+               }else{
+                  null
                }
             }
-         ) {
-            BasicTextFieldExpanded(
+         }
+         
+         PriorityLayout(
+            bottom = {
+               errorText?.let { Text(it, color = MyColor.Red) }
+            }
+            ) {
+            OutlinedTextFieldExpanded(
                value = myText,
                onValueChange = {
                   myText = it
+                  if(!hasBegunWritting){
+                     hasBegunWritting = true
+                  }
                },
-               modifier = Modifier
-                  .wrapContentHeight()
-                  .border(2.dp, MyColor.TextColor(), RoundedCornerShape(10.dp))
-                  .imePadding(),
                textStyle = TextStyle(color = MyColor.TextColor()),
-               
+               isError = errorText!=null,
+               placeholder = {
+                  Text("Title",color = MyColor.Inactive)
+               }
             )
          }
       }
       
       
+      
    }
+   
+      
+      
+   
+         
+      
+      
+   
+   
+   
+   
 }

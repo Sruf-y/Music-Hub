@@ -1,13 +1,12 @@
 package Presentation.SongsPage
 
 import AppDatabase.AndroidDatabase
-import AppDatabase.MyDatabaseProvider
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
-import ui.components.SheetViewmodel
-import ui.components.rememberBottomSheetInstance
+import MyViewModels.SheetViewmodel
+import MyViewModels.rememberBottomSheetInstance
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize

@@ -3,7 +3,6 @@ package ui.components
 import AppDatabase.SongRelated.Song
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,7 +34,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -141,8 +139,8 @@ fun SongItem_Mockup(
                         imageVector = Icons.Default.MoreVert,
                         modifier = Modifier.size(45.dp,45.dp),
                         iconSize = Size(0.75f,0.75f),
-                        iconTint = iconTint,
-                        onclick = {
+                        tint = iconTint,
+                        onClick = {
                             menuIsExpanded.value = true
                         }
                     )
@@ -254,13 +252,14 @@ fun SongItem(
 
             if(optionsMenu!=null){
                 Box(contentAlignment = Alignment.Center,modifier = Modifier.padding(5.dp)) {
-
+                    
+                    
                     IconButton(
                         imageVector = Icons.Default.MoreVert,
                         modifier = Modifier.size(MyIcons.sizeMedium, MyIcons.sizeMedium),
                         iconSize = Size(1f,1f),
-                        iconTint = iconTint,
-                        onclick = {
+                        tint = iconTint,
+                        onClick = {
                             menuIsExpanded.value = true
                         }
                     )
