@@ -272,7 +272,7 @@ class MainActivityView : CustomComponentActivity() {
          
          notificationPermissionLauncher.launch()
          
-         if(hasNotificationPermission.value ) {
+         if(hasNotificationPermission.value) {
             
             MusicService.handleOnAppStart(contextRef)
             

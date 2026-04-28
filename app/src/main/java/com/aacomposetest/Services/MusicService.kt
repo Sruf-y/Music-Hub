@@ -192,7 +192,11 @@ class MusicService: Service() {
       
       scope.launch {
          myExoPlayer.isPlaying.collect {
-            UpdateNotification(CreateNotification())
+            if(it && currentLayerState != LayerState.Foreground){
+               sendToForeground()
+            }
+            else
+               UpdateNotification(CreateNotification())
          }
       }
       
@@ -392,11 +396,12 @@ class MusicService: Service() {
          
          // when its paused, it becomes a background service. StopForeground will not work on a background service. I need to manually cancel the notification.
          removeNotification()
-         
+         currentLayerState = LayerState.NONE
          stopSelf()
          MyApplication.killProccess()
-      }else{
+      }else{ // When trying to close the notification itself
          stopForeground(STOP_FOREGROUND_REMOVE)
+         currentLayerState = LayerState.NONE
       }
    }
    
@@ -405,6 +410,8 @@ class MusicService: Service() {
       CLOSE
    }
    
+   private var currentLayerState = LayerState.NONE
+   
    companion object{
       
       private enum class LayerState{
@@ -412,19 +419,15 @@ class MusicService: Service() {
          BackGround,
          NONE
       }
-      private var currentLayerState = LayerState.NONE
+      
       
       fun handleOnAppStart(context: Context){
-         if(currentLayerState == LayerState.NONE) {
-            val intent = Intent(context, MusicService::class.java).apply {
-               action = MusicService.Actions.START.name
-            }
-            context.startForegroundService(intent)
-         }else
-            if(currentLayerState == LayerState.BackGround){
-               MyApplication.serviceInstance?.sendToForeground()
-            }
          
+         val intent = Intent(context, MusicService::class.java).apply {
+            action = MusicService.Actions.START.name
+         }
+         context.startForegroundService(intent)
+        
       }
       
       
