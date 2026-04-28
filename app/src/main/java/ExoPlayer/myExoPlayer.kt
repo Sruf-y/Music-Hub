@@ -6,6 +6,7 @@ import MyViewModels.DataObserverViewModel
 import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistWatcher
 import MyViewModels.SongsViewModel
+import Settings.MySettings
 import Settings.PlayerSettings
 import android.content.Context
 import android.content.SharedPreferences
@@ -144,7 +145,7 @@ object myExoPlayer {
                }
                
                if(isPlaying.value){
-                  delay(2000)
+                  delay(MySettings.settings?.let{it.playerPositionWriteInterval.stateFlow.value}?:2000L)
                }
             }
       }

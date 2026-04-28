@@ -3,15 +3,18 @@ package com.aacomposetest
 import AppDatabase.PlaylistRelated.Playlist
 import ExoPlayer.myExoPlayer
 import MyViewModels.FileWatcher
-import MyViewModels.LyricsManager
 import MyViewModels.SongsViewModel
+import Settings.MySettings
 import android.Manifest
-import android.app.Activity
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.database.ContentObserver
-import android.media.audiofx.Equalizer
+import android.os.IBinder
 import android.os.Process
 import android.provider.MediaStore
 import android.util.Log
@@ -29,11 +32,13 @@ import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
 import com.aacomposetest.Classes.NotificationPoster.Companion.openMediaStoreUriPendingIntent
 import com.aacomposetest.Services.MusicService
+import com.aacomposetest.Services.ServiceBindManager
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 
 class MyApplication: Application(), ImageLoaderFactory {
+    
     
     val songViewModel: SongsViewModel by lazy {
         SongsViewModel(this)
@@ -80,6 +85,21 @@ class MyApplication: Application(), ImageLoaderFactory {
                 this
             )
         }
+        
+        /**
+         * Lazily wake service for the first time
+         * */
+        val musicServiceBinder = ServiceBindManager(MusicService::class, this)
+            .apply {
+                this.onServiceReady = {
+                    serviceInstance = it as MusicService
+                }
+                
+                this.onServiceFailed = {
+                    serviceInstance = null
+                }
+            }
+        MySettings.initialize(this)
         
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             // Log the crash
@@ -140,33 +160,25 @@ class MyApplication: Application(), ImageLoaderFactory {
 
         val crashLogger by lazy { CrashReporter(foldername = "CrashLogs_${instance.getString(R.string.app_name)}") }
         
+        
+        
+        
         var serviceInstance: MusicService? = null
             private set
-        
-        
-
-
-        fun registerServiceInstance(service: MusicService) {
-            serviceInstance = service
-        }
-
-        fun unregisterServiceInstance() {
-            serviceInstance = null
-        }
         
         fun killProccess(){
             android.os.Process.killProcess(Process.myPid())
         }
         
         fun showSystemAlert(
-            activity: Activity,  // Any Activity, not just AppCompatActivity
+            parentContext: Context,  // Any Activity, not just AppCompatActivity
             title: String,
             message: String,
             onOk: () -> Unit = {},
             onCancel:(()->Unit)? = null
         ) {
             android.app.AlertDialog.Builder(
-                activity,
+                parentContext,
                 android.R.style.Theme_DeviceDefault_Dialog_Alert
             )
                 .setTitle(title)
@@ -207,14 +219,10 @@ class MyApplication: Application(), ImageLoaderFactory {
 
     }
     
-    fun aa(){
-    
-    }
-    
     
 }
 
-fun Log(message:String,tag:String = "WTF",type:String = "e"){
+private fun handleInternalLog(message:String, tag:String, type:String){
     when(type){
         "e"->{
             Log.e(tag,message)
@@ -222,8 +230,22 @@ fun Log(message:String,tag:String = "WTF",type:String = "e"){
         "i"->{
             Log.i(tag,message)
         }
+        "d"->{
+            Log.d(tag,message)
+        }
     }
-
+}
+fun Log(
+    message: String,
+    tag: Any = "WTF",  // Accept either String or Logs enum
+    type: String = "e"
+) {
+    val tagString = when (tag) {
+        is String -> tag
+        is Logs -> tag.name
+        else -> "WTF"
+    }
+    handleInternalLog(message, tagString, type)
 }
 
 inline fun tryTo(

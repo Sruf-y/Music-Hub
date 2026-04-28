@@ -75,11 +75,19 @@ import kotlinx.serialization.InternalSerializationApi
 import MyViewModels.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
 import MyViewModels.SheetViewmodel
+import android.content.ComponentName
+import android.content.ServiceConnection
+import android.os.IBinder
+import com.aacomposetest.Logs
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
 
 
 class MainActivityView : CustomComponentActivity() {
+   
+   
+   
+   
    
    val songViewModel: SongsViewModel
       get() {

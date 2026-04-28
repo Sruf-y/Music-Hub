@@ -43,7 +43,7 @@ class DataStoreCursorValue<T : Any>(
    val writeDebounce:Long = 500L
 ): ViewModel(
 ){
-   var castErrorMessage = "Cast error for CursorValue in its viewModel. Key:[${key.name}]"
+   private var castErrorMessage = "Cast error for CursorValue in its viewModel. Key:[${key.name}]"
    
    private val immediateFlow = AutoStateFlow<T>(defaultValue)
    

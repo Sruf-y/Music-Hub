@@ -16,10 +16,11 @@ import androidx.compose.ui.graphics.Color
 import com.aacomposetest.ui.theme.SrufTheme
 import android.content.Context
 import android.content.Intent
+import com.aacomposetest.Classes.CustomComponentActivity
 import com.aacomposetest.TestSource
 
 
-class TestActivity : ComponentActivity() {
+class TestActivity : CustomComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {

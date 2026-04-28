@@ -7,10 +7,12 @@ import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.BitmapFactory
+import android.os.Binder
 import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.media.MediaMetadataCompat
@@ -33,12 +35,24 @@ import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication.Companion.allertPoster
 import com.aacomposetest.MyApplication.Companion.crashLogger
 import com.aacomposetest.tryTo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import okhttp3.Dispatcher
 
-class MusicService: LifecycleService() {
+class MusicService: Service() {
+   
+   val scope = CoroutineScope(Dispatchers.Main)
+   
+   private val binder = MusicBinder()
+   
+   inner class MusicBinder : Binder() {
+      fun getService(): MusicService = this@MusicService
+   }
    
    override fun onBind(intent: Intent): IBinder? {
-      return super.onBind(intent)
+      return binder
    }
    
    lateinit var mediaSession: MediaSessionCompat
@@ -76,12 +90,7 @@ class MusicService: LifecycleService() {
    
    val playerListener = object : MyPlayerListener{
       
-      
-      
-      
-      
       override fun onToggle(value: Boolean) {
-      
          
       }
       
@@ -118,11 +127,13 @@ class MusicService: LifecycleService() {
       }
       
    }
-   
+   /**
+    * **Note:**
+    * A [GlobalScope] is launched in onCreate.
+    * */
    override fun onCreate() {
       super.onCreate()
       
-      MyApplication.registerServiceInstance(this)
       
       myExoPlayer.registerListener(playerListener)
       
@@ -179,7 +190,7 @@ class MusicService: LifecycleService() {
       }
       
       
-      lifecycleScope.launch {
+      scope.launch {
          myExoPlayer.isPlaying.collect {
             UpdateNotification(CreateNotification())
          }
@@ -202,8 +213,6 @@ class MusicService: LifecycleService() {
    override fun onDestroy() {
       super.onDestroy()
       removeNotification()
-      
-      MyApplication.unregisterServiceInstance()
       
       myExoPlayer.unRegisterListener(playerListener)
       
