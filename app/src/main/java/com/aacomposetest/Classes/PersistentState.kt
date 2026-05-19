@@ -4,7 +4,7 @@ import androidx.compose.runtime.State
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-object GlobalScreenState {
+object GlobalPersistentStateManager {
    private val states = mutableMapOf<String, Any>()
    
    @Suppress("UNCHECKED_CAST")
@@ -33,9 +33,9 @@ object GlobalScreenState {
 
 
 /**
- * Desc:
- *    A type of object persistence done through a map, allowing items to persist only as long as the proccess is alive.
- *    Items are deleted at proccess death.
+ *
+ * A type of object persistence done through a map, allowing items to persist only as long as the proccess is alive.
+ * Items are deleted at proccess death.
  *
  *
  * Only to be used for values where multiple instances will never happen OR don't matter. For example the initial values for states like initialPage or initialOffset.
@@ -44,7 +44,7 @@ object GlobalScreenState {
  *
  *    private class InitialState(){
  *
- *       var initialPage PersistentState("fullscreenViewmodel", { 0 })
+ *       var initialPage by PersistentState("initialPageKey", { 0 })
  *
  *       val pages = listOf("Song","Lyrics")
  *    }
@@ -61,8 +61,8 @@ class PersistentState<T : Any>(
    private val defaultFactory:()-> T
 ): ReadWriteProperty<Any?,T>, State<T> {
    override var value: T
-      get() = GlobalScreenState.getState(key, defaultFactory.invoke())
-      set(value) = GlobalScreenState.setState(key, value)
+      get() = GlobalPersistentStateManager.getState(key, defaultFactory.invoke())
+      set(value) = GlobalPersistentStateManager.setState(key, value)
    
    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
       return this.value
@@ -70,5 +70,21 @@ class PersistentState<T : Any>(
    
    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
       this.value = value
+   }
+   
+   object GlobalStates{
+      // make the string harder to collide at least for myself
+      @JvmField
+      val playerBottomSheetIsExpandedByDefault ="isPlayerBottomSheetExpanded#_ID_01"
+      @JvmField
+      val fullScreenState = "fullScreenState#_ID_01"
+      @JvmField
+      val mainPagerSavedPage = "mainPagerInitialPage#_ID_01"
+      @JvmField
+      val lastAccessedPlaylist = "lastAccessedPlaylistName#_ID_01"
+      @JvmField
+      val lastAccessedPlaylistIndex = "page_view_playlist_index#_ID_01"
+      @JvmField
+      val lastAccessedPlaylistOffset = "page_view_playlist_offset#_ID_01"
    }
 }

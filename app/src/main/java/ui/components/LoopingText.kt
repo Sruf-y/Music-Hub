@@ -23,7 +23,7 @@ fun LoopingText(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = Theme. colorScheme().inverseSurface,
-    textAlign: TextAlign? = TextAlign.Unspecified,
+    textAlign: TextAlign? = TextAlign.Center,
     fontSize: TextUnit = 16.sp,
     style: TextStyle = LocalTextStyle.current,
     fontWeight: FontWeight? = null
@@ -40,6 +40,7 @@ fun LoopingText(
         color = color,
         textAlign = textAlign,
         fontSize = fontSize,
-        style = style, fontWeight = fontWeight
+        style = style,
+        fontWeight = fontWeight
     )
 }

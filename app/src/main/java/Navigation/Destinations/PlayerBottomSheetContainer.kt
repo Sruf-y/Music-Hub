@@ -10,7 +10,6 @@ import MyViewModels.SheetViewmodel
 import android.app.Activity
 import MyViewModels.rememberBottomSheetInstance
 import android.content.SharedPreferences
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -21,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -36,12 +34,12 @@ import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Open
 import com.aacomposetest.Classes.ActivityLifecycleEffect
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.PersistentState
+import com.aacomposetest.Classes.accessCursorValue
 import com.aacomposetest.Classes.getCursorValue
 import com.aacomposetest.Classes.putCursorValue
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.ResponsivePlayerBS
@@ -49,10 +47,10 @@ import ui.components.BottomSheets.rememberBottomSheetConfig
 import ui.components.Pages.PlaylistsPage
 
 @Serializable
-object PlayerBottomSheetParent {
+object PlayerBottomSheetContainer {
    
    @Composable
-   fun invoke(
+   fun RenderBottomSheetContainer(
       startDestination:Any,
       prefs: SharedPreferences,
       localNavController: NavHostController,
@@ -62,11 +60,22 @@ object PlayerBottomSheetParent {
       onClickAddPlaylist:(Page_ViewPlaylist)->Unit,
       onBottomSheetClick:()->Unit
    ){
-      val songBS_Config = rememberBottomSheetConfig()
+      var isBS_ExpandedByDefault by remember{ PersistentState(
+         key = PersistentState.GlobalStates.playerBottomSheetIsExpandedByDefault,
+         defaultFactory = {false})
+      }
+      
+      val songBS_Config = rememberBottomSheetConfig(
+         isExpandedByDefault = isBS_ExpandedByDefault
+      )
       
       val songPlayerBS_State = rememberBottomSheetState(
-         initialDetent = songBS_Config.peekDetent?: SheetDetent.Hidden,
-         detents = songBS_Config.detents
+         initialDetent = songBS_Config.resolveInitialState(),
+         detents = songBS_Config.detents,
+         confirmDetentChange = {
+            isBS_ExpandedByDefault = it == SheetDetent.FullyExpanded
+            true
+         }
       )
       
       val songsListState = rememberSaveable(saver = LazyListState.Saver) {
@@ -100,7 +109,13 @@ object PlayerBottomSheetParent {
       
       
       
-      // Save scroll position for the [All Songs] page
+      /**
+       * Save scroll position for the [All Songs] page
+       *
+       * * Note: *
+       *
+       * Is already debounced by the lifecycle!
+       * */
       ActivityLifecycleEffect(
          key = songsListState,
          callbacks = object : ActivityLifecycleCallbacks_Open(){
@@ -145,12 +160,11 @@ object PlayerBottomSheetParent {
          composable<MainPager> {
             val initialPage = remember { prefs.getCursorValue(MyPrefs._prefs_PagerPosition, "") }
             
-            MainPager.invoke(initialPage.toIntOrNull()) { newPage ->
+            MainPager.RenderPager(initialPage.toIntOrNull()) { newPage ->
                when (newPage) {
                   
                   // Main songs page
                   0 -> {
-                     
                      PullToRefreshBox(
                         state = refreshBoxState,
                         modifier = Modifier
@@ -163,7 +177,6 @@ object PlayerBottomSheetParent {
                         }
                      ) {
                         
-                        
                         MainSongsColumn(
                            modifier = Modifier.fillMaxSize(),
                            settingsBottomSheetVM = globalBottomSheetVM,
@@ -174,20 +187,8 @@ object PlayerBottomSheetParent {
                   
                   // Playlists page
                   1 -> {
-                     // State yet unused for the playlist viewing dropdown menu.
-                     val playlistsPageMoreMenuState by remember {
-                        mutableStateOf(
-                           false
-                        )
-                     }
                      
                      val plusClickContent = rememberBottomSheetInstance {
-                        val scope = rememberCoroutineScope()
-                        BackHandler {
-                           scope.launch {
-                              globalBottomSheetVM.dismissCurrent()
-                           }
-                        }
                         PlaylistAddOrEdit_Content(
                            allPlaylists,
                            bottomSheetVM = globalBottomSheetVM
@@ -216,8 +217,40 @@ object PlayerBottomSheetParent {
          composable<Page_ViewPlaylist> {
             val args = it.toRoute<Page_ViewPlaylist>()
             
-            var persistentIndex by remember{ PersistentState("page_view_playlist_index#${args.title}",{ 0 }) }
-            var persistentOffset by remember{ PersistentState("page_view_playlist_offset#${args.title}",{ 0 }) }
+            var persistentIndex by remember{
+               PersistentState(
+                  key = PersistentState.GlobalStates.lastAccessedPlaylistIndex,
+                  defaultFactory = {
+                     0
+                  }
+               )
+            }
+            var persistentOffset by remember{
+               PersistentState(
+                  key = PersistentState.GlobalStates.lastAccessedPlaylistOffset,
+                  defaultFactory = {
+                     0
+                  }
+               )
+            }
+            
+            
+            var lastViewedPlaylist by remember {
+               PersistentState(
+                  key = PersistentState.GlobalStates.lastAccessedPlaylist,
+                  defaultFactory = {
+                     args.title
+                  }
+               ).apply {
+                  if(this.value != args.title){
+                     persistentIndex = 0
+                     persistentOffset = 0
+                     this.value = args.title
+                  }
+               }
+            }
+            
+            
             
             val playlistViewingLazyListState = rememberLazyListState(persistentIndex,persistentOffset)
             
@@ -232,16 +265,17 @@ object PlayerBottomSheetParent {
             }
             
             
-            Page_ViewPlaylist.PlaylistViewing(
+            Page_ViewPlaylist.Page(
                playlistTitle = args.title,
                lazyListState = playlistViewingLazyListState,
                onBack = {
                   localNavController.popBackStack()
                },
                bottomPadding = songBS_Config.bottomHeight,
-               plusButtonClick = {
+               onPlusClick = {
                   onClickAddPlaylist.invoke(args)
                },
+               optionsMenu = null // TODO
             )
             
             
@@ -253,21 +287,18 @@ object PlayerBottomSheetParent {
       if (songBS_Config.alpha.value > 0f) {
          val curSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
          
-         ResponsivePlayerBS(
-            modifier = Modifier
-               .graphicsLayer{
-                  alpha = songBS_Config.alpha.value
+         if(curSong!=null)
+            ResponsivePlayerBS(
+               modifier = Modifier
+                  .graphicsLayer {
+                     alpha = songBS_Config.alpha.value
+                  },
+               state = songPlayerBS_State,
+               currentSong = curSong,
+               onBackgroundClick = {
+                  onBottomSheetClick.invoke()
                }
-            ,
-            state = songPlayerBS_State,
-            currentSong = curSong,
-            onBackgroundClick = {
-               
-               onBottomSheetClick.invoke()
-               
-               
-            }
-         )
+            )
          
          
       }

@@ -16,7 +16,8 @@ import com.composables.core.rememberBottomSheetState
 data class BottomSheetConfig(
     val peekHeight: Dp? = BSConfigDefaults.peekHeight,
     val expandedHeight: Dp = BSConfigDefaults.expandedHeight,
-    val isHideable: Boolean = false,
+    val isExpandedByDefault: Boolean,
+    val isHideable: Boolean,
     val alpha: Animatable<Float, AnimationVector1D> = Animatable(BSConfigDefaults.alpha),
     val peekDetent: SheetDetent? = peekHeight?.let {
         SheetDetent(
@@ -41,6 +42,9 @@ data class BottomSheetConfig(
     }.toList(),
     val bottomHeight: Dp = peekHeight?:0.dp
 ){
+    fun resolveInitialState(): SheetDetent{
+        return (if(isExpandedByDefault) SheetDetent.FullyExpanded else peekDetent)?: SheetDetent.Hidden
+    }
     
     suspend fun animateVisibilityTo(
         targetValue: Float,
@@ -71,10 +75,17 @@ data class BottomSheetConfig(
 fun rememberBottomSheetConfig(
     peekHeight: Dp? = BSConfigDefaults.peekHeight,
     expandedHeight: Dp = BSConfigDefaults.expandedHeight,
+    isExpandedByDefault: Boolean = true,
     isHideable: Boolean = false,
     alpha:Float = 1f
 ): BottomSheetConfig = remember(peekHeight, expandedHeight, isHideable) {
-    BottomSheetConfig(peekHeight, expandedHeight, isHideable,Animatable(alpha))
+    BottomSheetConfig(
+       peekHeight = peekHeight,
+       expandedHeight = expandedHeight,
+       isExpandedByDefault = isExpandedByDefault,
+       isHideable = isHideable,
+       alpha = Animatable(alpha)
+    )
 }
 
 object BSConfigDefaults{

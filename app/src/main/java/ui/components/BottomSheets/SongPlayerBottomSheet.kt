@@ -614,7 +614,7 @@ private fun SmallPlayer(
          verticalAlignment = Alignment.CenterVertically
       ) {
          LoopingText(
-            currentSong?.title ?: "<unknown>",
+            currentSong?.title ?: stringResource(R.string.unknown),
             modifier = Modifier
                .weight(1f)
                .padding(horizontal = 16.dp),

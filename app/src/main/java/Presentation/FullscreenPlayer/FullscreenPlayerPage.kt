@@ -57,7 +57,10 @@ fun FullscreenPlayerPage(modifier: Modifier = Modifier,initialPage:Int? = null){
 
 private class InitialState(){
     
-    var initialPage by PersistentState("fullscreenViewmodel", { 0 })
+    var initialPage by PersistentState(
+        key = PersistentState.GlobalStates.fullScreenState,
+        defaultFactory = { 0 }
+    )
     
     val pages = listOf("Song","Lyrics")
 }

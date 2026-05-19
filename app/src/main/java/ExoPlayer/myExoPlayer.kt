@@ -10,7 +10,6 @@ import Settings.MySettings
 import Settings.PlayerSettings
 import android.content.Context
 import android.content.SharedPreferences
-import android.media.audiofx.Equalizer
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
@@ -41,7 +40,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -145,7 +143,7 @@ object myExoPlayer {
                }
                
                if(isPlaying.value){
-                  delay(MySettings.settings?.let{it.playerPositionWriteInterval.stateFlow.value}?:2000L)
+                  delay(MySettings.settings?.let{it.playerPosition_WriteInterval.stateFlow.value}?:2000L)
                }
             }
       }

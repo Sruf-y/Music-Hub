@@ -50,6 +50,7 @@ class CrashReporter(val foldername:String? = null) {
         ===== DEVICE INFO =====
         ${getDeviceInfo()}
     """.trimIndent()
+        throw throwable
 
         return writeToDownloads(
             text = crashText,

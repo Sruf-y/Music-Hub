@@ -66,15 +66,16 @@ private fun Preview(){
 fun PlaylistAddOrEdit_Content(
    existingPlaylists: List<Playlist>? = null,
    bottomSheetVM: SheetViewmodel? = null,
-   playlist: Playlist? = null
+   playlist: String? = null
 ) {
    val contextRef = LocalContext.current
    val scope = rememberCoroutineScope()
    
-   var myText by rememberSaveable { mutableStateOf(playlist?.title ?: "") }
+   var myText by rememberSaveable { mutableStateOf(playlist?: "") }
    
    PriorityLayout(
-      modifier = Modifier.fillMaxWidth()
+      modifier = Modifier
+         .fillMaxWidth()
          .wrapContentHeight()
          .padding(vertical = VerticalPadding),
       bottom = {
@@ -87,23 +88,26 @@ fun PlaylistAddOrEdit_Content(
             onConfirm = {
                
                if (myText.isNotEmpty()) {
-                  if (!(existingPlaylists?.map { it -> it.title }?.contains(myText)
-                        ?: false)
+                  // If playlist exists already
+                  if (existingPlaylists?.map { it -> it.title }?.contains(myText) != true
                   ) {
                      val invalidChars = "[\\\\/:*?\"<>]".toRegex()
-                     myText = myText.replace(invalidChars, "_")
-                     myText = myText.replace("|", "\\u2503")
+                     val sanitizedText =  myText
+                        .replace(invalidChars, "_")
+                        .replace("|", "\\u2503")
                      
                      
-                     val file = playlist?.getFileIfExists(contextRef)
-                     
-                     if (file != null) {
-                        file.rename(myText)
-                     } else {
-                        Playlist(myText).save(contextRef)
-                     }
-                     scope.launch {
-                        bottomSheetVM?.dismissCurrent()
+                     Playlist.getPlaylist(contextRef,playlist).let {
+                        if(it == null){
+                           // Create new playlist
+                           Playlist(sanitizedText).save(contextRef)
+                        }else{
+                           // Rename old one
+                           it.rename(sanitizedText,contextRef)
+                        }
+                        scope.launch {
+                           bottomSheetVM?.dismissCurrent()
+                        }
                      }
                      
                      
@@ -127,19 +131,21 @@ fun PlaylistAddOrEdit_Content(
       ){
          val errorText by remember {
             derivedStateOf {
-               if (myText.isEmpty() && hasBegunWritting) {
-                  "Title cannot be blank!"
-               } else if(existingPlaylists?.map { it.title }?.contains(myText) == true){
-                  "Playlist already exists!"
-               }else{
-                  null
-               }
+               if (hasBegunWritting) {
+                  if (myText.isEmpty()) {
+                     "Title cannot be blank!"
+                  } else if (existingPlaylists?.map { it.title }?.contains(myText) == true) {
+                     "Playlist already exists!"
+                  }else null
+               }else null
             }
          }
+         val textColor = MyColor.TextColor()
+         val textStyle = remember { TextStyle(color = textColor) }
          
          PriorityLayout(
             bottom = {
-               errorText?.let { Text(it, color = MyColor.Red) }
+               errorText?.let { Text(it, color = MyColor.Red, style = textStyle) }
             }
             ) {
             OutlinedTextFieldExpanded(
@@ -150,10 +156,10 @@ fun PlaylistAddOrEdit_Content(
                      hasBegunWritting = true
                   }
                },
-               textStyle = TextStyle(color = MyColor.TextColor()),
+               textStyle = textStyle,
                isError = errorText!=null,
                placeholder = {
-                  Text("Title",color = MyColor.Inactive)
+                  Text("Title",color = MyColor.Inactive, style = textStyle)
                }
             )
          }

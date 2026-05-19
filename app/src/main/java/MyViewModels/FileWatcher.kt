@@ -71,7 +71,7 @@ class FileWatcher(
                MOVE_SELF -> "MOVE_SELF"
                else -> "UNKNOWN($event)"
             }
-         com.aacomposetest.Log("Event type : [ ${eventType} ]")
+         com.aacomposetest.Log("Event type : [ ${eventType} ]",Logs.FILE_IO)
          viewModelScope.launch {
             onChangeListenerList.toList().forEach {
                //filter the event
@@ -125,7 +125,7 @@ private class  FileObserverImpl(
    val onEvent: (Int,String?)->Unit = {_,_->}
 ):FileObserver(
    dir,
-   CREATE or DELETE_SELF or DELETE or MODIFY or MOVED_TO or MOVED_FROM or CLOSE_WRITE
+   CREATE or DELETE_SELF or DELETE or MODIFY or MOVED_TO or MOVED_FROM or CLOSE_WRITE or MOVE_SELF
 ) {
    override fun onEvent(event: Int, path: String?) = onEvent.invoke(event,path)
 }

@@ -200,29 +200,22 @@ object Functions {
    }
    
    object JsonOp{
-      private val jsonMutex: Mutex = Mutex()
       
+      val gson = Gson()
       
-      fun saveAsJson(context: Context, filename:String, data:Any,parent:File=context.filesDir,onFinished:(suspend ()->Unit)? = null) {
-         val _filename = filename.replace(".json","")
+      fun saveAsJson(
+         context: Context,
+         filename:String,
+         data:Any,parent:File=context.filesDir
+      ): File {
+         val sanitized = if (filename.endsWith(".json")) filename else "$filename.json"
+         val file = File(parent, sanitized)
          
-         CoroutineScope(Dispatchers.IO).launch {
-            jsonMutex.withLock {
-               if(!parent.exists()){
-                  parent.mkdirs()
-               }
-               
-               val json=Gson().toJson(data);
-               val Filename= "$_filename.json"
-               
-               File(parent,Filename).writeText(json)
-               
-               withContext(Dispatchers.Main) {
-                  onFinished?.invoke()
-               }
-               
-            }
-         }
+         file.parentFile?.mkdirs()
+         
+         file.writeText(gson.toJson(data))
+         
+         return file
       }
       
       
@@ -232,12 +225,8 @@ object Functions {
          filename: String,
          parent: File = context.filesDir
       ): T? {
-         var Filename = filename
-         
-         if (!filename.endsWith(".json"))
-            Filename = "$filename.json"
-         
-         val file = File(parent, Filename)
+         val sanitized = if (filename.endsWith(".json")) filename else "$filename.json"
+         val file = File(parent, sanitized)
          
          return loadFromJson(file)
       }
@@ -249,7 +238,7 @@ object Functions {
                if (file.exists()) {
                   val loadedFile = file.readText()
                   val type = object : TypeToken<T>() {}.type
-                  val readData: T = Gson().fromJson(loadedFile, type)
+                  val readData: T = gson.fromJson(loadedFile, type)
                   return@withContext readData
                }
                return@withContext null
@@ -375,23 +364,26 @@ object Functions {
     *
     * Do not add the extension to the file's name in the [string] parameter
     * */
-   fun File.rename(string:String):File?{
-      if(this.exists()){
-         val filepath = this.toPath()
-         
-         val newExtension = if(this.extension.isNotEmpty())".${this.extension}" else ""
-         
-         
-         val newfile = File(this.parent,string+newExtension)
-         
-         this.renameTo(newfile)
-         
-         return newfile
-      }
-      else {
-         Log.e("ERROR","File does not exist")
+   fun File.rename(string: String, overwrite: Boolean = false): File? {
+      if (!exists()) {
+         Log("File does not exist: $path", Logs.FILE_IO)
          return null
       }
+      
+      val extension = if (this.extension.isNotEmpty()) ".${this.extension}" else ""
+      var newFile = File(parent, string + extension)
+      
+      // Handle existing file
+      if (newFile.exists()) {
+         if (overwrite) {
+            newFile.delete()
+         } else {
+            Log("Destination already exists: ${newFile.path}", Logs.FILE_IO)
+            return null
+         }
+      }
+      
+      return if (renameTo(newFile)) newFile else null
    }
 }
 

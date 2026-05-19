@@ -5,8 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.datastore.preferences.preferencesDataStore
-import com.aacomposetest.Classes.AutoStateFlow
 import com.aacomposetest.Classes.accessCursorValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 
 private val Context.settingsDataStore by preferencesDataStore("app_settings")
@@ -15,10 +16,20 @@ class SettingsRepository(context: Context) {
    
    // Keys
    companion object {
-      val PLAYER_WRITE_MAX_DEBOUNCE = "PLAYER_WRITE_MAX_DEBOUNCE"
+      private val settingsScope = CoroutineScope(Dispatchers.IO)
+      
+      private val PLAYER_WRITE_MAX_DEBOUNCE_KEY = "PLAYER_WRITE_MAX_DEBOUNCE"
+      val playerPosition_WriteIntervalPossibleRange = 20000L..10000L
    }
-   val playerPositionWriteInterval by accessCursorValue(10000L,PLAYER_WRITE_MAX_DEBOUNCE,
-      context.settingsDataStore
+   
+   val playerPosition_WriteInterval by accessCursorValue(
+      defaultValue = 10000L,
+      writeCondition = {
+         it in playerPosition_WriteIntervalPossibleRange
+      },
+      key = PLAYER_WRITE_MAX_DEBOUNCE_KEY,
+      datastoreDir = context.settingsDataStore,
+      scope = settingsScope
    )
    
    

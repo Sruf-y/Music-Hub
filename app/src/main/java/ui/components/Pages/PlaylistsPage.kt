@@ -21,8 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,14 +36,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aacomposetest.Classes.DropdownMenuState
-import com.aacomposetest.Classes.DropdownMenuState.Companion.rememberDropdownMenu
 import com.aacomposetest.Classes.SimpleDropdownMenuState
+import com.aacomposetest.Classes.rememberSimpleDropdownMenu
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
+import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.PlaylistItem
 
@@ -61,9 +59,24 @@ fun PlaylistsPage(
     onPlusClick: (()-> Unit)? = null,
     optionsButtonMenu:SimpleDropdownMenuState? = null,
     onPlaylistClick: ((Playlist) -> Unit)? = null,
+    itemOptionsDropdownMenu: SimpleDropdownMenuState? = null,
     globalBottomSheetViewModel: SheetViewmodel
 ) {
-
+    var playlistToEdit by remember { mutableStateOf<Playlist?>(null) }
+    
+    val deleteItem_Content = rememberBottomSheetInstance {
+        PlaylistDelete_Content(
+            playlist = playlistToEdit,
+            bottomSheetVM = globalBottomSheetViewModel
+        )
+    }
+    val renameItem_Content = rememberBottomSheetInstance {
+        PlaylistAddOrEdit_Content(
+            existingPlaylists = playlists,
+            bottomSheetVM = globalBottomSheetViewModel,
+            playlist = playlistToEdit?.title
+        )
+    }
 
     Box(modifier = modifier) {
 
@@ -76,63 +89,35 @@ fun PlaylistsPage(
                 onPlusClick = onPlusClick,
                 optionsButtonMenu = optionsButtonMenu
             )
+            
             //Separator
             HorizontalSeparator(color = MyColor.SeparatorGray)
 
             // Playlists
-
             LazyColumn(state = state,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(bottom = bottomPadding)
             ) {
-                items(items = playlists) { thisPlaylist ->
-
-                    var menuIsOpen by remember { mutableStateOf(false) }
-                    
+                items(items = playlists) { item ->
                     PlaylistItem(
-                        playlist = thisPlaylist,
+                        playlist = item,
                         onClick = onPlaylistClick,
-                        optionsDropdownMenu = rememberDropdownMenu(
-                            
-                            onOpen = {
-                                
-                            },
-                            onDismiss = {
-                                
-                            },
-                            content = {
-                                DropdownMenu(
-                                    expanded = menuIsOpen,
-                                    onDismissRequest = {
-                                        menuIsOpen = false
-                                    }
-                                ) {
-                                    
-                                    val deleteItemContent = rememberBottomSheetInstance {
-                                        PlaylistDelete_Content(
-                                            playlist = thisPlaylist,
-                                            bottomSheetVM = globalBottomSheetViewModel
-                                        )
-                                    }
-                                    
-                                    DropdownMenuItem(
-                                        text = { Text("Delete") },
-                                        onClick = {
-                                            globalBottomSheetViewModel.addSheet(
-                                                deleteItemContent
-                                            )
-                                            
-                                            menuIsOpen = false
-                                        }
+                        optionsDropdownMenu = rememberSimpleDropdownMenu(
+                            listOf(
+                                "Rename" to {
+                                    globalBottomSheetViewModel.addSheet(
+                                        renameItem_Content.apply { playlistToEdit = item }
                                     )
-                                    
+                                },
+                                "Delete" to {
+                                    globalBottomSheetViewModel.addSheet(
+                                        deleteItem_Content.apply { playlistToEdit = item }
+                                    )
                                 }
-                            }
+                            )
                         )
-                        
                     )
-
                 }
             }
         }
@@ -177,7 +162,7 @@ private fun TopBar(
                 modifier = Modifier
                     .size(buttonsSize)
                     .clip(CircleShape),
-                iconSize = Size(0.75f, 0.75f)
+                iconScale = Size(0.75f, 0.75f)
             ) {
                 onPlusClick?.invoke()
             }
@@ -194,9 +179,9 @@ private fun TopBar(
                         .clip(CircleShape),
                     iconSize = Size(0.75f,0.75f)
                 ){
-                    optionsButtonMenu?.state = true
+                    optionsButtonMenu?.open()
                 }
-                optionsButtonMenu?.content?.invoke()
+                optionsButtonMenu?.RenderMenu()
             }
 
         }

@@ -6,6 +6,7 @@ import ExoPlayer.myExoPlayer
 import androidx.annotation.DrawableRes
 import androidx.annotation.FloatRange
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -28,12 +29,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.aacomposetest.R
 import com.aacomposetest.clickableNoRipple
+import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.Theme
 import ui.components.BottomSheets.PlayPauseButton
@@ -67,18 +71,26 @@ internal fun FullscreenSong(modifier: Modifier = Modifier) {
 private fun content(currentSong: Song?,modifier:Modifier = Modifier){
     Box(modifier){
         
-        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceAround) {
+        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceAround, horizontalAlignment = Alignment.CenterHorizontally) {
             
-            ScreenSpace(verticalPercent = 0.5f){
-                _ImageSpace(
-                    currentSong,
-                    Modifier.fillMaxSize()
+            ScreenSpace(verticalPercent = 0.5f) {
+                
+                SongImage(
+                    song = currentSong, modifier = Modifier
+                        .fillMaxSize(0.7f)
+                        .aspectRatio(1f)
                 )
+                
             }
             
-            ScreenSpace(verticalPercent = 0.15f){
-                _TextSpace(currentSong,modifier = Modifier
-                    .fillMaxSize()
+            ScreenSpace(verticalPercent = 0.15f) {
+                
+                LoopingText(
+                    text = currentSong?.title ?: stringResource(R.string.unknown),
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .align(Alignment.Center),
+                    textAlign = TextAlign.Center
                 )
             }
             
@@ -88,25 +100,12 @@ private fun content(currentSong: Song?,modifier:Modifier = Modifier){
                 _ButtonsSpace(currentSong)
             }
             
-            
-            
-            
         }
     }
     
 }
 
-@Composable
-private fun _ImageSpace(song:Song?, modifier: Modifier = Modifier.fillMaxSize()){
 
-    Box(modifier = modifier, contentAlignment = Alignment.Center){
-
-        SongImage(song = song,modifier = Modifier
-            .fillMaxSize(0.7f)
-            .aspectRatio(1f)
-        )
-    }
-}
 
 @Composable
 private fun SongImage(
@@ -132,17 +131,7 @@ private fun SongImage(
 
 }
 
-@Composable
-private fun _TextSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()){
-    Box(modifier = modifier) {
-        LoopingText(
-            text = song?.title ?: Song.defaultTitle,
-            modifier = Modifier
-                .fillMaxWidth(0.7f)
-                .align(Alignment.BottomCenter)
-        )
-    }
-}
+
 
 @Composable
 private fun _ButtonsSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()){
@@ -208,6 +197,7 @@ private fun ScreenSpace(
         modifier = modifier
             .fillMaxWidth(horizontalPercent)
             .fillMaxHeight(verticalPercent),
-        content = content
+        content = content,
+        contentAlignment = Alignment.Center
     )
 }

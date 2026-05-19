@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.putCursorValue
+import com.aacomposetest.Classes.rememberSimpleDropdownMenu
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
@@ -117,16 +118,13 @@ fun MainSongsColumn(
          
          items(count = state.firstVisibleItemIndex+30) {
             Theme.Glint.GlintBox {
-               SongItem_Mockup(
-                  optionsMenu = {
-                     // requires non-null for propper mockup here
-                  }
-               )
+               SongItem_Mockup()
             }
          }
          
       }
-   }else{
+   }
+   else{
       // Succesful load
       LazyColumn(
          modifier = modifier,
@@ -135,14 +133,14 @@ fun MainSongsColumn(
       ) {
          
          item(key = "sort_header") {
-            if(songs.isNotEmpty()) {
+            
                SortHeader(
                   songs = songs,
                   onFilterClick = {
                      settingsBottomSheetVM?.addSheet(songsSortContent)
                   }
                )
-            }
+            
          }
          
          items(
@@ -161,9 +159,12 @@ fun MainSongsColumn(
                // For when initiating a refresh while having songs on the screen scrolled
                if(AndroidDatabase.isRefreshingSongs){
                   // Apply mockup of on-screen songs for a smoother loading experience
-                  Overlay({
-                     Theme.Glint.GlintBox(Modifier.fillMaxSize())
-                  }) {
+                  Overlay(
+                     modifier = Modifier,
+                     overlay = {
+                        Theme.Glint.GlintBox(Modifier.fillMaxSize())
+                     }
+                  ) {
                      SongItem(
                         song = song,
                         textColor = textColor,
@@ -173,15 +174,13 @@ fun MainSongsColumn(
                               onClick = {
                                  onItemClick.invoke(song)
                               }
-                           )
-                           .padding(vertical = 5.dp),
-                        optionsMenu = {
-                           // TODO
-                        }
+                           ),
+                        optionsMenu = null // TODO
                      )
                   }
                   
-               }else{
+               }
+               else{
                   // Everything works as intended
                   SongItem(
                      song = song,
@@ -193,10 +192,10 @@ fun MainSongsColumn(
                               onItemClick.invoke(song)
                            }
                         )
-                        .padding(vertical = 5.dp),
-                     optionsMenu = {
-                        // TODO
-                     }
+                     ,
+                     optionsMenu = rememberSimpleDropdownMenu(
+                        listOf() // TODO: add options for songs globally. This shouldn't be hard (make an object with callbacks)
+                     ),
                   )
                }
                

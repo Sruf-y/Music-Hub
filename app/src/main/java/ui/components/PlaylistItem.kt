@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -30,9 +31,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aacomposetest.Classes.DropdownMenuState
-import com.aacomposetest.Classes.DropdownMenuState.Companion.rememberDropdownMenu
+import com.aacomposetest.Classes.SimpleDropdownMenuState
+import com.aacomposetest.Classes.rememberSimpleDropdownMenu
 import com.aacomposetest.ui.theme.SrufTheme
+import com.aacomposetest.ui.theme.Theme
 
 @Composable
 fun PlaylistItem(
@@ -44,11 +46,11 @@ fun PlaylistItem(
     thumbNailSize:Dp = 45.dp,
     textPadding: PaddingValues = PaddingValues(10.dp,0.dp),
     optionsSize: Dp = 45.dp,
-    optionsDropdownMenu:DropdownMenuState = rememberDropdownMenu(),
+    optionsDropdownMenu: SimpleDropdownMenuState? = null,
     onClick:((Playlist)->Unit)? = null
 ) {
 
-    val iconTint = if(isSystemInDarkTheme()) Color.White else Color.Black
+    val iconTint = Theme.IconTint()
 
 
     Row(
@@ -85,15 +87,17 @@ fun PlaylistItem(
             
             IconButton(
                 imageVector = Icons.Default.MoreVert,
-                onClick = optionsDropdownMenu.onOpen,
+                onClick = {
+                    optionsDropdownMenu?.open()
+                },
                 modifier = Modifier
                     .align(Alignment.Center)
                 .size(optionsSize),
                 iconSize = Size(0.66f,0.66f),
                 tint = iconTint
             )
-
-            optionsDropdownMenu.content.invoke()
+            
+            optionsDropdownMenu?.RenderMenu()
         }
     }
 }

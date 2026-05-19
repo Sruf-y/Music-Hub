@@ -47,9 +47,11 @@ import com.composables.core.BottomSheetScope
 import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 
 class SheetViewmodel(): ViewModel(){
@@ -80,17 +82,20 @@ class SheetViewmodel(): ViewModel(){
     * */
    suspend fun dismissCurrent(){
       actionMutex.withLock {
-         if(stack.isNotEmpty()) {
-            // synchronously animate and THEN drop the last item from the stack,
-            // if there is one to be dropped
-            
-            stack.last().sheetState.animateTo(SheetDetent.Hidden)
-            stack = stack.dropLast(1)
+         withContext(Dispatchers.Main) {
+            if(stack.isNotEmpty()) {
+               // synchronously animate and THEN drop the last item from the stack,
+               // if there is one to be dropped
+               
+               stack.last().sheetState.animateTo(SheetDetent.Hidden)
+               stack = stack.dropLast(1)
+            }
          }
+         
       }
    }
    // TODO: replace the entire SheetState class with a copied and modifier version of my own from AOSP
-   // TODO: It does work for now but i'd REALLY like to get this done sometime
+   //  It does work for now but i'd REALLY like to get this done sometime
    private suspend fun removeItemFromStack(item: BottomSheetInstance){
       actionMutex.withLock {
          if(stack.isNotEmpty()) {

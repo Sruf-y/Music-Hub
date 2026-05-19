@@ -1,5 +1,6 @@
 package Navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,11 +31,16 @@ fun SafeDrawer(
     
     val localDensity = LocalDensity.current
     
+    BackHandler {
+        if(state.currentValue == ViewDrawerValue.Open)
+            state.close()
+    }
     ViewDrawer(
         modifier = Modifier
             .fillMaxSize()
             .padding(
                 start = with(localDensity) {
+                    // This is just to make sure the drawer can be interacted with from any phone orientation and isn't being blocked by a system bar
                     maxOf(
                         systemBars.getLeft(this, layoutDirection),
                         navBars.getLeft(this, layoutDirection),
@@ -43,7 +49,6 @@ fun SafeDrawer(
                 }
             ),
         state = state,
-        //scrimColor = MyColor.Transparent.toArgb(),
         mainContent = mainContent,
         drawerContent = drawerContent
     )

@@ -5,10 +5,23 @@ import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.aacomposetest.Functions
+import com.aacomposetest.Functions.rename
+import com.aacomposetest.Log
+import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
 import java.io.File
 import com.aacomposetest.R
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.encodeStructure
+import kotlinx.serialization.serializer
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.random.nextLong
@@ -19,10 +32,12 @@ import kotlin.random.nextLong
  * Songs can be moved around, added and removed at will.
  *
  * */
-@Serializable
-class Playlist(
-    var title: String
-) {
+@Serializable()
+class Playlist constructor(
+    val title: String
+)
+{
+    
 
     /**
      * List of song IDs
@@ -35,25 +50,32 @@ class Playlist(
 
     fun setThumbnail(context: Context, @DrawableRes id: Int){
         val _thumbnailString = context.resources.getResourceEntryName(id)
-
+        
         thumbNail = context.resources.getIdentifier(_thumbnailString, "drawable", context.packageName)
     }
 
 
 
-    fun save(context: Context,onFinished: (suspend () -> Unit)? = null){
+    fun save(context: Context):File{
 
-        Functions.JsonOp.saveAsJson(
+        return internalSaveJustData(title,context)
+    }
+    
+    private fun internalSaveJustData(filename:String,context: Context): File {
+        return Functions.JsonOp.saveAsJson(
             context = context,
-            filename = title,
-            data = this,
+            filename = filename,
+            data = this.toIntermediary(),
             parent = getFolder(context),
-            onFinished = onFinished
         )
     }
 
     fun delete(context: Context): Boolean{
         return getFileIfExists(context)?.delete() == true
+    }
+    
+    fun rename(name:String,context: Context,overwrite: Boolean = false): File? {
+        return getFileIfExists(context)?.rename(name,overwrite)
     }
 
 
@@ -116,6 +138,10 @@ class Playlist(
             return null
         }
     }
+    
+    fun toIntermediary(): IntermediaryPlaylist{
+        return IntermediaryPlaylist(songsIdList)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -147,7 +173,7 @@ class Playlist(
     }
 
     companion object {
-
+        
         object Defaults{
             private val _thumbnailString = MyApplication.instance.resources.getResourceEntryName(R.drawable.ic_launcher_foreground)
             val Thumbnail
@@ -189,14 +215,41 @@ class Playlist(
 
         fun getPlaylist(context: Context, title:String?): Playlist?{
 
-            return if(title!=null)Functions.JsonOp.syncLoadFromJson(context,title,getFolder(context)) else null
+            return if(title!=null) {
+                (Functions.JsonOp.syncLoadFromJson(context, title, getFolder(context)) as? IntermediaryPlaylist)?.toPlaylist(title)
+            } else null
+        }
+        
+        fun getFileIfExists(context: Context,title:String): File?{
+            val file = File(getFolder(context), "$title.json")
+            
+            file.exists().let {
+                return if(it){
+                    file
+                }else{
+                    null
+                }
+            }
         }
 
         suspend fun getFromFile(file: File): Playlist?{
-            val result: Playlist? = Functions.JsonOp.loadFromJson(file = file)
+            val result: IntermediaryPlaylist? = Functions.JsonOp.loadFromJson(file = file)
 
-            return result
+            return result?.toPlaylist(file.nameWithoutExtension)
         }
 
+    }
+}
+
+@Serializable
+data class IntermediaryPlaylist(
+    val songsIdList: ArrayList<Long>
+){
+    fun toPlaylist(title:String): Playlist {
+        return Playlist(title).let {
+            it.songsIdList = this.songsIdList
+            //it.setThumbnail() = this.thumbNail // TODO make actual thumbnail recovering
+            it
+        }
     }
 }

@@ -70,7 +70,7 @@ private val customIndicator =
 object MainPager {
    
    @Composable
-   fun invoke(initialPage:Int?, pageContent:@Composable (page:Int)->Unit) {
+   fun RenderPager(initialPage:Int?, pageContent:@Composable (page:Int)->Unit) {
       
       val contextRef = LocalContext.current
       val prefs = remember { MyPrefs.getPrefs(contextRef, MyPrefs.PrefDirs.VisualData) }
@@ -273,7 +273,10 @@ object MainPager {
          "Playlists"
       )
       
-      var initialPage by PersistentState("mainPagerInitialPage",{ 0 })
+      var initialPage by PersistentState(
+         key = PersistentState.GlobalStates.mainPagerSavedPage,
+         defaultFactory = { 0 }
+      )
    }
 }
 

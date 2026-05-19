@@ -21,7 +21,7 @@
 #-renamesourcefileattribute SourceFile
 ###############
 # I use proguard only to remove unused stuff and to keep the app small.
-# I donot want to obfuscate (rename packages, classes, methods, ...) since this is open source
+# I donot want to obfuscate (rename packages, classes, methods, ...) since this is supposed to be open source
 -dontobfuscate
 -dontoptimize
 -keepnames class ** { *; }

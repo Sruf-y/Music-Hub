@@ -10,9 +10,6 @@ data class PlaylistAddSongsPage(val title:String) {
    
    
    companion object{
-      @Composable
-      fun invoke(title:String,content:@Composable (title:String)-> Unit){
-      
-      }
+   
    }
 }

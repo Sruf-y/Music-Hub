@@ -29,14 +29,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -52,6 +49,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aacomposetest.Classes.MyIcons
+import com.aacomposetest.Classes.SimpleDropdownMenuState
+import com.aacomposetest.Classes.rememberSimpleDropdownMenu
 import com.aacomposetest.MyApplication
 import com.aacomposetest.R
 import com.aacomposetest.mapByOrderOf
@@ -68,15 +67,15 @@ data class Page_ViewPlaylist(val title: String) {
    companion object{
       
       @Composable
-      fun PlaylistViewing(
+      fun Page(
          modifier:Modifier = Modifier.fillMaxSize(),
          lazyListState: LazyListState,
          playlistTitle: String,
          onBack:(()-> Unit)? = null,
          bottomPadding: Dp = 0.dp,
          thumbNailSize:Dp = 150.dp,
-         plusButtonClick:(()-> Unit)? =null,
-         onOptionsClickShowMenu: @Composable ((MutableState<Boolean>) -> Unit)? = null
+         onPlusClick:(()-> Unit)? =null,
+         optionsMenu: SimpleDropdownMenuState? = null
       ) {
          Theme.RenderDefaultBackground()
          
@@ -146,7 +145,6 @@ data class Page_ViewPlaylist(val title: String) {
          
          
          
-         val menuIsExpanded = remember { mutableStateOf(false) }
          
          
          
@@ -250,10 +248,10 @@ data class Page_ViewPlaylist(val title: String) {
                         // PLUS ICON
                         IconButton(
                            resId = R.drawable.ic_add,
-                           iconSize = Size(0.75f, 0.75f),
+                           iconScale = Size(0.75f, 0.75f),
                            modifier = Modifier.size(MyIcons.sizeMedium, MyIcons.sizeMedium)
                         ) {
-                           plusButtonClick?.invoke()
+                           onPlusClick?.invoke()
                         }
                         
                         // More options button
@@ -266,11 +264,11 @@ data class Page_ViewPlaylist(val title: String) {
                               modifier = Modifier.size(MyIcons.sizeMedium, MyIcons.sizeMedium),
                               iconSize = Size(0.75f, 0.75f)
                            ) {
-                              menuIsExpanded.value = true
+                              optionsMenu?.open()
                            }
                            
                            // Show the menu, hence a Composable
-                           onOptionsClickShowMenu?.invoke(menuIsExpanded)
+                           optionsMenu?.RenderMenu()
                         }
                      }
                      
@@ -311,54 +309,46 @@ data class Page_ViewPlaylist(val title: String) {
                                  }
                               )
                               .animateItem(),
-                           optionsMenu = { showMenu ->
-                              DropdownMenu(
-                                 expanded = showMenu.value,
-                                 onDismissRequest = { showMenu.value = false }) {
-                                 DropdownMenuItem(
-                                    text = { Text("Remove") },
-                                    onClick = {
-                                       removeItemOnClickListener.invoke(song)
-                                       
-                                       showMenu.value = false
+                           leftmostContent = {
+                              if (!isSearching) {
+                                 IconButton(
+                                    resId = R.drawable.ic_drag_handle,
+                                    modifier = Modifier
+                                       .fillMaxHeight(0.8f)
+                                       .aspectRatio(1f,true)
+                                       .draggableHandle(
+                                          onDragStopped = {
+                                             
+                                             val auxList = playlistSongs.map { it -> it.id }
+                                             
+                                             playlist?.songsIdList?.clear()
+                                             
+                                             playlist?.songsIdList?.addAll(auxList)
+                                             
+                                             playlist?.save(contextRef)
+                                             Toast.makeText(
+                                                contextRef,
+                                                "Playlist saved!",
+                                                Toast.LENGTH_SHORT
+                                             ).show()
+                                          }
+                                       ),
+                                    ripple = null,
+                                    onclick = {
+                                    
                                     }
                                  )
-                              }
-                              
-                           }
-                        ) {
-                           if (!isSearching)
-                              androidx.compose.material3.IconButton(
-                                 modifier = Modifier.draggableHandle(
-                                    onDragStopped = {
-                                       
-                                       val auxList = playlistSongs.map { it -> it.id }
-                                       
-                                       playlist?.songsIdList?.clear()
-                                       
-                                       playlist?.songsIdList?.addAll(auxList)
-                                       
-                                       playlist?.save(contextRef) {
-                                          Toast.makeText(
-                                             contextRef,
-                                             "Playlist saved!",
-                                             Toast.LENGTH_SHORT
-                                          ).show()
-                                       }
-                                    }
-                                 ),
-                                 onClick = {
                                  
-                                 },
-                              ) {
-                                 Icon(
-                                    painter = painterResource(R.drawable.ic_drag_handle),
-                                    contentDescription = "Reorder",
-                                    modifier = Modifier.fillMaxHeight(0.9f).aspectRatio(1f),
-                                    tint = MyColor.TextColor()
-                                 )
                               }
-                        }
+                           },
+                           optionsMenu = rememberSimpleDropdownMenu(
+                              listOf(
+                                 "Remove" to {
+                                    removeItemOnClickListener.invoke(song)
+                                 }
+                              )
+                           )
+                        )
                      }
                   }
                   

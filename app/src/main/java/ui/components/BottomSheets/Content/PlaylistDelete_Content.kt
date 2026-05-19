@@ -27,13 +27,13 @@ import ui.components.BottomSheets.Content.BottomSheetContentDefaults.VerticalPad
 import ui.components.CancelConfirm
 
 @Composable
-fun PlaylistDelete_Content(playlist: Playlist, bottomSheetVM: SheetViewmodel?){
+fun PlaylistDelete_Content(playlist: Playlist?, bottomSheetVM: SheetViewmodel?){
    
    val context = LocalContext.current
    
    val scope = rememberCoroutineScope()
    
-   val myTitle = playlist.title
+   val myTitle = playlist?.title
    
    val question = buildAnnotatedString {
       append("Are you sure you want to ")
@@ -75,7 +75,7 @@ fun PlaylistDelete_Content(playlist: Playlist, bottomSheetVM: SheetViewmodel?){
          }
       },
          onConfirm = {
-            playlist.delete(context)
+            playlist?.delete(context)
             
             scope.launch {
                bottomSheetVM?.dismissCurrent()

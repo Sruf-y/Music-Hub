@@ -1,33 +1,64 @@
 package com.aacomposetest.Classes
 
+import SrufComposeComponents.Text
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.aacomposetest.Classes.SimpleDropdownMenuState
 
-class SimpleDropdownMenuState private constructor(initialState:Boolean, val content: @Composable ()-> Unit) {
+class SimpleDropdownMenuState(
+   initialState:Boolean,
+   private val content: List<Pair<String,()->Unit>>
+) {
    var state by mutableStateOf(initialState)
+      private set
    
-   companion object{
-      @Composable
-      fun rememberSimpleDropdownMenu(initialState:Boolean,content: @Composable ()-> Unit):SimpleDropdownMenuState{
-         return remember(content) {
-            SimpleDropdownMenuState(initialState,content)
+   fun open(){
+      state = true
+      onOpen.invoke()
+   }
+   fun close(){
+      state = false
+      onClose.invoke()
+   }
+   
+   var onClose:()->Unit = {}
+   var onOpen:()->Unit = {}
+   
+   @Composable
+   fun RenderMenu(){
+      DropdownMenu(
+         state,
+         onDismissRequest = {
+            close()
+         }
+      ) {
+         content.forEach {
+            DropdownMenuItem(
+               text = {
+                  Text(it.first)
+               },
+               onClick = {
+                  it.second.invoke()
+                  close()
+               }
+            )
          }
       }
    }
 }
 
-
-
-class DropdownMenuState private constructor(val onOpen:()->Unit = {},val onDismiss:()->Unit = {},val content: @Composable ()-> Unit = {}){
-   companion object{
-      @Composable
-      fun rememberDropdownMenu(onOpen:()->Unit = {}, onDismiss:()->Unit = {}, content: @Composable ()-> Unit = {}):DropdownMenuState{
-         return remember(key1 = onOpen, key2 = onDismiss, key3 = content) {
-            DropdownMenuState(onOpen,onDismiss,content)
-         }
-      }
+@Composable
+fun rememberSimpleDropdownMenu(
+   content: List<Pair<String,()->Unit>>,
+   initialState:Boolean = false
+):SimpleDropdownMenuState{
+   return remember(content) {
+      SimpleDropdownMenuState(initialState,content)
    }
 }

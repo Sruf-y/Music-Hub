@@ -12,8 +12,8 @@ import kotlin.reflect.KProperty
 object MyIcons {
     
     val sizeSmall = 35.dp
-    val sizeMedium = 40.dp
-    val sizeBig = 45.dp
+    val sizeMedium = 45.dp
+    val sizeBig = 65.dp
     
 
     val SrufSign by iconBuilder{

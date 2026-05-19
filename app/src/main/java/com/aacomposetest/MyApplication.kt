@@ -9,12 +9,8 @@ import android.Manifest
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
 import android.database.ContentObserver
-import android.os.IBinder
 import android.os.Process
 import android.provider.MediaStore
 import android.util.Log
@@ -247,16 +243,32 @@ fun Log(
     }
     handleInternalLog(message, tagString, type)
 }
-
+/**
+ * @param throwAnyway will first throw the exception anyway THEN call onError. This is to ensure the error is first NOT handled. Just for testing purposes this can be enabled
+ * */
 inline fun tryTo(
-    onError: (Exception) -> Unit = {},
+    onError: (Exception) -> Unit = {
+        it.printStackTrace()
+    },
+    throwAnyway:Boolean = false,
     action: () -> Unit,
 ) {
-    try {
-       action.invoke()
-    }catch (ex: Exception){
-        onError.invoke(ex)
+    if(!throwAnyway){
+        try {
+            action.invoke()
+        }catch (ex: Exception){
+            onError.invoke(ex)
+        }
+    }else{
+        try {
+            action.invoke()
+        }catch (ex: Exception){
+            throw ex
+            onError.invoke(ex)
+        }
+       
     }
+    
 }
 
 inline fun <T>tryValue(

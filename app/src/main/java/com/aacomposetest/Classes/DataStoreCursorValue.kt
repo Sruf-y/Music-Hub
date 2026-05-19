@@ -8,9 +8,10 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
@@ -23,28 +24,36 @@ import kotlinx.coroutines.launch
 inline fun <reified T : Any> accessCursorValue(
    defaultValue: T,
    key: String,
+   scope: CoroutineScope,
    datastoreDir: DataStore<Preferences>,
+   noinline writeCondition:(T)-> Boolean = {true},
    writeDebounce:Long = 500L
 ): PersistentState<DataStoreCursorValue<T>> {
    return PersistentState(key){
       DataStoreCursorValue(
          defaultValue = defaultValue,
          key = genericKey<T>(key),
+         writeCondition = writeCondition,
          datastoreDir = datastoreDir,
-         writeDebounce = writeDebounce
+         writeDebounce = writeDebounce,
+         scope = scope
       )
    }
 }
+
+
+
+
+
 
 class DataStoreCursorValue<T : Any>(
    defaultValue:T,
    val key: Preferences.Key<T>,
    val datastoreDir:DataStore<Preferences>,
-   val writeDebounce:Long = 500L
-): ViewModel(
+   var writeCondition:(T)-> Boolean = {true},
+   val writeDebounce:Long = 500L,
+   private val scope: CoroutineScope
 ){
-   private var castErrorMessage = "Cast error for CursorValue in its viewModel. Key:[${key.name}]"
-   
    private val immediateFlow = AutoStateFlow<T>(defaultValue)
    
    private val writtenFlow = datastoreDir.data
@@ -53,20 +62,20 @@ class DataStoreCursorValue<T : Any>(
    /**
     * Emits whenever [writeValue] is called but also when a disk write finishes.
     * */
-   val stateFlow = combine(
+   val stateFlow:StateFlow<T> = combine(
       immediateFlow.stateFlow,
       writtenFlow
    ) { immediate,written->
       immediate
    }.stateIn(
-      scope = viewModelScope,
+      scope = scope,
       started = SharingStarted.WhileSubscribed(5000L),
       initialValue = defaultValue
    )
    
    init {
       // FLOW - Collect immediate value and write it to disk
-      viewModelScope.launch {
+      scope.launch(Dispatchers.Default) {
          immediateFlow.stateFlow
             // Wait 500ms to before writing data to file in case a new value is about to be written
             // in quick succestion. In that case don't write and start waiting again but on behalf of the next value
@@ -75,6 +84,9 @@ class DataStoreCursorValue<T : Any>(
                datastoreDir.edit {
                   
                   //TODO: STATEFUL - Implement here if wanted/needed in the future.
+                  // note to self: by stateful i meant "create an 'oldValue' and compare against it if another variable, "equalityCheck" is true. Current behaviour in that
+                  // instance is when that variable would be false.
+                  // I don't see a reason for that tho
                   
                   it[key] = newImmediateValue
                }
@@ -86,7 +98,10 @@ class DataStoreCursorValue<T : Any>(
     * Sets the value that is read by the stateFlow. The value will be written to disk after the debounced time [writeDebounce]
     * */
    fun setValue(value:T){
-      immediateFlow.setValue(value)
+      if(writeCondition.invoke(value)){
+         immediateFlow.setValue(value)
+      }
+      
    }
    
    /**
@@ -95,7 +110,7 @@ class DataStoreCursorValue<T : Any>(
    fun emergencyForceWrite(value:T){
       immediateFlow.setValue(value)
       
-      viewModelScope.launch {
+      scope.launch {
          datastoreDir.edit {
             it[key] = value
          }

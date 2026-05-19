@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.aacomposetest.Classes.MyIcons
+import com.aacomposetest.Classes.SimpleDropdownMenuState
 import com.aacomposetest.R
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
@@ -74,15 +75,16 @@ private fun Preview(){
 @Composable
 fun SongItem_Mockup(
     modifier: Modifier = Modifier,
-    height:Dp = 60.dp,
+    height:Dp = MyIcons.sizeBig,
     iconTint:Color = Theme.IconTint(),
     textPadding: PaddingValues = PaddingValues(0.dp,0.dp),
-    optionsMenu: @Composable ((isExpanded: MutableState<Boolean>)-> Unit)? = null,
+    optionsMenu: SimpleDropdownMenuState? = null,
     leftmostContent: @Composable (RowScope.() -> Unit)? = null
 ){
-    Box(modifier = modifier){
+    Box(modifier = modifier.padding(vertical = (2.5).dp)){
         Row(
             modifier = Modifier
+                .padding(vertical = 5.dp)
                 .height(height)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -128,7 +130,7 @@ fun SongItem_Mockup(
             }
             
             
-            var menuIsExpanded = remember { mutableStateOf(false) }
+            
             
             // Playlist More options
             
@@ -141,11 +143,11 @@ fun SongItem_Mockup(
                         iconSize = Size(0.75f,0.75f),
                         tint = iconTint,
                         onClick = {
-                            menuIsExpanded.value = true
+                            optionsMenu.open()
                         }
                     )
                     
-                    optionsMenu.invoke(menuIsExpanded)
+                    optionsMenu.RenderMenu()
                 }
             }
         }
@@ -159,15 +161,13 @@ fun SongItem(
     textColor:Color = Theme.TextColor(),
     titleFontSize: TextUnit = 16.sp,
     artistFontSize: TextUnit = 12.sp,
-    height:Dp = 60.dp,
+    height:Dp = MyIcons.sizeBig,
     iconTint:Color = Theme.IconTint(),
     textPadding: PaddingValues = PaddingValues(0.dp,0.dp),
-    optionsMenu: @Composable ((isExpanded: MutableState<Boolean>)-> Unit)? = {},
+    optionsMenu: SimpleDropdownMenuState? = null,
     leftmostContent: @Composable (RowScope.() -> Unit)? = null
 ) {
-
-
-    Box(modifier = modifier){
+    Box(modifier = modifier.padding(vertical = (2.5).dp)){
         Row(
             modifier = Modifier
                 .height(height)
@@ -175,16 +175,13 @@ fun SongItem(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-
+            
             leftmostContent?.invoke(this@Row)
-
-
 
             // Song icon
             Box(contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(horizontal = 10.dp)
+                    .padding(horizontal = 5.dp)
                     .fillMaxHeight(0.8f).aspectRatio(1f)
                     .clip(RoundedCornerShape(size = 10.dp))
             ){
@@ -244,27 +241,27 @@ fun SongItem(
                     Spacer(modifier = Modifier.weight(1f))
                 }
             }
-
-
-            var menuIsExpanded = remember { mutableStateOf(false) }
+            
 
             // Playlist More options
 
             if(optionsMenu!=null){
-                Box(contentAlignment = Alignment.Center,modifier = Modifier.padding(5.dp)) {
-                    
-                    
+                Box(contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                    .size(MyIcons.sizeMedium, MyIcons.sizeMedium)
+                    .padding(5.dp)
+                ) {
                     IconButton(
                         imageVector = Icons.Default.MoreVert,
-                        modifier = Modifier.size(MyIcons.sizeMedium, MyIcons.sizeMedium),
+                        modifier = Modifier.fillMaxSize(),
                         iconSize = Size(1f,1f),
                         tint = iconTint,
                         onClick = {
-                            menuIsExpanded.value = true
+                            optionsMenu.open()
                         }
                     )
 
-                    optionsMenu.invoke(menuIsExpanded)
+                    optionsMenu.RenderMenu()
                 }
             }
         }

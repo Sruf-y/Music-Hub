@@ -166,7 +166,6 @@ fun AddSongsToPlaylistPage(
                         items(items = checkableItems, key = { it.item.id }) { item ->
                             SongItem(
                                 leftmostContent = {
-                                    
                                     Checkbox(
                                         modifier = Modifier
                                             .padding(horizontal = 10.dp),
@@ -201,47 +200,39 @@ fun AddSongsToPlaylistPage(
             //if(playlist?.songsIdList?.containsAll(validList.filter { it->it.isChecked.value }.map{it->it.item.id})==false)
                 ElevatedButton(
                     onClick = {
-
-
-
-                            playlist?.songsIdList?.apply {
-
-
-                                removeAll(checkableItems.filter { it -> !it.isChecked.value }
-                                    .map { it -> it.item.id })
-
-                                checkableItems.filter { it -> it.isChecked.value }
-                                    .map { it -> it.item.id }.let { mappedList ->
-
-
-                                        addAll(mappedList.filter { it ->
-                                            !this.contains(
-                                                it
-                                            )
-                                        })
-                                    }
-
-                            }
-
-
-
-                            playlist?.save(contextRef) {
-
-                                /**
-                                 * If the currently playing song was in this playlist, don't continue playing in this playlist.
-                                 * */
-                                myExoPlayer.currentlyPlayingSong.getValue?.let {
-                                    if(playlist?.songsIdList?.contains(it.id) == true){
-                                        myExoPlayer.setCurrentPlaylist(null)
-                                    }
+                        playlist?.songsIdList?.apply {
+                            
+                            removeAll(checkableItems.filter { it -> !it.isChecked.value }
+                                .map { it -> it.item.id })
+                            
+                            checkableItems.filter { it -> it.isChecked.value }
+                                .map { it -> it.item.id }.let { mappedList ->
+                                    
+                                    
+                                    addAll(mappedList.filter { it ->
+                                        !this.contains(
+                                            it
+                                        )
+                                    })
                                 }
-
-                                onBack.invoke()
+                            
+                        }
+                        
+                        
+                        playlist?.save(contextRef)
+                        /**
+                         * If the currently playing song was in this playlist, don't continue playing in this playlist.
+                         * */
+                        myExoPlayer.currentlyPlayingSong.getValue?.let {
+                            if (playlist?.songsIdList?.contains(it.id) == true) {
+                                myExoPlayer.setCurrentPlaylist(null)
                             }
-
-
-
-                }
+                        }
+                        
+                        onBack.invoke()
+                        
+                        
+                    }
                 ) {
                     Text(text = "Confirm", fontSize = 18.sp, modifier = Modifier.padding(5.dp))
                 }

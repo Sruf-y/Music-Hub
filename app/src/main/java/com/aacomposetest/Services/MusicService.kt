@@ -22,8 +22,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat.getSystemService
-import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.lifecycleScope
 import com.aacomposetest.MyApplication
 import com.aacomposetest.R
 import androidx.media.app.NotificationCompat.MediaStyle
@@ -32,14 +30,12 @@ import com.aacomposetest.Classes.NotificationPoster.Companion.openMediaStoreUriP
 import com.aacomposetest.Functions
 import com.aacomposetest.Log
 import com.aacomposetest.Logs
-import com.aacomposetest.MyApplication.Companion.allertPoster
 import com.aacomposetest.MyApplication.Companion.crashLogger
 import com.aacomposetest.tryTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import okhttp3.Dispatcher
 
 class MusicService: Service() {
    
@@ -336,9 +332,13 @@ class MusicService: Service() {
    fun StartForegroundNotification(notification:Notification){
       /** It seems after testing that this now passes without throwing an exception, but keeping the exception
        * handling is preffered as one can still be thrown at a random time.
+       *
+       * TODO: Set throwAnyway to false. This is here as true for testing because otherwise it will silently fail. And even if it does, now it shouldn't have any issue anymore
+       *    due to app UI restarting the service + the proccess having a bind to the service which on fail allows for restart.
        * */
       tryTo(
-         {
+         throwAnyway = true,
+         onError = {
             val uri = MyApplication.crashLogger.writeCrashToFile(
                throwable = it,
                context = this,
@@ -400,6 +400,7 @@ class MusicService: Service() {
          stopSelf()
          MyApplication.killProccess()
       }else{ // When trying to close the notification itself
+         removeNotification()
          stopForeground(STOP_FOREGROUND_REMOVE)
          currentLayerState = LayerState.NONE
       }

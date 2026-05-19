@@ -10,6 +10,7 @@ import com.aacomposetest.Classes.AutoStateFlow
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.Setting
 import com.aacomposetest.Classes.getCursorValue
+import com.aacomposetest.Log
 import com.aacomposetest.MyApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -205,7 +206,7 @@ private class PlaylistLISTHolder(val IOscope: CoroutineScope){
 
             IOscope.launch {
 
-                filesList.forEachIndexed { index, file ->
+                filesList.sortedBy { it.nameWithoutExtension }.forEachIndexed { index, file ->
 
                     Playlist.getFromFile(file)?.let { loadedPlaylist ->
                         newlist.add(loadedPlaylist)
@@ -213,17 +214,15 @@ private class PlaylistLISTHolder(val IOscope: CoroutineScope){
 
                 }
 
-
-                _allPlaylists.update { old->
-
-                    newlist
-                }
+                Log("New list is ${newlist.map{it.title}}")
+                _allPlaylists.value = newlist
+                
                 onfinished?.invoke()
             }
 
 
         } else {
-            _allPlaylists.update { old-> newlist  }
+            _allPlaylists.value = newlist
             onfinished?.invoke()
         }
     }

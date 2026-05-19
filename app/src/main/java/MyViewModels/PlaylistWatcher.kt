@@ -3,9 +3,12 @@ package MyViewModels
 import AppDatabase.PlaylistRelated.Playlist
 import MyViewModels.FileWatcher.Companion.FileWatchListener
 import android.content.Context
+import android.os.FileObserver
 import android.os.FileObserver.CLOSE_WRITE
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.aacomposetest.CrashReporter
 import com.aacomposetest.MyApplication
@@ -39,7 +42,7 @@ class PlaylistWatcher(fileWatcher: FileWatcher, val logger: CrashReporter  = MyA
         }
     }
 
-    var file:MutableState<File?> = mutableStateOf(null)
+    var file by mutableStateOf<File?>(null)
         private set
     private val _curPlaylist = MutableStateFlow<Playlist?>(null)
     val playlist = _curPlaylist.asStateFlow()
@@ -55,10 +58,10 @@ class PlaylistWatcher(fileWatcher: FileWatcher, val logger: CrashReporter  = MyA
         
         if (result == null) {
             _curPlaylist.value = null
-            file.value = null
+            file = null
         } else {
             _curPlaylist.value = result
-            file.value = result.getFileIfExists(context)!!
+            file = result.getFileIfExists(context)!!
         }
     }
 
@@ -72,10 +75,10 @@ class PlaylistWatcher(fileWatcher: FileWatcher, val logger: CrashReporter  = MyA
     val listener = FileWatchListener(
         key = listenerKey,
         fileNameFilter = {name->
-            name == file.value?.name
+            name == file?.name
         },
         eventFilter = {event->
-            event == CLOSE_WRITE
+            event and (CLOSE_WRITE or FileObserver.MODIFY or FileObserver.MOVED_FROM or FileObserver.MOVED_TO or FileObserver.DELETE) >0
         },
         onEvent = { event, name ->
             

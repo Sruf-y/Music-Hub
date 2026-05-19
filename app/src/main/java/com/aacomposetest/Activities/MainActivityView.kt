@@ -5,7 +5,7 @@ import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
 import Navigation.Destinations.EqualizerTemporaryDestination
 import Navigation.Destinations.MainPager
-import Navigation.Destinations.PlayerBottomSheetParent
+import Navigation.Destinations.PlayerBottomSheetContainer
 import Navigation.Destinations.PlaylistAddSongsPage
 import Navigation.NavExtensions.safeNavigate
 import Navigation.SafeDrawer
@@ -75,10 +75,6 @@ import kotlinx.serialization.InternalSerializationApi
 import MyViewModels.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
 import MyViewModels.SheetViewmodel
-import android.content.ComponentName
-import android.content.ServiceConnection
-import android.os.IBinder
-import com.aacomposetest.Logs
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
 
@@ -358,10 +354,10 @@ private fun ParentContainer(
             Box(
                modifier = Modifier
                   .fillMaxSize()
+                  .background(Theme.Sourcesets.SongsBackground())
                   .navigationBarsPadding()
                   .displayCutoutPadding()
                   .systemBarsPadding()
-                  .background(Theme.Sourcesets.SongsBackground())
                   .graphicsLayer {
                      shape = RoundedCornerShape(
                         size = 20.dp.times(drawerState.currentOffset)
@@ -389,15 +385,15 @@ private fun ParentContainer(
                 * */
                MyNavigation(
                   startDestination = {
-                     PlayerBottomSheetParent
+                     PlayerBottomSheetContainer
                   }.invoke(),
                   navController = navController
                ) {
                   
                   
-                  composable<PlayerBottomSheetParent> {
+                  composable<PlayerBottomSheetContainer> {
                      
-                     PlayerBottomSheetParent.invoke(
+                     PlayerBottomSheetContainer.RenderBottomSheetContainer(
                         startDestination = MainPager,
                         prefs = prefs,
                         localNavController = playerBS_mainContentNavController,

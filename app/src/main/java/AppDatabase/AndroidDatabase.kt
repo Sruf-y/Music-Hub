@@ -198,7 +198,7 @@ object AndroidDatabase {
             
             
             Playlist.getFolder(context).listFiles()?.forEach {
-               val openedPlaylist: Playlist? = Functions.JsonOp.loadFromJson(file = it)
+               val openedPlaylist: Playlist? = Playlist.getFromFile(it)
                
                
                openedPlaylist?.let { playlist->
