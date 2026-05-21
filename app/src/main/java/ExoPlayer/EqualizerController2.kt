@@ -36,28 +36,14 @@ import ui.components.ConnectedSliderGroup
 import ui.components.rememberSliderGroupState
 
 /**
- * TODO: Replace the equalizer with a [DynamicsProcessing]
+ * TODO: finish this
  * */
 @OptIn(UnstableApi::class)
 class EqualizerController2(sessionId: Int){
    /**
     * Equalizer affects only captured noise. This means there is no need to destroy it since it dies with the proccess.
     * */
-   private var equalizer: Equalizer = Equalizer(0,sessionId)
-   
-   /**
-    * A list of the available presets as strings
-    * */
-   var presets by mutableStateOf(listOf<String>())
-      private set
-   
-   /**
-    * Gets the current preset.
-    *
-    * @return the preset that is set at the moment.
-    * */
-   var currentPreset by mutableIntStateOf(0)
-      private set
+   private var equalizer: DynamicsProcessing = DynamicsProcessing(sessionId)
    
    
    var enabled by mutableStateOf(false)
@@ -68,90 +54,41 @@ class EqualizerController2(sessionId: Int){
       enabled = equalizer.enabled
    }
    
-   private fun refreshCurrentPreset(){
-      currentPreset = equalizer.currentPreset.toInt()
-   }
    
-   // Will list the available fresets from the system
-   private fun updatePresets(){
-      val nr = equalizer.numberOfPresets
-      
-      presets = List(nr.toInt()) {it-> equalizer.getPresetName(it.toShort()) }
-   }
    
-   /**
-    * Change the settings to a given preset from [presets] using its index
-    * */
-   fun changeSettingsToPreset(preset:Int){
-      if(preset>=0 && preset < presets.size) {
-         equalizer.usePreset(preset.toShort())
-      }
-      onSettingsChanged()
-   }
    
-   /**
-    * Change the settings by providing a new instance
-    * */
-   fun changeSettings(block:(Equalizer.Settings)-> Equalizer.Settings){
-      equalizer.properties = block.invoke(equalizer.properties)
-      onSettingsChanged()
-   }
    
-   var bandLevels by mutableStateOf<List<Short>>(listOf())
-      private set
    
-   val levelRange:List<Short>
-      get() {
-         return ArrayList<Short>().apply {
-            val range = equalizer.bandLevelRange.toList()
-            addAll(range)
-            Log("Range is from ${range.firstOrNull()} to ${range.lastOrNull()}")
-         }
-      }
-   
-   fun refreshData(){
-      onSettingsChanged()
-   }
    private fun onSettingsChanged(){
-      refreshCurrentPreset()
-      bandLevels = _getBandLevels()
-      
+   
    }
    
    init {
-      updatePresets()
       onSettingsChanged()
    }
    
    /**
     * Delete later, does nothing, just to see what functions do what
     * */
-   fun getBands(): Unit{
-      val listOfCenterFrequencies = ArrayList<Int>()
-      val numberOfBands = equalizer.numberOfBands
+   fun functionToTryOutStuffAndDeleteLater(): Unit{
       
-      for(i in 0 until numberOfBands) {
-         val range = equalizer.getCenterFreq(i.toShort())
+      for(i in 0..equalizer.channelCount){
+         val a = equalizer.getChannelByChannelIndex(i)
          
-         listOfCenterFrequencies.add(range)
       }
       
-      val levelOfBand0 = equalizer.getBandLevel(listOfCenterFrequencies[0].toShort())
    }
    
-   private fun _getBandLevels():List<Short>{
-      val list = mutableListOf<Short>()
-      val numberOfBands = equalizer.numberOfBands
-      for(i in 0 until numberOfBands) {
-         val item = equalizer.getBandLevel(i.toShort())
-         list.add(item)
-         Log(item.toInt().toString())
-      }
-      
-      return list
-   }
-   
-   
+   data class BandData(
+      val bandIndex: Int,
+      val threshold: Float,
+      val ratio: Float,
+      val attackMs: Float,
+      val releaseMs: Float,
+      val kneeWidthDb: Float,
+      val makeupGainDb: Float,
+      val enabled: Boolean
+   )
    
    
    // TODO: Finish storage logic (REALLY need to automate this sometime)
@@ -184,16 +121,9 @@ class EqualizerController2(sessionId: Int){
       @Composable
       internal fun BandsTestPreview(){
          
-         val data by remember {
+         val data:List<Float>? by remember {
             derivedStateOf {
-               myExoPlayer.equalizerController?.bandLevels?.map {
-                  it.toFloat().map(
-                     myExoPlayer.equalizerController?.levelRange?.first()?.toFloat() ?: 0f,
-                     myExoPlayer.equalizerController?.levelRange?.last()?.toFloat() ?: 1f,
-                     0f,
-                     1f
-                  )
-               }
+               listOf()
             }
          }
          
@@ -221,14 +151,15 @@ class EqualizerController2(sessionId: Int){
                )
                
                Button({
-                  myExoPlayer.equalizerController?.refreshData()
                   tryTo {
                      groupState.setValues {
                         data?:emptyList()
                      }
                   }
-                  
-               }) { Text("Refresh") }
+               }
+               ) {
+                  Text("Refresh")
+               }
             }
          }
       }

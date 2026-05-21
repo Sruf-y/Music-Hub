@@ -41,7 +41,7 @@ import ui.components.rememberSliderGroupState
  * TODO: Replace the equalizer with a [DynamicsProcessing]
  * */
 @OptIn(UnstableApi::class)
-class EqualizerController(sessionId: Int){
+class EqualizerController0(sessionId: Int){
    /**
     * Equalizer affects only captured noise. This means there is no need to destroy it since it dies with the proccess.
     * */
@@ -186,16 +186,9 @@ class EqualizerController(sessionId: Int){
       @Composable
       internal fun BandsTestPreview(){
          
-         val data by remember {
+         val data:List<Float>? by remember {
             derivedStateOf {
-               myExoPlayer.equalizerController?.bandLevels?.map {
-                  it.toFloat().map(
-                     myExoPlayer.equalizerController?.levelRange?.first()?.toFloat() ?: 0f,
-                     myExoPlayer.equalizerController?.levelRange?.last()?.toFloat() ?: 1f,
-                     0f,
-                     1f
-                  )
-               }
+               emptyList()
             }
          }
          
@@ -223,7 +216,7 @@ class EqualizerController(sessionId: Int){
                )
                
                Button({
-                  myExoPlayer.equalizerController?.refreshData()
+                  
                   tryTo {
                      groupState.setValues {
                         data?:emptyList()

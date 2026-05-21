@@ -13,6 +13,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastForEach
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -42,7 +43,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 interface MyPlayerListener{
    fun onToggle(value:Boolean)
@@ -83,6 +85,13 @@ private inline fun ArrayList<MyPlayerListener>.dispatchSeek() {
 
 object myExoPlayer {
    
+   
+   var isSongDurationShort by mutableStateOf(false)
+      private set
+   private fun updateisSongDurationShort(duration:Long){
+      isSongDurationShort = duration<5000
+   }
+   
    val myListeners = ArrayList<MyPlayerListener>()
    
    fun registerListener(listener:MyPlayerListener){
@@ -111,7 +120,8 @@ object myExoPlayer {
    private val diskWriteFlow = AutoStateFlow<Long>(prefs?.getCursorValue(MyPrefs._prefs_LastSongPosition,0) ?: 0)
    // Handles song position saving.
    private val progressVM = DataObserverViewModel<Long>(
-      delayMillis = 250,
+      // For shorter audio set the progress to update faster
+      delayMillis = {if(isSongDurationShort) 50 else 250 },
       initialValue = prefs?.getCursorValue(MyPrefs._prefs_LastSongPosition, 0) ?: 0,
       observingFunction = {
          val curSong = currentlyPlayingSong.getValue
@@ -128,12 +138,12 @@ object myExoPlayer {
          
          progress
       },
-      onValueChangeDelayMillis = 500,
+      onValueChangeDelayMillis ={ if(isSongDurationShort) 50 else 500},
       onValueChange = {
-         
          diskWriteFlow.setValue(it)
       }
    ).apply {
+      /** Is already delayed Look after the first write */
       viewModelScope.launch {
          diskWriteFlow.stateFlow
             .collect {
@@ -158,7 +168,7 @@ object myExoPlayer {
    private var songsVM : SongsViewModel? = null
    
    private var exoPlayer: External_ExoPlayer? = null
-   var equalizerController: EqualizerController? = null
+   var equalizerController: EqualizerController2? = null
       private set
    var isPrepared = false
    
@@ -207,7 +217,7 @@ object myExoPlayer {
                            isPrepared = true
                            if(equalizerController==null){
                               /** Is initialized here because the audioSessionId is not valid until exoplayer is "prepared" */
-                              equalizerController = EqualizerController(this@apply.audioSessionId)
+                              equalizerController = EqualizerController2(this@apply.audioSessionId)
                            }
                         }
                         Player.STATE_ENDED -> {
@@ -383,8 +393,7 @@ object myExoPlayer {
                song.apply {
                   timesPlayed++
                }
-               
-               
+               updateisSongDurationShort(it.duration)
                
                
                

@@ -4,7 +4,6 @@ import androidx.annotation.OptIn
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
-import com.aacomposetest.Log
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -13,30 +12,40 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-
+/**
+ * **Note:**
+ *  [isStateful] does not work with current implementation and will always be coutned as true. So to avoid unessesary
+ *  checks, it is better to leave it as false as that allows only the State check to happen and this class' check to be ignored.
+ *
+ * @param delayMillis delay between reads
+ * @param onValueChangeDelayMillis delay between writtings to the value variable
+ * @param observingFunction function that is ran at an interval of [delayMillis] and written at
+ * an interval of [onValueChangeDelayMillis] and writes the output of the function to the value variable
+ * @param initialValue the first value emitted. This is required since this class uses stateFlow as its base
+ * @param isStateful if the [observingFunction] should write to the stateFlow even if the last value was the same as the current value.
+ *
+ *
+ * */
 @kotlin.OptIn(FlowPreview::class)
 class DataObserverViewModel<T>(
    val observingFunction:()->T,
    val initialValue:T,
-   var delayMillis: Long = 250,
-   var onValueChangeDelayMillis:Long = 500,
+   var delayMillis: ()->Long = {250},
+   var onValueChangeDelayMillis:()->Long = {500},
    var isStateful: Boolean = false,
    var onValueChange:(T)-> Unit = {
    
    }
 ): ViewModel()
 {
-   
-   
-   
    private var valueChangeJob:Job? = null
    
-   private val _progress = MutableStateFlow<T>(initialValue)
-   val progress: StateFlow<T> = _progress.asStateFlow()
+   private val _value = MutableStateFlow<T>(initialValue)
+   val value: StateFlow<T> = _value.asStateFlow()
    
-   fun handleBeingStateful(newValue:T,onPerformChange:()-> Unit){
+   private fun handleBeingStateful(newValue:T,onPerformChange:()-> Unit){
       if(isStateful){
-         if(_progress.value != newValue){
+         if(_value.value != newValue){
             onPerformChange.invoke()
          }
       }else{
@@ -49,8 +58,8 @@ class DataObserverViewModel<T>(
       if(updaterJob == null){
          updaterJob = viewModelScope.launch {
             while(true){
-               updateProgress()
-               delay(delayMillis)
+               updateValue()
+               delay(delayMillis.invoke())
             }
             
          }
@@ -65,17 +74,17 @@ class DataObserverViewModel<T>(
    
    
    @OptIn(UnstableApi::class)
-   private fun updateProgress() {
+   private fun updateValue() {
       
       // Doesn't update if the same value is tried to be emitted
       handleBeingStateful(observingFunction.invoke()){
-         _progress.value = observingFunction.invoke()
+         _value.value = observingFunction.invoke()
       }
       
    }
    
    fun forceValue(value:T){
-      _progress.tryEmit(value)
+      _value.tryEmit(value)
    }
    
    fun startUpdates() {
@@ -90,14 +99,14 @@ class DataObserverViewModel<T>(
       // Job that reacts to the core udpater's value updates, thus should not be interrupted and only canceled at onCleared()
       valueChangeJob = viewModelScope.launch {
          // Use debounce
-         var lastValue = progress.value
+         var lastValue = value.value
          // Run in a loop with a DISTINCT check then debounce
          while (true){
-            if(lastValue!=progress.value) {
-               onValueChange.invoke(progress.value)
-               lastValue = progress.value
+            if(lastValue!=value.value) {
+               onValueChange.invoke(value.value)
+               lastValue = value.value
             }
-            delay(onValueChangeDelayMillis)
+            delay(onValueChangeDelayMillis.invoke())
          }
          
       }

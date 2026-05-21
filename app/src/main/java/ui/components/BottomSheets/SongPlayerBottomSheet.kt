@@ -375,7 +375,7 @@ fun ResponsivePlayerBS(
             0f..(currentSong?.duration?.toFloat()?:1f)
          }
       }
-      val curPos by myExoPlayer.currentPositionVM().progress.collectAsState()
+      val curPos by myExoPlayer.currentPositionVM().value.collectAsState()
       
       
       
@@ -450,7 +450,7 @@ fun ResponsiveSlider(
 ) {
    
    val currentSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
-   val curPos by myExoPlayer.currentPositionVM().progress.collectAsState()
+   val curPos by myExoPlayer.currentPositionVM().value.collectAsState()
    
    val range by remember(currentSong) {
       derivedStateOf {
@@ -467,6 +467,7 @@ fun ResponsiveSlider(
    
    val calculatedSliderPosition by remember {
       derivedStateOf {
+         
          if (isUserDragging.value == false && userDragConcluded.value == false) {
             curPos.toFloat()
          } else {
@@ -487,15 +488,18 @@ fun ResponsiveSlider(
    Box(
       modifier = modifier
    ){
-      
+      val isSongShort by remember {
+         derivedStateOf {
+            myExoPlayer.isSongDurationShort
+         }
+      }
       // Time text
       Box(modifier = Modifier.fillMaxWidth()){
-         val duration = remember(currentSong) { currentSong?.duration?:1L }
          
          val fontSize = remember { 14.sp }
-         
+         /** Left text */
          Text(
-            if(duration<5*1000) calculatedSliderPosition.toLong().toString().padStart(4, '0')
+            if(isSongShort) calculatedSliderPosition.toLong().toString().padStart(4, '0')
             else
                DateUtils.formatElapsedTime((calculatedSliderPosition/1000).toLong()),
             color = Color.White,
@@ -504,9 +508,9 @@ fun ResponsiveSlider(
          )
          
          
-         
+         /** Right text */
          Text(
-            if(duration<5*1000) range.endInclusive.toLong().toString().padStart(4, '0')
+            if(isSongShort) range.endInclusive.toLong().toString().padStart(4, '0')
             else
                DateUtils.formatElapsedTime((range.endInclusive/1000).toLong()),
             color = Color.White,

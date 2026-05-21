@@ -438,6 +438,24 @@ class MusicService: Service() {
          val activityManager = getSystemService(MyApplication.instance, ActivityManager::class.java) as ActivityManager
          val appTasks = activityManager.appTasks
          
+         
+         appTasks.isNotEmpty().let {
+            Log("App task is alive = ${it}")
+            if(it){
+               appTasks.forEachIndexed { index, task ->
+                  val info = task.taskInfo
+                  Log("Tasks", """
+            Task $index:
+            - TaskId: ${info.taskId}
+            - NumActivities: ${info.numActivities}
+            - BaseActivity: ${info.baseActivity?.className}
+            - TopActivity: ${info.topActivity?.className}
+            - IsVisible: ${info.isVisible}
+        """.trimIndent(),"i")
+               }
+            }
+         }
+         
          return appTasks.isNotEmpty()
       }
       

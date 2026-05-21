@@ -30,7 +30,7 @@ fun EqualizerPage(modifier: Modifier = Modifier.fillMaxSize()) {
    
    // Background
    Theme.RenderDefaultBackground()
-   
+   /*
    LazyColumn(
       state = state,
       modifier = modifier
@@ -78,4 +78,6 @@ fun EqualizerPage(modifier: Modifier = Modifier.fillMaxSize()) {
       }
       
    }
+   
+    */
 }
