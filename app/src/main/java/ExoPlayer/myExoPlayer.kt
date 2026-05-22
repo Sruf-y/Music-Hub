@@ -85,7 +85,6 @@ private inline fun ArrayList<MyPlayerListener>.dispatchSeek() {
 
 object myExoPlayer {
    
-   
    var isSongDurationShort by mutableStateOf(false)
       private set
    private fun updateisSongDurationShort(duration:Long){

@@ -439,32 +439,13 @@ class MusicService: Service() {
          val appTasks = activityManager.appTasks
          
          
-         appTasks.isNotEmpty().let {
-            Log("App task is alive = ${it}")
-            if(it){
-               appTasks.forEachIndexed { index, task ->
-                  val info = task.taskInfo
-                  Log("Tasks", """
-            Task $index:
-            - TaskId: ${info.taskId}
-            - NumActivities: ${info.numActivities}
-            - BaseActivity: ${info.baseActivity?.className}
-            - TopActivity: ${info.topActivity?.className}
-            - IsVisible: ${info.isVisible}
-        """.trimIndent(),"i")
-               }
-            }
-         }
-         
-         return appTasks.isNotEmpty()
+         return appTasks.any { it.taskInfo.isRunning }
       }
       
       
       const val notification_id = 106
       const val mediaSessionTag = "MusicPlayer"
       
-      
-      private fun selfIsActive():Boolean = MyApplication.serviceInstance!=null
    }
    
 }
