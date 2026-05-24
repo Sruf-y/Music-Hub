@@ -48,70 +48,56 @@ fun PriorityLayout(
          if (measurables.size > 1) {
             val bottomMeasurable = measurables[1]
             
-            // Measure bottom with full constraints
-            val bottomPlaceable = bottomMeasurable.measure(constraints)
-            
-            // Calculate remaining space for content
-            val contentConstraints = Constraints(
-               minWidth = constraints.minWidth.coerceAtLeast(0),
-               maxWidth = if (constraints.hasBoundedWidth) {
-                  constraints.maxWidth.coerceAtLeast(constraints.minWidth)
-               } else {
-                  Constraints.Infinity
-               },
-               minHeight = constraints.minHeight.coerceAtLeast(0),
-               maxHeight = if (constraints.hasBoundedHeight) {
-                  (constraints.maxHeight - bottomPlaceable.height)
-                     .coerceAtLeast(constraints.minHeight)
-               } else {
-                  Constraints.Infinity
-               }
+            // Measure both with natural sizes
+            val contentPlaceable = contentMeasurable.measure(
+               Constraints(
+                  minWidth = 0,
+                  maxWidth = constraints.maxWidth,
+                  minHeight = 0,
+                  maxHeight = Constraints.Infinity
+               )
             )
             
-            // Measure content with remaining space
-            val contentPlaceable = contentMeasurable.measure(contentConstraints)
+            val bottomPlaceable = bottomMeasurable.measure(
+               Constraints(
+                  minWidth = 0,
+                  maxWidth = constraints.maxWidth,
+                  minHeight = 0,
+                  maxHeight = Constraints.Infinity
+               )
+            )
             
-            // Calculate total dimensions respecting max constraints
-            val totalWidth = maxOf(bottomPlaceable.width, contentPlaceable.width)
+            // Calculate total dimensions
+            val totalWidth = maxOf(contentPlaceable.width, bottomPlaceable.width)
                .coerceIn(constraints.minWidth, constraints.maxWidth)
             
-            val totalHeight = (bottomPlaceable.height + contentPlaceable.height)
+            val totalHeight = (contentPlaceable.height + bottomPlaceable.height)
                .coerceIn(constraints.minHeight, constraints.maxHeight)
             
             layout(totalWidth, totalHeight) {
-               // Place content at top
-               contentPlaceable.placeRelative(0, 0)
+               // Center content horizontally
+               val contentX = (totalWidth - contentPlaceable.width) / 2
+               contentPlaceable.placeRelative(contentX, 0)
                
-               // Place bottom after content, but ensure it stays within bounds
-               val bottomY = contentPlaceable.height.coerceAtMost(totalHeight)
-               bottomPlaceable.placeRelative(0, bottomY)
+               // Center bottom horizontally
+               val bottomX = (totalWidth - bottomPlaceable.width) / 2
+               bottomPlaceable.placeRelative(bottomX, contentPlaceable.height)
             }
          } else {
-            // Only content exists - respect max constraints fully
+            // Only content exists - center it horizontally
             val contentPlaceable = contentMeasurable.measure(constraints)
             
             val width = contentPlaceable.width.coerceIn(constraints.minWidth, constraints.maxWidth)
             val height = contentPlaceable.height.coerceIn(constraints.minHeight, constraints.maxHeight)
             
             layout(width, height) {
-               contentPlaceable.placeRelative(0, 0)
+               val x = (width - contentPlaceable.width) / 2
+               contentPlaceable.placeRelative(x, 0)
             }
          }
       } else {
-         // Empty layout - respect constraints
-         val width = if (constraints.hasBoundedWidth) {
-            constraints.maxWidth.coerceAtLeast(constraints.minWidth)
-         } else {
-            constraints.minWidth
-         }
-         
-         val height = if (constraints.hasBoundedHeight) {
-            constraints.maxHeight.coerceAtLeast(constraints.minHeight)
-         } else {
-            constraints.minHeight
-         }
-         
-         layout(width, height) {}
+         // Empty layout
+         layout(constraints.minWidth, constraints.minHeight) {}
       }
    }
 }

@@ -24,9 +24,11 @@ import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -58,8 +60,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.internal.composableLambda
-import androidx.compose.runtime.internal.rememberComposableLambda
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -81,6 +81,7 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.takeOrElse
@@ -103,6 +104,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.semantics.contentDescription
@@ -125,6 +127,7 @@ import com.aacomposetest.Log
 import com.aacomposetest.append
 import com.aacomposetest.countIf
 import com.aacomposetest.roundToIntOffset
+import com.aacomposetest.toPx
 import com.aacomposetest.ui.theme.MyColor
 import kotlin.jvm.JvmInline
 import kotlin.math.abs
@@ -140,7 +143,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import ui.components.Text.OutlinedTextFieldExpanded
 import java.util.ArrayList
-import kotlin.jvm.Throws
 
 /**
  * #DISCLAIMER
@@ -808,7 +810,7 @@ private fun SliderImpl(
       },
       modifier =
          modifier
-            .minimumInteractiveComponentSize()
+            //.minimumInteractiveComponentSize()
             .requiredSizeIn(
                minWidth = if (state.orientation == Vertical) TrackHeight else ThumbWidth,
                minHeight = if (state.orientation == Vertical) ThumbWidth else TrackHeight,
@@ -998,7 +1000,7 @@ private fun RangeSliderImpl(
       },
       modifier =
          modifier
-            .minimumInteractiveComponentSize()
+            //.minimumInteractiveComponentSize()
             .requiredSizeIn(minWidth = ThumbWidth, minHeight = TrackHeight)
             .then(pressDrag),
    ) { measurables, constraints ->
@@ -3039,14 +3041,12 @@ fun SliderGroup(
          reverseDirection = state.reverseVerticalDirection
       )
    },
-   startEndGap: Dp = 10.dp,
-   spacing:Dp = 5.dp
+   startEndGap: Dp = 0.dp,
+   spacing:Dp = 0.dp
 ) {
    
    Box(
-      modifier
-         
-         .clipToBounds()
+      modifier.clipToBounds()
    ) {
       val scroll = rememberScrollState()
       
@@ -3189,6 +3189,7 @@ private fun calculateStartPoint(
    lineStartValue: Float?,
    isRtl: Boolean,
    sliderGroupState: SliderGroupState,
+   enforcedTrackHeightPx: Int?,
 ):Offset?{
    return if(childLayoutCoords!=null) {
       
@@ -3201,11 +3202,20 @@ private fun calculateStartPoint(
                      when (sliderGroupState.reverseVerticalDirection) {
                         // Cases for vertical orientation
                         true -> {
-                           it.size.height * (1f - lineStartValue)
+                           if(enforcedTrackHeightPx!=null){
+                              enforcedTrackHeightPx * (1f - lineStartValue)
+                           }else{
+                              it.size.height * (1f - lineStartValue)
+                           }
+                           
                         }
                         
                         false -> {
-                           it.size.height * lineStartValue
+                           if(enforcedTrackHeightPx!=null){
+                              enforcedTrackHeightPx * lineStartValue
+                           }else{
+                              it.size.height * lineStartValue
+                           }
                         }
                      }
                   }
@@ -3218,11 +3228,21 @@ private fun calculateStartPoint(
                   x = childLayoutCoords.let {
                      when (isRtl) {
                         false -> {
-                           it.size.width * lineStartValue
+                           if(enforcedTrackHeightPx!=null){
+                              enforcedTrackHeightPx * lineStartValue
+                           }else{
+                              it.size.width * lineStartValue
+                           }
+                           
                         }
                         
                         true -> {
-                           it.size.width * (1f - lineStartValue)
+                           if(enforcedTrackHeightPx!=null){
+                              enforcedTrackHeightPx * (1f - lineStartValue)
+                           }else{
+                              it.size.width * (1f - lineStartValue)
+                           }
+                           
                         }
                      }
                   }
@@ -3242,6 +3262,7 @@ private fun calculateEndPoint(
    lineEndValue: Float?,
    isRtl: Boolean,
    sliderGroupState: SliderGroupState,
+   enforcedTrackHeightPx: Int?,
 ):Offset?{
    return if(childLayoutCoords!=null){
       
@@ -3255,11 +3276,20 @@ private fun calculateEndPoint(
                      when (sliderGroupState.reverseVerticalDirection) {
                         // Cases for vertical orientation
                         true -> {
-                           it.size.height * (1f - lineEndValue)
+                           if(enforcedTrackHeightPx!=null){
+                              enforcedTrackHeightPx * (1f - lineEndValue)
+                           }else{
+                              it.size.height * (1f - lineEndValue)
+                           }
+                           
                         }
                         
                         false -> {
-                           it.size.height * lineEndValue
+                           if(enforcedTrackHeightPx!=null){
+                              enforcedTrackHeightPx * lineEndValue
+                           }else{
+                              it.size.height * lineEndValue
+                           }
                         }
                      }
                   } ?: 0f
@@ -3272,11 +3302,21 @@ private fun calculateEndPoint(
                   x = childLayoutCoords?.let {
                      when (isRtl) {
                         false -> {
-                           it.size.width * lineEndValue
+                           if(enforcedTrackHeightPx!=null){
+                              enforcedTrackHeightPx * lineEndValue
+                           }
+                           else{
+                              it.size.width * lineEndValue
+                           }
+                           
                         }
                         
                         true -> {
-                           it.size.width * (1f - lineEndValue)
+                           if(enforcedTrackHeightPx!=null){
+                              enforcedTrackHeightPx * (1f-lineEndValue)
+                           }else {
+                              it.size.width * (1f - lineEndValue)
+                           }
                         }
                      }
                   } ?: 0f
@@ -3351,20 +3391,28 @@ fun ConnectedSliderGroup(
          reverseDirection = state.reverseVerticalDirection
       )
    },
+   trackEnforcedHeight:Dp? = null,
+   decoration: (@Composable (Int,@Composable ()->Unit)->Unit)? = null,
    @FloatRange(from = 0.0,to = 1.0) lineStartValue: Float? = 0.5f,
    @FloatRange(from = 0.0,to = 1.0) lineEndValue: Float? = 0.5f,
    lineColor: Color = Color.Blue,
    lineWidth: Dp = Dp.Hairline,
-   startEndGap: Dp = 10.dp,
-   spacing:Dp = 5.dp,
-   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor1X:Float = 0.3f,
-   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor1Y:Float = 0.1f,
-   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor2X:Float = 0.7f,
-   @FloatRange(from = 0.0,to = 1.0) cubicControlFactor2Y:Float = 0.9f
-   
+   startEndGap: Dp = 0.dp,
+   spacing:Dp = 0.dp,
+   spaceEventy:Boolean = false,
+   cubicControl: CubicControl = remember { CubicControl(0.3f,0.1f,0.7f,0.9f) }
 ) {
+   val density = LocalDensity.current
    
-   
+   val internalValidDecoration = remember(decoration) {
+      if (decoration == null) {
+         @Composable { index:Int, deco: @Composable () -> Unit ->
+            deco.invoke()
+         }
+      } else {
+         decoration
+      }
+   }
    
    var parentCoords: LayoutCoordinates? by remember { mutableStateOf(null) }
    
@@ -3409,7 +3457,8 @@ fun ConnectedSliderGroup(
                childLayoutCoords = childLayoutCoords,
                lineStartValue = lineStartValue,
                isRtl = isRtl,
-               sliderGroupState = state
+               sliderGroupState = state,
+               enforcedTrackHeightPx = trackEnforcedHeight?.toPx(density)?.roundToInt()
             )
          } else null
       }
@@ -3426,7 +3475,8 @@ fun ConnectedSliderGroup(
                childLayoutCoords = childLayoutCoords,
                lineEndValue = lineEndValue,
                isRtl = isRtl,
-               sliderGroupState = state
+               sliderGroupState = state,
+               enforcedTrackHeightPx = trackEnforcedHeight?.toPx(density)?.roundToInt()
             )
          } else null
       }.apply {
@@ -3435,245 +3485,257 @@ fun ConnectedSliderGroup(
    }
    
    
-   BoxWithConstraints(
+   Box(
       modifier
          .onGloballyPositioned {
             parentCoords = it
          }
          .clipToBounds()
-         
+         .height(IntrinsicSize.Min) // this basically sets the intrinsic size of children to minimum, making the measurement system behave as i would expect it to
    ) {
-      
-      
-         Overlay(
-            modifier = Modifier,
-            overlay = {
-            Canvas(modifier = Modifier.matchParentSize()) {
-               if (points.isEmpty() || points.size < 1 + countIf(
-                     lineStartValue != null,
-                     lineEndValue != null
+      // Sliders group
+      when (state.orientation) {
+         Vertical -> {
+            Row(
+               modifier = Modifier
+                  .fillMaxWidth()
+                  .horizontalScroll(scroll, overscrollEffect = null)
+                  .onGloballyPositioned {
+                     childLayoutCoords = it
+                  },
+               horizontalArrangement = if (spaceEventy) Arrangement.SpaceEvenly else Arrangement.Start
+            ) {
+               
+               if (!spaceEventy)
+                  Spacer(
+                     Modifier
+                        .fillMaxHeight()
+                        .width(startEndGap)
                   )
-               ) return@Canvas
-               
-               val path = Path()
                
                
-               
-               // Start at first point
-               if(startPointOffset!=null){
-                  startPointOffset?.apply {
-                     path.moveTo(this.x,this.y)
-                     path.cubicTo(
-                        x1 = lerp(this.x, points[0].x, cubicControlFactor1X),
-                        y1 = lerp(this.y,points[0].y,cubicControlFactor1Y),
-                        x2 = lerp(this.x, points[0].x, cubicControlFactor2X),
-                        y2 = lerp(this.y,points[0].y,cubicControlFactor2Y),
-                        x3 = points[0].x,
-                        y3 = points[0].y
-                     )
-                  }
-               }else{
-                  path.moveTo(points[0].x,points[0].y)
-               }
-               
-               
-               
-               
-               
-               // Generate smooth curve through all points
-               when(state.orientation){
-                  Vertical->{
-                     for(i in 0..<points.lastIndex) {
-                        
-                        path.cubicTo(
-                           x1 = lerp(points[i].x, points[i + 1].x, cubicControlFactor1X),
-                           y1 = lerp(points[i].y,points[i + 1].y,cubicControlFactor1Y),
-                           x2 = lerp(points[i].x, points[i + 1].x, cubicControlFactor2X),
-                           y2 = lerp(points[i].y,points[i + 1].y,cubicControlFactor2Y),
-                           x3 = points[i + 1].x,
-                           y3 = points[i + 1].y
-                        )
-                     }
-                  }
-                  Horizontal->{
-                     for(i in 0..<points.lastIndex) {
-                        
-                        path.cubicTo(
-                           x1 = lerp(points[i].x, points[i + 1].x, cubicControlFactor1Y),
-                           y1 = lerp(points[i].y,points[i + 1].y,cubicControlFactor1X),
-                           x2 = lerp(points[i].x, points[i + 1].x, cubicControlFactor2Y),
-                           y2 = lerp(points[i].y,points[i + 1].y,cubicControlFactor2X),
-                           x3 = points[i + 1].x,
-                           y3 = points[i + 1].y
-                        )
-                     }
-                  }
-               }
-               
-               endPointOffset?.apply {
-                  path.cubicTo(
-                     x1 = lerp(points[points.lastIndex].x,this.x,  cubicControlFactor1X),
-                     y1 = lerp(points[points.lastIndex].y,this.y,cubicControlFactor1Y),
-                     x2 = lerp(points[points.lastIndex].x,this.x, cubicControlFactor2X),
-                     y2 = lerp(points[points.lastIndex].y,this.y,cubicControlFactor2Y),
-                     x3 = this.x,
-                     y3 = this.y
-                  )
-               }
-               
-               
-               drawPath(
-                  path = path,
-                  color = lineColor,
-                  style = Stroke(width = lineWidth.toPx())
-               )
-               path.rewind()
-            }
-         }
-         ) {
-            when (state.orientation) {
-               Vertical -> {
-                  Row(
-                     modifier = Modifier
-                        .horizontalScroll(scroll, overscrollEffect = null)
-                        .onGloballyPositioned {
-                           childLayoutCoords = it
-                        }
-                  ) {
-                     
-                     
-                     Spacer(
-                        Modifier
-                           .fillMaxHeight()
-                           .width(startEndGap)
-                     )
-                     
-                     
-                     state.states.forEachIndexed { index, internalState ->
-                        
-                        VerticalSlider(
-                           state = internalState,
-                           reverseDirection = state.reverseVerticalDirection,
-                           enabled = enabled,
-                           colors = colors,
-                           thumb = {
-                              thumb.invoke(
-                                 it,
-                                 Modifier.onGloballyPositioned {
-                                    points[index] =
-                                       parentCoords?.localPositionOf(it)
-                                          .let { off ->
-                                             if (off != null) {
-                                                Offset(
-                                                   off.x + it.size.width / 2,
-                                                   off.y + it.size.height / 2
-                                                )
-                                             } else {
-                                                off
-                                             }
-                                             
+               state.states.forEachIndexed { index, internalState ->
+                  internalValidDecoration.invoke(index) {
+                     VerticalSlider(
+                        modifier = Modifier.let {
+                           if (trackEnforcedHeight != null) {
+                              it.height(trackEnforcedHeight)
+                           } else {
+                              it
+                           }
+                        },
+                        state = internalState,
+                        reverseDirection = state.reverseVerticalDirection,
+                        enabled = enabled,
+                        colors = colors,
+                        thumb = {
+                           thumb.invoke(
+                              it,
+                              Modifier.onGloballyPositioned {
+                                 points[index] =
+                                    parentCoords?.localPositionOf(it)
+                                       .let { off ->
+                                          if (off != null) {
+                                             Offset(
+                                                off.x + it.size.width / 2,
+                                                off.y + it.size.height / 2
+                                             )
+                                          } else {
+                                             off
                                           }
-                                          ?: Offset.Zero
-                                 }
-                              )
-                           },
-                           track = track
-                        )
-                        
-                        // Render gap
-                        if(index!=state.states.lastIndex){
-                           Spacer(Modifier
+                                          
+                                       }
+                                       ?: Offset.Zero
+                              }
+                           )
+                        },
+                        track = track
+                     )
+                  }
+                  
+                  // Render gap
+                  if (!spaceEventy)
+                     if (index != state.states.lastIndex) {
+                        Spacer(
+                           Modifier
                               .fillMaxHeight()
                               .width(spacing)
-                           )
-                        }
+                        )
                      }
-                     
-                     
-                     Spacer(
-                        Modifier
-                           .fillMaxHeight()
-                           .width(startEndGap)
+               }
+               
+               if (!spaceEventy)
+                  Spacer(
+                     Modifier
+                        .fillMaxHeight()
+                        .width(startEndGap)
+                  )
+               
+            }
+            
+         }
+         
+         Horizontal -> {
+            Column(
+               Modifier
+                  .verticalScroll(scroll, overscrollEffect = null)
+                  .onGloballyPositioned {
+                     childLayoutCoords = it
+                  },
+               verticalArrangement = if (spaceEventy) Arrangement.SpaceEvenly else Arrangement.Top
+            ) {
+               
+               if (!spaceEventy)
+                  Spacer(
+                     Modifier
+                        .fillMaxWidth()
+                        .height(startEndGap)
+                  )
+               
+               
+               state.states.forEachIndexed { index, itemState ->
+                  // Doesn't require reverseDirection since it handles RTL by itself
+                  internalValidDecoration.invoke(index) {
+                     Slider(
+                        modifier = Modifier.let {
+                           if (trackEnforcedHeight != null) {
+                              it.width(trackEnforcedHeight)
+                           } else {
+                              it
+                           }
+                        },
+                        state = itemState,
+                        enabled = enabled,
+                        colors = colors,
+                        thumb = {
+                           thumb.invoke(
+                              it,
+                              Modifier.onGloballyPositioned {
+                                 points[index] =
+                                    parentCoords?.localPositionOf(it)
+                                       .let { off ->
+                                          if (off != null) {
+                                             Offset(
+                                                off.x + it.size.width / 2,
+                                                off.y + it.size.height / 2
+                                             )
+                                          } else {
+                                             off
+                                          }
+                                          
+                                       }
+                                       ?: Offset.Zero
+                              }
+                           )
+                        },
+                        track = track
                      )
-                     
                   }
+                  
+                  
+                  // Render Gap
+                  if (!spaceEventy)
+                     if (index != state.states.lastIndex) {
+                        Spacer(
+                           Modifier
+                              .fillMaxWidth()
+                              .height(spacing)
+                        )
+                     }
                   
                }
                
-               Horizontal -> {
-                  Column(
+               if (!spaceEventy)
+                  Spacer(
                      Modifier
-                        .verticalScroll(scroll, overscrollEffect = null)
-                        .onGloballyPositioned {
-                           childLayoutCoords = it
-                        }
-                  ) {
-                     
-                     
-                     Spacer(
-                        Modifier
-                           .fillMaxWidth()
-                           .height(startEndGap)
-                     )
-                     
-                     
-                     state.states.forEachIndexed { index, itemState ->
-                        // Doesn't require reverseDirection since it handles RTL by itself
-                        Slider(
-                           state = itemState,
-                           enabled = enabled,
-                           colors = colors,
-                           thumb = {
-                              thumb.invoke(
-                                 it,
-                                 Modifier.onGloballyPositioned {
-                                    points[index] =
-                                       parentCoords?.localPositionOf(it)
-                                          .let { off ->
-                                             if (off != null) {
-                                                Offset(
-                                                   off.x + it.size.width / 2,
-                                                   off.y + it.size.height / 2
-                                                )
-                                             } else {
-                                                off
-                                             }
-                                             
-                                          }
-                                          ?: Offset.Zero
-                                 }
-                              )
-                           },
-                           track = track
-                        )
-                        
-                        // Render Gap
-                        if(index!=state.states.lastIndex){
-                           Spacer(Modifier
-                              .fillMaxWidth()
-                              .height(spacing)
-                           )
-                        }
-                        
-                     }
-                     
-                     
-                     Spacer(
-                        Modifier
-                           .fillMaxWidth()
-                           .height(startEndGap)
-                     )
-                     
-                     
-                  }
-                  
-                  
-               }
+                        .fillMaxWidth()
+                        .height(startEndGap)
+                  )
+               
+               
             }
+            
+            
+         }
+      }
+      
+      // Canvas to draw the line on
+      Canvas(
+         modifier = Modifier
+            //This canvas composable will not itself be shown but its drawings will be rendered regardless. This isn't bad honestly
+            .let {
+               if (trackEnforcedHeight != null) {
+                  if (state.orientation == Orientation.Vertical) {
+                     it.height(trackEnforcedHeight)
+                  } else {
+                     it.width(trackEnforcedHeight)
+                  }
+               } else it
+            }
+      ) {
+         if (points.isEmpty() || points.size < 1 + countIf(
+               lineStartValue != null,
+               lineEndValue != null
+            )
+         ) return@Canvas
+         
+         val path = Path()
+         val _cubicControl = if (state.orientation == Orientation.Vertical) {
+            cubicControl
+         } else {
+            cubicControl.withReversedOrientation()
          }
          
-      
-      
+         // Start at first point
+         if (startPointOffset != null) {
+            startPointOffset?.apply {
+               path.moveTo(this.x, this.y)
+               path.cubicTo(
+                  x1 = lerp(this.x, points[0].x, _cubicControl.x1),
+                  y1 = lerp(this.y, points[0].y, _cubicControl.y1),
+                  x2 = lerp(this.x, points[0].x, _cubicControl.x2),
+                  y2 = lerp(this.y, points[0].y, _cubicControl.y2),
+                  x3 = points[0].x,
+                  y3 = points[0].y
+               )
+            }
+         } else {
+            path.moveTo(points[0].x, points[0].y)
+         }
+         
+         
+         // Generate smooth curve through all points
+         for(i in 0..<points.lastIndex) {
+            path.cubicTo(
+               x1 = lerp(points[i].x, points[i + 1].x, _cubicControl.x1),
+               y1 = lerp(points[i].y, points[i + 1].y, _cubicControl.y1),
+               x2 = lerp(points[i].x, points[i + 1].x, _cubicControl.x2),
+               y2 = lerp(points[i].y, points[i + 1].y, _cubicControl.y2),
+               x3 = points[i + 1].x,
+               y3 = points[i + 1].y
+            )
+         }
+         
+         endPointOffset?.apply {
+            path.cubicTo(
+               x1 = lerp(points[points.lastIndex].x, this.x, _cubicControl.x1),
+               y1 = lerp(points[points.lastIndex].y, this.y, _cubicControl.y1),
+               x2 = lerp(points[points.lastIndex].x, this.x, _cubicControl.x2),
+               y2 = lerp(points[points.lastIndex].y, this.y, _cubicControl.y2),
+               x3 = this.x,
+               y3 = this.y
+            )
+         }
+         
+         
+         drawPath(
+            path = path,
+            color = lineColor,
+            style = Stroke(width = lineWidth.toPx(), cap = StrokeCap.Round)
+         
+         )
+         path.rewind()
+      }
       
    }
    
@@ -3770,10 +3832,7 @@ internal fun ConnectedSliderGroupPreview(){
    
    val state = rememberSliderGroupState(12, orientation = Horizontal, reverseVerticalDirection = true)
    
-   var x1 by remember { mutableFloatStateOf(0.3f) }
-   var y1 by remember { mutableFloatStateOf(0.1f) }
-   var x2 by remember { mutableFloatStateOf(0.7f) }
-   var y2 by remember { mutableFloatStateOf(0.9f) }
+   var cubicControl by remember { mutableStateOf(CubicControl(0.3f,0.1f,0.7f,0.9f)) }
    
    val scrollstate = rememberScrollState()
    Column(Modifier
@@ -3799,17 +3858,14 @@ internal fun ConnectedSliderGroupPreview(){
             .fillMaxWidth(),
          lineStartValue = 0.5f,
          lineEndValue = 0.5f,
-         cubicControlFactor1X = x1,
-         cubicControlFactor1Y = y1,
-         cubicControlFactor2X = x2,
-         cubicControlFactor2Y = y2
+         cubicControl = cubicControl
       )
       
       // Controlls for testing
-         OutlinedTextFieldExpanded(x1.toString(),{x1 = it.toFloatOrNull()?:0f}, label = {Text("x1")})
-         OutlinedTextFieldExpanded(y1.toString(),{y1 = it.toFloatOrNull()?:0f}, label = {Text("y1")})
-         OutlinedTextFieldExpanded(x2.toString(),{x2 = it.toFloatOrNull()?:0f}, label = {Text("x2")})
-         OutlinedTextFieldExpanded(y2.toString(),{y2 = it.toFloatOrNull()?:0f}, label = {Text("y2")})
+         OutlinedTextFieldExpanded(cubicControl.x1.toString(),{cubicControl = cubicControl.copy(x1 = it.toFloatOrNull()?:0f)}, label = {Text("x1")})
+         OutlinedTextFieldExpanded(cubicControl.y1.toString(),{cubicControl = cubicControl.copy(y1 = it.toFloatOrNull()?:0f)}, label = {Text("y1")})
+         OutlinedTextFieldExpanded(cubicControl.x2.toString(),{cubicControl = cubicControl.copy(x2 = it.toFloatOrNull()?:0f)}, label = {Text("x2")})
+         OutlinedTextFieldExpanded(cubicControl.y2.toString(),{cubicControl = cubicControl.copy(y2 = it.toFloatOrNull()?:0f)}, label = {Text("y2")})
          
          
          Row(verticalAlignment = Alignment.CenterVertically) {
@@ -3844,3 +3900,13 @@ internal fun ConnectedSliderGroupPreview(){
    
 }
 
+data class CubicControl(
+   @FloatRange(from = 0.0,to = 1.0) val x1: Float,
+   @FloatRange(from = 0.0,to = 1.0) val y1: Float,
+   @FloatRange(from = 0.0,to = 1.0) val x2: Float,
+   @FloatRange(from = 0.0,to = 1.0) val y2: Float,
+){
+   fun withReversedOrientation(): CubicControl{
+      return CubicControl(y1,x1,y2,x2)
+   }
+}
