@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastRoundToInt
 import com.aacomposetest.ui.theme.MyColor
+import ui.components.CenreredPriorityLayout
 import ui.components.PriorityLayout
 import kotlin.Float
 import kotlin.Pair
@@ -263,7 +264,7 @@ class EqualizerController2 constructor(sessionId: Int){
                   spaceEventy = true,
                   trackEnforcedHeight = 300.dp,
                   decoration = {index,slider->
-                     PriorityLayout(bottom = {
+                     CenreredPriorityLayout(bottom = {
                         SrufComposeComponents.Text(
                            """
                               ${data?.get(index)?.first?.let {

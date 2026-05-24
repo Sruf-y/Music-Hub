@@ -48,6 +48,94 @@ fun PriorityLayout(
          if (measurables.size > 1) {
             val bottomMeasurable = measurables[1]
             
+            // Measure bottom with full constraints
+            val bottomPlaceable = bottomMeasurable.measure(constraints)
+            
+            // Calculate remaining space for content
+            val contentConstraints = Constraints(
+               minWidth = constraints.minWidth.coerceAtLeast(0),
+               maxWidth = if (constraints.hasBoundedWidth) {
+                  constraints.maxWidth.coerceAtLeast(constraints.minWidth)
+               } else {
+                  Constraints.Infinity
+               },
+               minHeight = constraints.minHeight.coerceAtLeast(0),
+               maxHeight = if (constraints.hasBoundedHeight) {
+                  (constraints.maxHeight - bottomPlaceable.height)
+                     .coerceAtLeast(constraints.minHeight)
+               } else {
+                  Constraints.Infinity
+               }
+            )
+            
+            // Measure content with remaining space
+            val contentPlaceable = contentMeasurable.measure(contentConstraints)
+            
+            // Calculate total dimensions respecting max constraints
+            val totalWidth = maxOf(bottomPlaceable.width, contentPlaceable.width)
+               .coerceIn(constraints.minWidth, constraints.maxWidth)
+            
+            val totalHeight = (bottomPlaceable.height + contentPlaceable.height)
+               .coerceIn(constraints.minHeight, constraints.maxHeight)
+            
+            layout(totalWidth, totalHeight) {
+               // Place content at top
+               contentPlaceable.placeRelative(0, 0)
+               
+               // Place bottom after content, but ensure it stays within bounds
+               val bottomY = contentPlaceable.height.coerceAtMost(totalHeight)
+               bottomPlaceable.placeRelative(0, bottomY)
+            }
+         } else {
+            // Only content exists - respect max constraints fully
+            val contentPlaceable = contentMeasurable.measure(constraints)
+            
+            val width = contentPlaceable.width.coerceIn(constraints.minWidth, constraints.maxWidth)
+            val height = contentPlaceable.height.coerceIn(constraints.minHeight, constraints.maxHeight)
+            
+            layout(width, height) {
+               contentPlaceable.placeRelative(0, 0)
+            }
+         }
+      } else {
+         // Empty layout - respect constraints
+         val width = if (constraints.hasBoundedWidth) {
+            constraints.maxWidth.coerceAtLeast(constraints.minWidth)
+         } else {
+            constraints.minWidth
+         }
+         
+         val height = if (constraints.hasBoundedHeight) {
+            constraints.maxHeight.coerceAtLeast(constraints.minHeight)
+         } else {
+            constraints.minHeight
+         }
+         
+         layout(width, height) {}
+      }
+   }
+}
+
+@Composable
+fun CenreredPriorityLayout(
+   modifier: Modifier = Modifier,
+   bottom: @Composable () -> Unit = {},
+   content: @Composable () -> Unit
+) {
+   Layout(
+      modifier = modifier,
+      content = {
+         content.invoke()
+         bottom.invoke()
+      }
+   ) { measurables, constraints ->
+      
+      if (measurables.isNotEmpty()) {
+         val contentMeasurable = measurables[0]
+         
+         if (measurables.size > 1) {
+            val bottomMeasurable = measurables[1]
+            
             // Measure both with natural sizes
             val contentPlaceable = contentMeasurable.measure(
                Constraints(
