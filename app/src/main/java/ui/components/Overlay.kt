@@ -14,7 +14,9 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.aacomposetest.of
 import com.aacomposetest.ui.theme.MyColor
@@ -66,25 +68,26 @@ private fun Overlay(
 @Composable
 fun Overlay(
    modifier: Modifier = Modifier,
-   overlay: @Composable ()->Unit = defaultOverlay,
-   content: @Composable ()->Unit
-){
-   SubcomposeLayout(modifier = modifier) {constraints->
+   overlay: @Composable () -> Unit = defaultOverlay,
+   content: @Composable () -> Unit
+) {
+   Layout(
+      modifier = modifier,
+      content = {
+         content()
+         overlay()
+      }
+   ) { measurables, constraints ->
       
-      val primaryPlaceable = subcompose("primary") {
-         content.invoke()
-      }.first().measure(constraints)
-      
-      val secondaryPlaceable = subcompose("overlay") {
-         overlay.invoke()
-      }.first().measure(
-         constraints.of(primaryPlaceable)
+      // First measurable is content (primary), second is overlay
+      val primaryPlaceable = measurables[0].measure(constraints)
+      val secondaryPlaceable = measurables[1].measure(
+         Constraints.fixed(primaryPlaceable.width, primaryPlaceable.height)
       )
       
-      
-      layout(primaryPlaceable.width,primaryPlaceable.height) {
-         primaryPlaceable.place(0,0,)
-         secondaryPlaceable.place(0,0,1f)
+      layout(primaryPlaceable.width, primaryPlaceable.height) {
+         primaryPlaceable.place(0, 0)
+         secondaryPlaceable.place(0, 0)
       }
    }
 }

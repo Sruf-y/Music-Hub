@@ -26,7 +26,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -53,7 +52,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -2926,6 +2924,7 @@ class SliderGroupState // no empty constructor()
    }
    
    
+   
    var job:Job? = null
    val scope = CoroutineScope(Dispatchers.Default)
    
@@ -2977,17 +2976,24 @@ class SliderGroupState // no empty constructor()
 fun rememberSliderGroupState(
    @IntRange(from = 0) count:Int,
    orientation:Orientation = Vertical,
-   reverseVerticalDirection:Boolean = true
+   reverseVerticalDirection:Boolean = true,
+   onValueChangeFinished:(Int, Float)-> Unit = { _, _->}
 ): SliderGroupState{
    return remember(count) {
       SliderGroupState(
-         orientation,
-         reverseVerticalDirection,
-         *List(count){
+         orientation = orientation,
+         reverseDirection = reverseVerticalDirection,
+         states = List(count){index->
             SliderState().apply {
+               this.onValueChange = {
+                  val newVal = it
+                  this.valueState = newVal
+                  onValueChangeFinished.invoke(index,this.value)
+               }
                this.reverseVerticalDirection = reverseVerticalDirection
             }
-         }.toTypedArray())
+         }.toTypedArray()
+      )
    }
 }
 
@@ -2996,17 +3002,25 @@ fun rememberSliderGroupState(
 fun rememberSliderGroupState(
    @FloatRange(from = 0.0,to = 1.0) values:List< Float>,
    orientation:Orientation = Vertical,
-   reverseVerticalDirection:Boolean = true
+   reverseVerticalDirection:Boolean = true,
+   onValueChangeFinished:(Int, Float)-> Unit = { _, _->}
 ): SliderGroupState{
    return remember(values) {
       SliderGroupState(
-         orientation,
-         reverseVerticalDirection,
-            values.map { value->
+         orientation = orientation,
+         reverseDirection = reverseVerticalDirection,
+            states = values.mapIndexed {index, value->
                SliderState(value = value).apply{
+                  this.onValueChange = {
+                     val newVal = it
+                     this.valueState = newVal
+                     onValueChangeFinished.invoke(index,it)
+                  }
                this.reverseVerticalDirection = reverseVerticalDirection
-            } }
+            }
+            }
          )
+      
    }
 }
 
@@ -3168,8 +3182,96 @@ fun SliderGroup(
    
 }
 
-
-
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VerticalSliderGroup(
+   state: SliderGroupState,
+   modifier:Modifier = Modifier,
+   enabled: Boolean = true,
+   colors: SliderColors = SliderDefaults.colors(),
+   thumb: @Composable (SliderState, Modifier) -> Unit = { sliderState, modifier ->
+      SliderDefaults.Thumb(
+         interactionSource = remember { MutableInteractionSource() },
+         sliderState = sliderState,
+         colors = colors,
+         enabled = enabled,
+         thumbSize = VerticalThumbSize,
+         modifier = modifier
+      )
+   },
+   track: @Composable (SliderState) -> Unit = { sliderState ->
+      
+      SliderDefaults.Track(
+         colors = colors,
+         enabled = enabled,
+         sliderState = sliderState,
+         trackCornerSize = Dp.Unspecified,
+         orientation = state.orientation,
+         reverseDirection = state.reverseVerticalDirection
+      )
+   },
+   startEndGap: Dp = 0.dp,
+   spacing:Dp = 0.dp,
+   decoration: (@Composable (Int,@Composable ()->Unit)->Unit)? = null
+){
+   Row(modifier = modifier) {
+      Spacer(Modifier
+         .fillMaxHeight()
+         .width(startEndGap)
+      )
+      
+      state.states.forEachIndexed { index, internalState ->
+         
+         if(decoration!=null){
+            decoration.invoke(index) {
+               VerticalSlider(
+                  state = internalState,
+                  reverseDirection = state.reverseVerticalDirection,
+                  enabled = enabled,
+                  colors = colors,
+                  thumb = {
+                     thumb.invoke(
+                        it,
+                        Modifier
+                     )
+                  },
+                  track = track
+               )
+            }
+         }else{
+            VerticalSlider(
+               state = internalState,
+               reverseDirection = state.reverseVerticalDirection,
+               enabled = enabled,
+               colors = colors,
+               thumb = {
+                  thumb.invoke(
+                     it,
+                     Modifier
+                  )
+               },
+               track = track
+            )
+         }
+         
+         // Render gap
+         if (index != state.states.lastIndex) {
+            Spacer(
+               Modifier
+                  .fillMaxHeight()
+                  .width(spacing)
+            )
+         }
+         
+      }
+      
+      
+      Spacer(Modifier
+         .fillMaxHeight()
+         .width(startEndGap)
+      )
+   }
+}
 
 
 private fun calcStartX(scrollState: Int):Float{
@@ -3494,247 +3596,251 @@ fun ConnectedSliderGroup(
          .height(IntrinsicSize.Min) // this basically sets the intrinsic size of children to minimum, making the measurement system behave as i would expect it to
    ) {
       // Sliders group
-      when (state.orientation) {
-         Vertical -> {
-            Row(
-               modifier = Modifier
-                  .fillMaxWidth()
-                  .horizontalScroll(scroll, overscrollEffect = null)
-                  .onGloballyPositioned {
-                     childLayoutCoords = it
-                  },
-               horizontalArrangement = if (spaceEventy) Arrangement.SpaceEvenly else Arrangement.Start
-            ) {
-               
-               if (!spaceEventy)
-                  Spacer(
-                     Modifier
-                        .fillMaxHeight()
-                        .width(startEndGap)
-                  )
-               
-               
-               state.states.forEachIndexed { index, internalState ->
-                  internalValidDecoration.invoke(index) {
-                     VerticalSlider(
-                        modifier = Modifier.let {
-                           if (trackEnforcedHeight != null) {
-                              it.height(trackEnforcedHeight)
-                           } else {
-                              it
-                           }
-                        },
-                        state = internalState,
-                        reverseDirection = state.reverseVerticalDirection,
-                        enabled = enabled,
-                        colors = colors,
-                        thumb = {
-                           thumb.invoke(
-                              it,
-                              Modifier.onGloballyPositioned {
-                                 points[index] =
-                                    parentCoords?.localPositionOf(it)
-                                       .let { off ->
-                                          if (off != null) {
-                                             Offset(
-                                                off.x + it.size.width / 2,
-                                                off.y + it.size.height / 2
-                                             )
-                                          } else {
-                                             off
-                                          }
-                                          
-                                       }
-                                       ?: Offset.Zero
-                              }
-                           )
-                        },
-                        track = track
-                     )
-                  }
-                  
-                  // Render gap
-                  if (!spaceEventy)
-                     if (index != state.states.lastIndex) {
-                        Spacer(
-                           Modifier
-                              .fillMaxHeight()
-                              .width(spacing)
-                        )
-                     }
-               }
-               
-               if (!spaceEventy)
-                  Spacer(
-                     Modifier
-                        .fillMaxHeight()
-                        .width(startEndGap)
-                  )
-               
-            }
-            
-         }
-         
-         Horizontal -> {
-            Column(
-               Modifier
-                  .verticalScroll(scroll, overscrollEffect = null)
-                  .onGloballyPositioned {
-                     childLayoutCoords = it
-                  },
-               verticalArrangement = if (spaceEventy) Arrangement.SpaceEvenly else Arrangement.Top
-            ) {
-               
-               if (!spaceEventy)
-                  Spacer(
-                     Modifier
-                        .fillMaxWidth()
-                        .height(startEndGap)
-                  )
-               
-               
-               state.states.forEachIndexed { index, itemState ->
-                  // Doesn't require reverseDirection since it handles RTL by itself
-                  internalValidDecoration.invoke(index) {
-                     Slider(
-                        modifier = Modifier.let {
-                           if (trackEnforcedHeight != null) {
-                              it.width(trackEnforcedHeight)
-                           } else {
-                              it
-                           }
-                        },
-                        state = itemState,
-                        enabled = enabled,
-                        colors = colors,
-                        thumb = {
-                           thumb.invoke(
-                              it,
-                              Modifier.onGloballyPositioned {
-                                 points[index] =
-                                    parentCoords?.localPositionOf(it)
-                                       .let { off ->
-                                          if (off != null) {
-                                             Offset(
-                                                off.x + it.size.width / 2,
-                                                off.y + it.size.height / 2
-                                             )
-                                          } else {
-                                             off
-                                          }
-                                          
-                                       }
-                                       ?: Offset.Zero
-                              }
-                           )
-                        },
-                        track = track
-                     )
-                  }
-                  
-                  
-                  // Render Gap
-                  if (!spaceEventy)
-                     if (index != state.states.lastIndex) {
-                        Spacer(
-                           Modifier
-                              .fillMaxWidth()
-                              .height(spacing)
-                        )
-                     }
-                  
-               }
-               
-               if (!spaceEventy)
-                  Spacer(
-                     Modifier
-                        .fillMaxWidth()
-                        .height(startEndGap)
-                  )
-               
-               
-            }
-            
-            
-         }
-      }
       
-      // Canvas to draw the line on
-      Canvas(
-         modifier = Modifier
-            //This canvas composable will not itself be shown but its drawings will be rendered regardless. This isn't bad honestly
-            .let {
-               if (trackEnforcedHeight != null) {
-                  if (state.orientation == Orientation.Vertical) {
-                     it.height(trackEnforcedHeight)
-                  } else {
-                     it.width(trackEnforcedHeight)
+      Overlay(
+         overlay = {
+            Canvas(
+               modifier = Modifier
+                  //This canvas composable will not itself be shown but its drawings will be rendered regardless. This isn't bad honestly
+                  .let {
+                     if (trackEnforcedHeight != null) {
+                        if (state.orientation == Orientation.Vertical) {
+                           it.height(trackEnforcedHeight)
+                        } else {
+                           it.width(trackEnforcedHeight)
+                        }
+                     } else it
                   }
-               } else it
-            }
-      ) {
-         if (points.isEmpty() || points.size < 1 + countIf(
-               lineStartValue != null,
-               lineEndValue != null
-            )
-         ) return@Canvas
-         
-         val path = Path()
-         val _cubicControl = if (state.orientation == Orientation.Vertical) {
-            cubicControl
-         } else {
-            cubicControl.withReversedOrientation()
-         }
-         
-         // Start at first point
-         if (startPointOffset != null) {
-            startPointOffset?.apply {
-               path.moveTo(this.x, this.y)
-               path.cubicTo(
-                  x1 = lerp(this.x, points[0].x, _cubicControl.x1),
-                  y1 = lerp(this.y, points[0].y, _cubicControl.y1),
-                  x2 = lerp(this.x, points[0].x, _cubicControl.x2),
-                  y2 = lerp(this.y, points[0].y, _cubicControl.y2),
-                  x3 = points[0].x,
-                  y3 = points[0].y
+            ) {
+               if (points.isEmpty() || points.size < 1 + countIf(
+                     lineStartValue != null,
+                     lineEndValue != null
+                  )
+               ) return@Canvas
+               
+               val path = Path()
+               val _cubicControl = if (state.orientation == Orientation.Vertical) {
+                  cubicControl
+               } else {
+                  cubicControl.withReversedOrientation()
+               }
+               
+               // Start at first point
+               if (startPointOffset != null) {
+                  startPointOffset?.apply {
+                     path.moveTo(this.x, this.y)
+                     path.cubicTo(
+                        x1 = lerp(this.x, points[0].x, _cubicControl.x1),
+                        y1 = lerp(this.y, points[0].y, _cubicControl.y1),
+                        x2 = lerp(this.x, points[0].x, _cubicControl.x2),
+                        y2 = lerp(this.y, points[0].y, _cubicControl.y2),
+                        x3 = points[0].x,
+                        y3 = points[0].y
+                     )
+                  }
+               } else {
+                  path.moveTo(points[0].x, points[0].y)
+               }
+               
+               
+               // Generate smooth curve through all points
+               for(i in 0..<points.lastIndex) {
+                  path.cubicTo(
+                     x1 = lerp(points[i].x, points[i + 1].x, _cubicControl.x1),
+                     y1 = lerp(points[i].y, points[i + 1].y, _cubicControl.y1),
+                     x2 = lerp(points[i].x, points[i + 1].x, _cubicControl.x2),
+                     y2 = lerp(points[i].y, points[i + 1].y, _cubicControl.y2),
+                     x3 = points[i + 1].x,
+                     y3 = points[i + 1].y
+                  )
+               }
+               
+               endPointOffset?.apply {
+                  path.cubicTo(
+                     x1 = lerp(points[points.lastIndex].x, this.x, _cubicControl.x1),
+                     y1 = lerp(points[points.lastIndex].y, this.y, _cubicControl.y1),
+                     x2 = lerp(points[points.lastIndex].x, this.x, _cubicControl.x2),
+                     y2 = lerp(points[points.lastIndex].y, this.y, _cubicControl.y2),
+                     x3 = this.x,
+                     y3 = this.y
+                  )
+               }
+               
+               
+               drawPath(
+                  path = path,
+                  color = lineColor,
+                  style = Stroke(width = lineWidth.toPx(), cap = StrokeCap.Round)
+               
                )
+               path.rewind()
             }
-         } else {
-            path.moveTo(points[0].x, points[0].y)
          }
-         
-         
-         // Generate smooth curve through all points
-         for(i in 0..<points.lastIndex) {
-            path.cubicTo(
-               x1 = lerp(points[i].x, points[i + 1].x, _cubicControl.x1),
-               y1 = lerp(points[i].y, points[i + 1].y, _cubicControl.y1),
-               x2 = lerp(points[i].x, points[i + 1].x, _cubicControl.x2),
-               y2 = lerp(points[i].y, points[i + 1].y, _cubicControl.y2),
-               x3 = points[i + 1].x,
-               y3 = points[i + 1].y
-            )
+      ) {
+         when (state.orientation) {
+            Vertical -> {
+               Row(
+                  modifier = Modifier
+                     .fillMaxWidth()
+                     .horizontalScroll(scroll, overscrollEffect = null)
+                     .onGloballyPositioned {
+                        childLayoutCoords = it
+                     },
+                  horizontalArrangement = if (spaceEventy) Arrangement.SpaceEvenly else Arrangement.Start
+               ) {
+                  
+                  if (!spaceEventy)
+                     Spacer(
+                        Modifier
+                           .fillMaxHeight()
+                           .width(startEndGap)
+                     )
+                  
+                  
+                  state.states.forEachIndexed { index, internalState ->
+                     internalValidDecoration.invoke(index) {
+                        VerticalSlider(
+                           modifier = Modifier.let {
+                              if (trackEnforcedHeight != null) {
+                                 it.height(trackEnforcedHeight)
+                              } else {
+                                 it
+                              }
+                           },
+                           state = internalState,
+                           reverseDirection = state.reverseVerticalDirection,
+                           enabled = enabled,
+                           colors = colors,
+                           thumb = {
+                              thumb.invoke(
+                                 it,
+                                 Modifier.onGloballyPositioned {
+                                    points[index] =
+                                       parentCoords?.localPositionOf(it)
+                                          .let { off ->
+                                             if (off != null) {
+                                                Offset(
+                                                   off.x + it.size.width / 2,
+                                                   off.y + it.size.height / 2
+                                                )
+                                             } else {
+                                                off
+                                             }
+                                             
+                                          }
+                                          ?: Offset.Zero
+                                 }
+                              )
+                           },
+                           track = track
+                        )
+                     }
+                     
+                     // Render gap
+                     if (!spaceEventy)
+                        if (index != state.states.lastIndex) {
+                           Spacer(
+                              Modifier
+                                 .fillMaxHeight()
+                                 .width(spacing)
+                           )
+                        }
+                  }
+                  
+                  if (!spaceEventy)
+                     Spacer(
+                        Modifier
+                           .fillMaxHeight()
+                           .width(startEndGap)
+                     )
+                  
+               }
+               
+            }
+            
+            Horizontal -> {
+               Column(
+                  Modifier
+                     .verticalScroll(scroll, overscrollEffect = null)
+                     .onGloballyPositioned {
+                        childLayoutCoords = it
+                     },
+                  verticalArrangement = if (spaceEventy) Arrangement.SpaceEvenly else Arrangement.Top
+               ) {
+                  
+                  if (!spaceEventy)
+                     Spacer(
+                        Modifier
+                           .fillMaxWidth()
+                           .height(startEndGap)
+                     )
+                  
+                  
+                  state.states.forEachIndexed { index, itemState ->
+                     // Doesn't require reverseDirection since it handles RTL by itself
+                     internalValidDecoration.invoke(index) {
+                        Slider(
+                           modifier = Modifier.let {
+                              if (trackEnforcedHeight != null) {
+                                 it.width(trackEnforcedHeight)
+                              } else {
+                                 it
+                              }
+                           },
+                           state = itemState,
+                           enabled = enabled,
+                           colors = colors,
+                           thumb = {
+                              thumb.invoke(
+                                 it,
+                                 Modifier.onGloballyPositioned {
+                                    points[index] =
+                                       parentCoords?.localPositionOf(it)
+                                          .let { off ->
+                                             if (off != null) {
+                                                Offset(
+                                                   off.x + it.size.width / 2,
+                                                   off.y + it.size.height / 2
+                                                )
+                                             } else {
+                                                off
+                                             }
+                                             
+                                          }
+                                          ?: Offset.Zero
+                                 }
+                              )
+                           },
+                           track = track
+                        )
+                     }
+                     
+                     
+                     // Render Gap
+                     if (!spaceEventy)
+                        if (index != state.states.lastIndex) {
+                           Spacer(
+                              Modifier
+                                 .fillMaxWidth()
+                                 .height(spacing)
+                           )
+                        }
+                     
+                  }
+                  
+                  if (!spaceEventy)
+                     Spacer(
+                        Modifier
+                           .fillMaxWidth()
+                           .height(startEndGap)
+                     )
+                  
+                  
+               }
+               
+               
+            }
          }
-         
-         endPointOffset?.apply {
-            path.cubicTo(
-               x1 = lerp(points[points.lastIndex].x, this.x, _cubicControl.x1),
-               y1 = lerp(points[points.lastIndex].y, this.y, _cubicControl.y1),
-               x2 = lerp(points[points.lastIndex].x, this.x, _cubicControl.x2),
-               y2 = lerp(points[points.lastIndex].y, this.y, _cubicControl.y2),
-               x3 = this.x,
-               y3 = this.y
-            )
-         }
-         
-         
-         drawPath(
-            path = path,
-            color = lineColor,
-            style = Stroke(width = lineWidth.toPx(), cap = StrokeCap.Round)
-         
-         )
-         path.rewind()
       }
       
    }

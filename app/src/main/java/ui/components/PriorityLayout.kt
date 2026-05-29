@@ -117,7 +117,7 @@ fun PriorityLayout(
 }
 
 @Composable
-fun CenreredPriorityLayout(
+fun CenteredPriorityLayout(
    modifier: Modifier = Modifier,
    bottom: @Composable () -> Unit = {},
    content: @Composable () -> Unit

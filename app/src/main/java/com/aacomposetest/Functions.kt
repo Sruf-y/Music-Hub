@@ -524,6 +524,10 @@ fun Float.map(in_range: Range<Float>,out_range:Range<Float>) :Float {
    return (this - in_range.lower) * (out_range.upper - out_range.lower) / (in_range.upper - in_range.lower) + out_range.lower
 }
 
+fun ClosedFloatingPointRange<Float>.totalLength():Float{
+   return this.endInclusive+(-this.start)
+}
+
 /**
  * Converts an [Int] to [Dp]
  * */
