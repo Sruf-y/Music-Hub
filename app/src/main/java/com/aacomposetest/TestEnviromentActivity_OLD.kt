@@ -128,7 +128,7 @@ fun MainScreen(viewModel: SongsViewModel?=null) {
 
                 ElevatedButton(onClick = {
                     // Launch permission dialogue when clicked
-                    permissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
+                    permissionLauncher.launch(MyApplication.Permissions.READ_MEDIA_AUDIO)
                 }) {
                     Text("Request Audio Permission")
                 }

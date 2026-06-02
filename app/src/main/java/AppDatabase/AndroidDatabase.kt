@@ -20,7 +20,9 @@ import androidx.room.Database
 import com.aacomposetest.Functions
 import com.aacomposetest.Functions.Images
 import com.aacomposetest.Logs
+import com.aacomposetest.MyApplication
 import com.aacomposetest.concatenateWith
+import com.aacomposetest.hasPermission
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -45,6 +47,13 @@ object AndroidDatabase {
     * */
    suspend fun doSongsQuery(viewmodel: SongsViewModel?, context:Context, alsoPictures: Boolean = true,forceUpdate:Boolean = false,  onFinish: (suspend ()->Unit)? = null):Int =
       withContext(Dispatchers.IO) {
+         
+         //TODO handle permissions removal better
+         if(!context.hasPermission(MyApplication.Permissions.READ_MEDIA_AUDIO)){
+            onFinish?.invoke()
+            finishRefresh()
+            return@withContext 0
+         }
          startRefresh()
          val contentResolver = context.contentResolver
          

@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.CallSuper
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.content.ContextCompat
 import com.aacomposetest.buildSystemBarsStyle
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.CoroutineScope
@@ -42,10 +43,5 @@ open class CustomComponentActivity(): ComponentActivity(){
       setupKeyboardPanMode()
    }
    
-   /**
-    * @return true if the activity has this permission, false otherwise
-    * */
-   fun hasPermission(permission:String):Boolean{
-      return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
-   }
+   
 }

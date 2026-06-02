@@ -171,7 +171,7 @@ data class Page_ViewPlaylist(val title: String) {
             
             val sHeaderTitle by remember {
                derivedStateOf {
-                  playlist?.title?.let { it + " (${playlist!!.songsIdList.size})" } ?: "Error"
+                  playlist?.title?.let { it + " (${playlistSongs.size})" } ?: "Error"
                }
             }
             

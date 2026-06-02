@@ -2,6 +2,7 @@ package com.aacomposetest.Classes
 
 import android.Manifest
 import android.R
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -16,6 +17,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import com.aacomposetest.Log
+import com.aacomposetest.MyApplication
+import com.aacomposetest.hasPermission
 import kotlin.random.Random
 
 class NotificationPoster(
@@ -63,7 +66,7 @@ class NotificationPoster(
     /**
      * @param id the notification id. Throws [IllegalArgumentException] if it is equal to 80085. If not provided, it will be randomly generated
      * */
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
+    @SuppressLint("MissingPermission")
     fun postNotification(
        id: Int? = null,
        title: String,
@@ -74,6 +77,11 @@ class NotificationPoster(
        color: Color = Color.Companion.Blue,
        showAsGroup: Boolean = true,
     ) {
+        // Early return in case i don't have notifications permissions
+        if(!context.hasPermission(MyApplication.Permissions.POST_NOTIFICATIONS)){
+            return
+        }
+        
         // Ensure channel exists
         if (channel == null) {
             createChannel()
@@ -104,10 +112,10 @@ class NotificationPoster(
                 .setGroup(group!!.id)
                 .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
         }
-
+        
         val notification = notificationBuilder.build()
         manager.notify(realId, notification)
-
+        
         postGroupSummary(
             summaryId = summaryId,
             summaryTitle = "Alerts Summary",
@@ -118,7 +126,7 @@ class NotificationPoster(
     }
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
-    fun postGroupSummary(
+    private fun postGroupSummary(
        summaryId: Int,
        summaryTitle: String,
        summaryText: String,

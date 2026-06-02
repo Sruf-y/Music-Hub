@@ -15,7 +15,6 @@ import android.os.Process
 import android.provider.MediaStore
 import android.util.Log
 import android.view.WindowManager
-import androidx.annotation.RequiresPermission
 import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import coil.ImageLoaderFactory
@@ -43,7 +42,7 @@ class MyApplication: Application(), ImageLoaderFactory {
     var mediastoreObserver: ContentObserver? = null
         private set
     
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
+    
     override fun onCreate() {
         super.onCreate()
 
@@ -207,6 +206,11 @@ class MyApplication: Application(), ImageLoaderFactory {
             prettyPrint = true
             prettyPrintIndent = "   "
         }
+    }
+    
+    object Permissions {
+        val POST_NOTIFICATIONS = Manifest.permission.POST_NOTIFICATIONS
+        val READ_MEDIA_AUDIO = Manifest.permission.READ_MEDIA_AUDIO
     }
 
     object MusicNotification{

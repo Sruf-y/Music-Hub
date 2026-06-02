@@ -2,6 +2,7 @@ package com.aacomposetest
 
 import android.content.ContentResolver
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -385,6 +386,16 @@ object Functions {
       
       return if (renameTo(newFile)) newFile else null
    }
+}
+
+/**
+ * @return true if the context has this permission, false otherwise
+ * */
+fun Context.hasPermission(permission:String):Boolean{
+   return ContextCompat.checkSelfPermission(
+   this,
+      permission
+   )== PackageManager.PERMISSION_GRANTED
 }
 
 fun List<String>.concatenateWith(divider:String ="", exceptForElements:List<Int>):String{

@@ -14,7 +14,6 @@ import Presentation.Navigation.MyNavigation
 import Presentation.Settings.EqualizerPage
 import SrufComposeComponents.Text
 import TestLayouts.TestActivityCore
-import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -75,6 +74,7 @@ import kotlinx.serialization.InternalSerializationApi
 import MyViewModels.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
 import MyViewModels.SheetViewmodel
+import com.aacomposetest.hasPermission
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
 
@@ -92,10 +92,10 @@ class MainActivityView : CustomComponentActivity() {
    
    val refreshState = RefreshState()
    
-   val hasNotificationPermission by lazy { mutableStateOf(hasPermission(Manifest.permission.POST_NOTIFICATIONS))  }
+   val hasNotificationPermission by lazy { mutableStateOf(hasPermission(MyApplication.Permissions.POST_NOTIFICATIONS))  }
    
    val notificationPermissionLauncher = createPermissionLauncher(
-      permission = Manifest.permission.POST_NOTIFICATIONS,
+      permission = MyApplication.Permissions.POST_NOTIFICATIONS,
       onFinish = {result->
          if(hasNotificationPermission.value != result) {
             hasNotificationPermission.value = result
@@ -105,7 +105,7 @@ class MainActivityView : CustomComponentActivity() {
    
    
    val mediaPermissionLauncher = createPermissionLauncher(
-      permission = Manifest.permission.READ_MEDIA_AUDIO,
+      permission = MyApplication.Permissions.READ_MEDIA_AUDIO,
       onGrant = {
          songViewModel.viewModelScope.launch {
             songViewModel.resyncALL_withMediaStore(
@@ -133,9 +133,6 @@ class MainActivityView : CustomComponentActivity() {
       }
    )
    
-   
-   
-   
    val intentSanitizer = IntentSanitizer.Builder()
       .allowAnyComponent()
       .allowAction {
@@ -146,7 +143,6 @@ class MainActivityView : CustomComponentActivity() {
    
    
    private suspend fun handleReceivedAudioIntent(intent:Intent){
-      
       
       val audioUri = intent.data
       
