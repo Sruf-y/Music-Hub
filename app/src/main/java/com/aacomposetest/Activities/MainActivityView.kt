@@ -3,7 +3,7 @@ package com.aacomposetest.Activities
 import ExoPlayer.myExoPlayer
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
-import Navigation.Destinations.EqualizerTemporaryDestination
+import Navigation.Destinations.EqualizerDest
 import Navigation.Destinations.MainPager
 import Navigation.Destinations.PlayerBottomSheetContainer
 import Navigation.Destinations.PlaylistAddSongsPage
@@ -74,6 +74,7 @@ import kotlinx.serialization.InternalSerializationApi
 import MyViewModels.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
 import MyViewModels.SheetViewmodel
+import Navigation.Destinations.SettingsDest
 import com.aacomposetest.hasPermission
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
@@ -222,8 +223,9 @@ class MainActivityView : CustomComponentActivity() {
       
       setContent {
          SrufTheme {
+            
             Theme.RenderDefaultBackground()
-               
+            
             MainView()
             
          }
@@ -298,6 +300,8 @@ private fun ParentContainer(
    Box(
       modifier = Modifier.fillMaxSize()
    ) {
+      // Set background
+      
       
       val drawerState = rememberViewDrawerState(initialValue = ViewDrawerValue.Closed)
       //val allSongs by ListFeedingVM.allSongs.collectAsState()
@@ -324,10 +328,18 @@ private fun ParentContainer(
                      top = 10.dp
                   )
             ) {
+               item(key = "settings"){
+                  Button({
+                     navController.safeNavigate(SettingsDest)
+                     drawerState.close()
+                  }) {
+                     Text("Settings")
+                  }
+               }
                item(key = "equalizer"){
                   // Your item content
                   Button({
-                     navController.safeNavigate(EqualizerTemporaryDestination)
+                     navController.safeNavigate(EqualizerDest)
                      drawerState.close()
                   }) {
                      Text("Open Equalizer")
@@ -346,14 +358,10 @@ private fun ParentContainer(
             }
          },
          mainContent = {
-            
             Box(
                modifier = Modifier
                   .fillMaxSize()
-                  .background(Theme.Sourcesets.SongsBackground())
-                  .navigationBarsPadding()
-                  .displayCutoutPadding()
-                  .systemBarsPadding()
+                  
                   .graphicsLayer {
                      shape = RoundedCornerShape(
                         size = 20.dp.times(drawerState.currentOffset)
@@ -365,6 +373,9 @@ private fun ParentContainer(
                      scaleY = scalar
                      transformOrigin = TransformOrigin.Center
                   }
+                  .navigationBarsPadding()
+                  .displayCutoutPadding()
+                  .systemBarsPadding()
             ) {
                
                val prefs by lazy {
@@ -396,20 +407,22 @@ private fun ParentContainer(
                         refreshBoxState = refreshBoxState,
                         refreshState = refreshState,
                         globalBottomSheetVM = globalBottomSheetVM,
+                        drawerState = drawerState,
                         onClickAddPlaylist = { args ->
                            navController.safeNavigate(PlaylistAddSongsPage(args.title))
                         },
                         onBottomSheetClick = {
-                           
                            val intent = Intent(contextRef, FullScreenPlayerActivity::class.java)
                            activity?.startActivity(intent)
                         }
                      )
                   }
                   
+                  composable<SettingsDest>{
+                     SettingsDest.Page()
+                  }
                   
-                  
-                  composable<EqualizerTemporaryDestination>(
+                  composable<EqualizerDest>(
                      enterTransition = {
                         val duration = 250
                         slideIntoContainer(
@@ -425,11 +438,10 @@ private fun ParentContainer(
                         )
                      }
                   ) {
-                     EqualizerPage()
-                     
-                     BackHandler {
-                        navController.popBackStack()
-                     }
+                     if(myExoPlayer.equalizerController!=null)
+                        EqualizerPage(
+                           equalizer = myExoPlayer.equalizerController!!
+                        )
                   }
                   
                   
@@ -478,7 +490,6 @@ private fun ParentContainer(
    }
    
 }
-
 
 val tempDrawerColor = MyColor.SemiTransparentDark
 

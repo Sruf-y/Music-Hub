@@ -121,9 +121,13 @@ fun SongItem_Mockup(
                 ) {
                     Spacer(modifier = Modifier.weight(2f))
                     
-                    GlintMaskBox(modifier = Modifier.height(20.dp).width(150.dp))
+                    GlintMaskBox(modifier = Modifier
+                        .height(20.dp)
+                        .width(150.dp))
                     
-                    GlintMaskBox(modifier = Modifier.height(20.dp).width(80.dp))
+                    GlintMaskBox(modifier = Modifier
+                        .height(20.dp)
+                        .width(80.dp))
                     
                     Spacer(modifier = Modifier.weight(1f))
                 }
@@ -167,7 +171,10 @@ fun SongItem(
     optionsMenu: SimpleDropdownMenuState? = null,
     leftmostContent: @Composable (RowScope.() -> Unit)? = null
 ) {
-    Box(modifier = modifier.padding(vertical = (2.5).dp)){
+    Box(
+        modifier = modifier
+            .padding(vertical = (2.5).dp)
+    ) {
         Row(
             modifier = Modifier
                 .height(height)
@@ -182,7 +189,8 @@ fun SongItem(
             Box(contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .padding(horizontal = 5.dp)
-                    .fillMaxHeight(0.8f).aspectRatio(1f)
+                    .fillMaxHeight(0.8f)
+                    .aspectRatio(1f)
                     .clip(RoundedCornerShape(size = 10.dp))
             ){
                 if(File(song?.thumbnailPath?:"").exists()) {
@@ -212,8 +220,8 @@ fun SongItem(
             // Song title & artist
             Box(
                 modifier = Modifier
-                .weight(1f)
-                .padding(textPadding)
+                    .weight(1f)
+                    .padding(textPadding)
             ){
                 Column(
                     modifier = Modifier
@@ -248,8 +256,8 @@ fun SongItem(
             if(optionsMenu!=null){
                 Box(contentAlignment = Alignment.Center,
                     modifier = Modifier
-                    .size(MyIcons.sizeMedium, MyIcons.sizeMedium)
-                    .padding(5.dp)
+                        .size(MyIcons.sizeMedium, MyIcons.sizeMedium)
+                        .padding(5.dp)
                 ) {
                     IconButton(
                         imageVector = Icons.Default.MoreVert,

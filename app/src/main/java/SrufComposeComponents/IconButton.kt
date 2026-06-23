@@ -57,7 +57,7 @@ fun IconButton(
     tint:Color = IconButtonDefaults.iconTint(),
     ripple:Indication? = IconButtonDefaults.ripple(),
     enabled:Boolean = true,
-    onClick:(()->Unit)
+    onClick:()->Unit
 ) {
     _baseIconButton(
         data = imageVector,

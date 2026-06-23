@@ -57,12 +57,11 @@ fun MainSongsColumn(
       )
    },
    settingsBottomSheetVM: SheetViewmodel? = null,
+   songs:List<Song>
 ) {
    val scope = rememberCoroutineScope()
    
    val contextRef = LocalContext.current
-   
-   val songs by ListFeedingVM.SortedSongs.sortedAndFilteredSongsFlow.collectAsState()
    
    val currentlyPlayingSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
    

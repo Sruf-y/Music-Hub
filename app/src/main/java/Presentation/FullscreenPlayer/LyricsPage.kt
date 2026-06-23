@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
@@ -129,7 +130,8 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
                color = MyColor.TextColor(),
                fontSize = fontSize,
                lineHeight = fontSize * 1.3f
-            )
+            ),
+            cursorBrush = SolidColor(Theme.TextColor())
          )
          
         

@@ -162,16 +162,19 @@ class ViewDrawerState(initialValue: ViewDrawerValue){
     * Sets the drawer to open or closed as the last state dictates.
     * */
    fun initDrawer(){
-      when(currentValue){
-         ViewDrawerValue.Open -> {
-            currentOffset = 1f
-            open()
-         }
-         ViewDrawerValue.Closed -> {
-            currentOffset = 0f
-            close()
+      drawerView.value?.post {
+         when(currentValue){
+            ViewDrawerValue.Open -> {
+               currentOffset = 1f
+               open()
+            }
+            ViewDrawerValue.Closed -> {
+               currentOffset = 0f
+               close()
+            }
          }
       }
+      
    }
    
    companion object{

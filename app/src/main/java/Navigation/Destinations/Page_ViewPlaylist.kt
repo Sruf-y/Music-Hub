@@ -123,6 +123,13 @@ data class Page_ViewPlaylist(val title: String) {
             )
          }
          
+         DisposableEffect(lazyListState,const_PlaylistSongs) {
+            
+            PrimaryNavigator.updatePlaylistPageController(lazyListState,const_PlaylistSongs.map { it.id })
+            onDispose {
+               PrimaryNavigator.disposePlaylistPageController()
+            }
+         }
          
          // Get the playlist
          DisposableEffect(Unit) {

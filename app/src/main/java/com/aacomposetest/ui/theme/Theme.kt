@@ -18,7 +18,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,6 +30,7 @@ import coil.request.ImageRequest
 import com.valentinilk.shimmer.LocalShimmerTheme
 import com.valentinilk.shimmer.defaultShimmerTheme
 import com.valentinilk.shimmer.shimmer
+import ui.components.Overlay
 import ui.components.SongItem
 
 object Theme{
@@ -150,22 +153,25 @@ object Theme{
    
    @Composable
    fun RenderDefaultBackground(modifier: Modifier = Modifier.fillMaxSize(), @DrawableRes id:Int = Theme.DefaultBackground()){
-      AsyncImage(ImageRequest.Builder(LocalContext.current)
-         .data(id)
-         .build(),
-         modifier = modifier,
-         contentDescription = null,
-         contentScale = ContentScale.Crop // CenterCrop
-      )
+      Overlay(overlay = {
+         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.15f)))
+      }) {
+         AsyncImage(ImageRequest.Builder(LocalContext.current)
+            .data(id)
+            .build(),
+            modifier = modifier,
+            contentDescription = null,
+            contentScale = ContentScale.Crop, // CenterCrop
+         )
+      }
+      
    }
 }
 
 abstract class ThemeSourceSet{
-   @Composable
-   open fun SongsBackground():Color = Theme.background().copy(alpha = 0.4f)
    
    @Composable
-   open fun TabRowBackground():Color  = Theme.SystemColor().copy(alpha = 0.4f)
+   open fun TabRowBackground():Color  = Theme.SystemColor().copy(alpha = 0.15f)
    
    @Composable
    open fun ToolbarBackground():Color = Theme.ToolBar()

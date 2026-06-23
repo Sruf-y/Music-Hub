@@ -17,7 +17,7 @@ import com.aacomposetest.MyApplication.Companion.showSystemAlert
 import kotlin.reflect.KClass
 
 /**
- *
+ * Manages the binding with the service in case it fails for whatever reason.
  * */
 class ServiceBindManager(
    private val serviceKClass: KClass<out Service>,

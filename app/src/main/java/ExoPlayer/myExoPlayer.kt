@@ -7,7 +7,6 @@ import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistWatcher
 import MyViewModels.SongsViewModel
 import Settings.MySettings
-import Settings.PlayerSettings
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
@@ -101,15 +100,16 @@ object myExoPlayer {
    }
    
    
-   private val _isInitialized = MutableStateFlow<Boolean>(value = false)
-   val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
+   var isInitialized by mutableStateOf(false)
+      private set
    
    private var playScope = CoroutineScope(Dispatchers.Main)
    
    private val prefs: SharedPreferences? = MyPrefs.PrefDirs.PlayerData.open(MyApplication.instance)
    
-   val playerSettings: PlayerSettings =
-      PlayerSettings(shuffle = false)
+   private fun isShuffleEnabled(): Boolean{
+      return MySettings.settings?.playerAllowShuffle?.stateFlow?.value == true
+   }
    
    // Player state tracking
    private val _isPlaying = MutableStateFlow<Boolean>(value = false)
@@ -311,7 +311,7 @@ object myExoPlayer {
                
                withContext(Dispatchers.Main) {
                   setSong(song = song, initialPosition = songPosition, startOnPrepared = false,playlistTitle = playlist?.title )
-                  _isInitialized.value = true
+                  isInitialized = true
                }
                
             }
@@ -518,7 +518,7 @@ object myExoPlayer {
                onError.invoke()
             }
             
-            else if(playerSettings.isShuffling.value){
+            else if(isShuffleEnabled()){
                playRandom()
             }
             
@@ -647,7 +647,7 @@ object myExoPlayer {
                onError.invoke()
             }
             // if shuffling
-            else if(playerSettings.isShuffling.value){
+            else if(isShuffleEnabled()){
                playRandom()
             }
             // if allowloop
@@ -753,7 +753,7 @@ object myExoPlayer {
       //setCurrentPlaylist(null)
       
       
-      _isInitialized.value = false
+      isInitialized = false
       
       try{
          exoPlayer?.stop()

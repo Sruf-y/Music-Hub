@@ -1,5 +1,6 @@
 package com.aacomposetest.Classes
 
+import Settings.MySettings
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.PersistableBundle
@@ -10,10 +11,12 @@ import androidx.annotation.CallSuper
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.aacomposetest.buildSystemBarsStyle
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 open class CustomComponentActivity(): ComponentActivity(){
    /**
@@ -41,6 +44,15 @@ open class CustomComponentActivity(): ComponentActivity(){
       super.onCreate(savedInstanceState, persistentState)
       
       setupKeyboardPanMode()
+   }
+   
+   init {
+      lifecycleScope.launch {
+         MySettings.initialize(this@CustomComponentActivity)
+         MySettings.settings!!.orientation.stateFlow.collect {
+            this@CustomComponentActivity.requestedOrientation = it
+         }
+      }
    }
    
    

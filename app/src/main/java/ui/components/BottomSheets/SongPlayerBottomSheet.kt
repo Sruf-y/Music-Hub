@@ -299,9 +299,6 @@ fun ResponsivePlayerBS(
    gotoSong: () -> Unit = {
    
    },
-   onShuffle:()->Unit = {
-      myExoPlayer.playerSettings.isShuffling.invert()
-   },
    onBackgroundClick:(Activity)->Unit = {
    
    }
@@ -403,7 +400,6 @@ fun ResponsivePlayerBS(
          state = state,
          swapControls = swapControls,
          currentSong = currentSong,
-         onShuffle = onShuffle,
          slider = {
             ResponsiveSlider(
                enabled = isExpandedEnabled
@@ -669,8 +665,7 @@ private fun BigPlayer(
          LoopingText(currentSong?.artistName?:stringResource(R.string.unknown), color = MyColor.SeparatorGray,)
       }
       
-   },
-   onShuffle:()-> Unit
+   }
 ){
    val isPlaying by myExoPlayer.isPlaying.collectAsState()
    
@@ -680,7 +675,6 @@ private fun BigPlayer(
       horizontalAlignment = Alignment.CenterHorizontally,
       reverseLayout = swapControls
    ) {
-      val isShuffling by myExoPlayer.playerSettings.isShuffling
       // Text area
       if (!swapControls) {
          item {
@@ -689,23 +683,6 @@ private fun BigPlayer(
                contentAlignment = Alignment.Center
             ) {
                headText.invoke()
-               // TODO move this logic out of the bottom sheet entirely and in the fullScreen verion. Or make a "More" options button on the bottom sheet's bottom i guess.
-               IconButton(
-                  imageVector =
-                     if(isShuffling)
-                        Icons.Default.Settings
-                     else
-                        Icons.Default.Close,
-                  modifier = Modifier
-                     .size(60.dp)
-                     .align(Alignment.TopEnd),
-                  iconSize = Size(0.7f,0.7f),
-                  tint = MyColor.White,
-                  enabled = isExpandedEnabled,
-                  onClick = {
-                     onShuffle.invoke()
-                  }
-               )
             }
          }
       }
@@ -737,19 +714,6 @@ private fun BigPlayer(
                contentAlignment = Alignment.Center
             ) {
                headText.invoke()
-               
-               IconButton(
-                  imageVector = if(isShuffling) Icons.Default.Settings else Icons.Default.Close,
-                  modifier = Modifier
-                     .size(60.dp)
-                     .align(Alignment.TopEnd),
-                  iconSize = Size(0.7f,0.7f),
-                  tint = MyColor.White,
-                  enabled = isExpandedEnabled,
-                  onClick = {
-                     onShuffle.invoke()
-                  }
-               )
             }
          }
          

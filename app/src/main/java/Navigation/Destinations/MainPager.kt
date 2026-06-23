@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material3.TabPosition
 import androidx.compose.material3.TabRow
 import androidx.compose.runtime.Composable
@@ -38,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
@@ -59,9 +62,10 @@ import com.composables.core.HorizontalSeparator
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import ui.components.Text.OutlinedTextFieldExpanded
+import ui.components.ViewDrawerState
 
 
-private val customIndicator =
+val customIndicator =
    @Composable { tabPositions: List<TabPosition>,pagerState: PagerState ->
       TabRowIndicator(tabPositions, pagerState, 2.dp)
    }
@@ -70,113 +74,7 @@ private val customIndicator =
 object MainPager {
    
    @Composable
-   fun RenderPager(initialPage:Int?, pageContent:@Composable (page:Int)->Unit) {
-      
-      val contextRef = LocalContext.current
-      val prefs = remember { MyPrefs.getPrefs(contextRef, MyPrefs.PrefDirs.VisualData) }
-      
-      val pageState = remember { MainPagerState().apply {
-         if(initialPage!=null){this.initialPage = initialPage}
-      }}
-      
-      
-      var pagerState = rememberPagerState(
-         initialPage = pageState.initialPage,
-         pageCount = { pageState.pages.size }
-      )
-      
-      
-      
-      
-      // Save current page
-      LaunchedEffect(pagerState.currentPage) {
-         
-         pageState.initialPage = pagerState.currentPage
-         
-         prefs.edit() {
-            putCursorValue(MyPrefs._prefs_PagerPosition,pagerState.currentPage.toString())
-         }
-      }
-      
-      
-      /**
-       * Main screen pager. This currently handles the Searchbar, the Tabrow and the Pager's combined scroll
-       * */
-      val animationScope = rememberCoroutineScope()
-      
-      
-      NestedScrollingFront(
-         appbar = {
-            SearchTopBar()
-         },
-         tabRow = {
-            TabRow(
-               modifier = Modifier.wrapContentHeight(),
-               indicator = {
-                  customIndicator.invoke(it,pagerState)
-               },
-               divider = {
-                  HorizontalSeparator(
-                     color = MyColor.Inactive,
-                     thickness = 2.dp
-                  )
-               },
-               selectedTabIndex = pagerState.currentPage,
-               containerColor = Theme.Sourcesets.TabRowBackground()
-            ) {
-               pageState.pages.forEachIndexed { index, title ->
-                  val interactionSource =
-                     remember { MutableInteractionSource() }
-                  
-                  CustomPagerTab(
-                     modifier = Modifier
-                        .height(40.dp)
-                        .clickable(
-                           onClick = {},
-                           interactionSource = interactionSource,
-                           indication = null
-                        ),
-                     unselectedContentColor = Theme.colorScheme().surfaceDim,
-                     selectedContentColor = Theme.colorScheme().outline,
-                     selected = pagerState.currentPage == index,
-                     onClick = {
-                        animationScope.launch {
-                           pagerState.animateScrollToPage(index)
-                        }
-                     }, text = {
-                        Text(
-                           text = title,
-                           fontSize = 16.sp,
-                           modifier = Modifier.zIndex(2f)
-                        )
-                     }
-                  )
-               }
-            }
-         },
-         pager = {
-            HorizontalPager(
-               state = pagerState,
-               modifier = Modifier.fillMaxSize()
-            ) { newPage ->
-               Box(
-                  modifier = Modifier.fillMaxSize()
-               ) {
-                  
-                  pageContent.invoke(newPage)
-                  
-               }
-            }
-         },
-         cursorValue = MyPrefs._prefs_songListState_NestedScrollOffset
-      )
-      
-      
-      // PAGER_END //
-      
-   }
-   @Composable
-   private fun SearchTopBar(){
+   fun SearchTopBar(drawerState: ViewDrawerState){
       Box(
          modifier = Modifier
             .height(60.dp)
@@ -213,13 +111,23 @@ object MainPager {
             .aspectRatio(1f, true)
          
          if(!isFocused) {
-            Text(
-               text = stringResource(R.string.app_name),
-               fontSize = 25.sp,
-               modifier = Modifier
-                  .align(Alignment.CenterStart)
-                  .padding(horizontal = 5.dp)
-            )
+            Row(
+               modifier = Modifier.align(Alignment.CenterStart),
+               verticalAlignment = Alignment.CenterVertically
+            ) {
+               IconButton(
+                  modifier = iconModifier,
+                  resId = R.drawable.options,
+               ){
+                  drawerState.open()
+               }
+               Text(
+                  text = stringResource(R.string.app_name),
+                  fontSize = 25.sp,
+                  modifier = Modifier.padding(horizontal = 5.dp)
+               )
+            }
+            
             
             IconButton(modifier = iconModifier.align(Alignment.CenterEnd),
                imageVector = Icons.Default.Search,
@@ -267,7 +175,7 @@ object MainPager {
       }
    }
    
-   private class MainPagerState(){
+   class MainPagerState(){
       val pages = listOf(
          "Songs",
          "Playlists"

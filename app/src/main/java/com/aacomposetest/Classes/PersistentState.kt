@@ -9,7 +9,7 @@ object GlobalPersistentStateManager {
    
    @Suppress("UNCHECKED_CAST")
    fun <T:Any> getState(key: String, default: T): T {
-      return (states[key] as? T) ?: default
+      return states.getOrPut(key) { default } as T
    }
    
    fun <T:Any> setState(key: String, value: T) {

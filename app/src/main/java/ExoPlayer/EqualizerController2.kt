@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -51,10 +50,6 @@ import androidx.compose.ui.util.lerp
 import com.aacomposetest.clickableNoRipple
 import com.aacomposetest.totalLength
 import com.aacomposetest.ui.theme.MyColor
-import com.google.gson.GsonBuilder
-import com.google.gson.TypeAdapter
-import com.google.gson.stream.JsonReader
-import com.google.gson.stream.JsonWriter
 import ui.components.CenteredPriorityLayout
 import ui.components.CubicControl
 import ui.components.Overlay
@@ -80,9 +75,21 @@ class EqualizerController2 constructor(sessionId: Int){
    var enabled by mutableStateOf(false)
       private set
    
-   fun enable(value:Boolean){
-      equalizer.enabled = value
+   fun enable() {
+      equalizer.enabled = true
       enabled = equalizer.enabled
+   }
+   fun disable(){
+      equalizer.enabled = false
+      enabled = equalizer.enabled
+   }
+   
+   fun switchEnable(){
+      if(equalizer.enabled){
+         disable()
+      }else{
+         enable()
+      }
    }
    
    
@@ -120,7 +127,7 @@ class EqualizerController2 constructor(sessionId: Int){
       
       bands = mutableStateListOf<Pair<Float,Float>>()
       
-      enable(false)
+      disable()
       _initialize()
    }
    
@@ -262,7 +269,7 @@ class EqualizerController2 constructor(sessionId: Int){
                      overlay = {
                         Box(
                            Modifier.clickableNoRipple{
-                              equalizer.enable(!equalizer.enabled)
+                              equalizer.switchEnable()
                            }
                         )
                      }
