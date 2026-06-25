@@ -27,7 +27,7 @@ import ui.components.BottomSheets.Content.BottomSheetContentDefaults.VerticalPad
 import ui.components.CancelConfirm
 
 @Composable
-fun PlaylistDelete_Content(playlist: Playlist?, bottomSheetVM: SheetViewmodel?){
+fun PlaylistDelete_Content(playlist: Playlist?, bottomSheetVM: MyViewModels.BottomSheet.SheetViewmodel?){
    
    val context = LocalContext.current
    

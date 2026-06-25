@@ -6,10 +6,8 @@ import MyViewModels.RefreshState
 import Navigation.NavExtensions.safeNavigate
 import Presentation.Navigation.MyNavigation
 import Presentation.SongsPage.MainSongsColumn
-import MyViewModels.SheetViewmodel
 import MyViewModels.SongsViewModel
 import android.app.Activity
-import MyViewModels.rememberBottomSheetInstance
 import Navigation.Destinations.MainPager.MainPagerState
 import Navigation.Destinations.MainPager.SearchTopBar
 import Presentation.NestedScrollingFront
@@ -54,7 +52,6 @@ import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Open
 import com.aacomposetest.Classes.ActivityLifecycleEffect
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.PersistentState
-import com.aacomposetest.Classes.Setting
 import com.aacomposetest.Classes.getCursorValue
 import com.aacomposetest.Classes.putCursorValue
 import com.aacomposetest.MyApplication
@@ -82,7 +79,7 @@ object PlayerBottomSheetContainer {
       localNavController: NavHostController,
       refreshBoxState: PullToRefreshState,
       refreshState: RefreshState,
-      globalBottomSheetVM: SheetViewmodel,
+      sheetLayerVM: MyViewModels.BottomSheet.SheetViewmodel,
       drawerState: ViewDrawerState,
       onClickAddPlaylist:(Page_ViewPlaylist)->Unit,
       onBottomSheetClick:()->Unit
@@ -308,7 +305,7 @@ object PlayerBottomSheetContainer {
                                  
                                  MainSongsColumn(
                                     modifier = Modifier.fillMaxSize(),
-                                    settingsBottomSheetVM = globalBottomSheetVM,
+                                    settingsBottomSheetVM = sheetLayerVM,
                                     state = songsListState,
                                     songs = songs
                                  )
@@ -318,12 +315,7 @@ object PlayerBottomSheetContainer {
                            // Playlists page
                            MainPages.Playlists -> {
                               
-                              val plusClickContent = rememberBottomSheetInstance {
-                                 PlaylistAddOrEdit_Content(
-                                    allPlaylists,
-                                    bottomSheetVM = globalBottomSheetVM
-                                 )
-                              }
+                              
                               
                               PlaylistsPage(
                                  playlists = allPlaylists,
@@ -334,10 +326,15 @@ object PlayerBottomSheetContainer {
                                     }
                                  },
                                  onPlusClick = {
-                                    globalBottomSheetVM
-                                       .addSheet(plusClickContent)
+                                    sheetLayerVM
+                                       .createAndAddSheet {
+                                          PlaylistAddOrEdit_Content(
+                                             allPlaylists,
+                                             bottomSheetVM = sheetLayerVM
+                                          )
+                                       }
                                  },
-                                 globalBottomSheetViewModel = globalBottomSheetVM
+                                 globalBottomSheetViewModel = sheetLayerVM
                               )
                            }
                         }
@@ -414,6 +411,7 @@ object PlayerBottomSheetContainer {
                onPlusClick = {
                   onClickAddPlaylist.invoke(args)
                },
+               sheetLayerVM = sheetLayerVM,
                optionsMenu = null // TODO
             )
             

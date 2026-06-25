@@ -2,7 +2,6 @@ package ui.components.Pages
 
 import AppDatabase.PlaylistRelated.Playlist
 import MyViewModels.SheetViewmodel
-import MyViewModels.rememberBottomSheetInstance
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.content.res.Configuration
@@ -60,23 +59,8 @@ fun PlaylistsPage(
     optionsButtonMenu:SimpleDropdownMenuState? = null,
     onPlaylistClick: ((Playlist) -> Unit)? = null,
     itemOptionsDropdownMenu: SimpleDropdownMenuState? = null,
-    globalBottomSheetViewModel: SheetViewmodel
+    globalBottomSheetViewModel: MyViewModels.BottomSheet.SheetViewmodel
 ) {
-    var playlistToEdit by remember { mutableStateOf<Playlist?>(null) }
-    
-    val deleteItem_Content = rememberBottomSheetInstance {
-        PlaylistDelete_Content(
-            playlist = playlistToEdit,
-            bottomSheetVM = globalBottomSheetViewModel
-        )
-    }
-    val renameItem_Content = rememberBottomSheetInstance {
-        PlaylistAddOrEdit_Content(
-            existingPlaylists = playlists,
-            bottomSheetVM = globalBottomSheetViewModel,
-            playlist = playlistToEdit?.title
-        )
-    }
 
     Box(modifier = modifier) {
 
@@ -106,14 +90,21 @@ fun PlaylistsPage(
                         optionsDropdownMenu = rememberSimpleDropdownMenu(
                             listOf(
                                 "Rename" to {
-                                    globalBottomSheetViewModel.addSheet(
-                                        renameItem_Content.apply { playlistToEdit = item }
-                                    )
+                                    globalBottomSheetViewModel.createAndAddSheet {
+                                        PlaylistAddOrEdit_Content(
+                                            existingPlaylists = playlists,
+                                            bottomSheetVM = globalBottomSheetViewModel,
+                                            playlist = item.title
+                                        )
+                                    }
                                 },
                                 "Delete" to {
-                                    globalBottomSheetViewModel.addSheet(
-                                        deleteItem_Content.apply { playlistToEdit = item }
-                                    )
+                                    globalBottomSheetViewModel.createAndAddSheet {
+                                        PlaylistDelete_Content(
+                                            playlist = item,
+                                            bottomSheetVM = globalBottomSheetViewModel
+                                        )
+                                    }
                                 }
                             )
                         )

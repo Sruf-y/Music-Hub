@@ -65,7 +65,7 @@ private fun Preview(){
 @Composable
 fun PlaylistAddOrEdit_Content(
    existingPlaylists: List<Playlist>? = null,
-   bottomSheetVM: SheetViewmodel? = null,
+   bottomSheetVM: MyViewModels.BottomSheet.SheetViewmodel? = null,
    playlist: String? = null
 ) {
    val contextRef = LocalContext.current
@@ -165,18 +165,5 @@ fun PlaylistAddOrEdit_Content(
          }
       }
       
-      
-      
    }
-   
-      
-      
-   
-         
-      
-      
-   
-   
-   
-   
 }

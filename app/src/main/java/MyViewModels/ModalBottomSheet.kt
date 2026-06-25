@@ -21,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -52,6 +53,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.apply
 
 
 class SheetViewmodel(): ViewModel(){
@@ -280,39 +282,10 @@ fun MyModalBottomSheet(
    
 }
 
-class SheetConfig {
-   
-   var backgroundColor: Color = Color.Unspecified
-   lateinit var contentPadding: PaddingValues
-   lateinit var shape: Shape
-   
-   
-   private constructor(
-      backgroundColor: Color = MyColor.SurfaceDark,
-      contentPadding: PaddingValues = PaddingValues(0.dp),
-      shape: Shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-   ) {
-      this.backgroundColor = backgroundColor
-      this.contentPadding = contentPadding
-      this.shape = shape
-   }
-   companion object{
-      @Composable
-      fun rememberSheetConfig(
-         backgroundColor: Color = MyColor.SurfaceDark,
-         contentPadding: PaddingValues = PaddingValues(0.dp),
-         shape: Shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-      ): SheetConfig {
-         return remember(backgroundColor,contentPadding,shape){
-            SheetConfig(
-               backgroundColor = backgroundColor,
-               contentPadding = contentPadding,
-               shape = shape
-            )
-         }
-      }
-      
-   }
+class SheetConfig() {
+   var backgroundColor by mutableStateOf(Color.Unspecified)
+   var contentPadding by mutableStateOf(PaddingValues(0.dp))
+   var shape by mutableStateOf<Shape>(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
 }
 
 /**
@@ -328,11 +301,13 @@ data class BottomSheetInstance(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun rememberBottomSheetInstance(
+private fun rememberBottomSheetInstance(
    initialDetent: SheetDetent = SheetDetent.Hidden,
    state: BottomSheetState = rememberBottomSheetState(SheetDetent.Hidden),
    sheetConfig: @Composable ()-> SheetConfig = {
-      SheetConfig.rememberSheetConfig(MyColor.Background())
+      SheetConfig().apply{
+         this.backgroundColor = MyColor.Background()
+      }
    },
    content: @Composable BottomSheetScope.() -> Unit,
 ): BottomSheetInstance {

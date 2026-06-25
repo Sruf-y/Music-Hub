@@ -3,6 +3,7 @@ package Navigation.Destinations
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
+import MyViewModels.BottomSheet.SheetViewmodel
 import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistWatcher
 import SrufComposeComponents.IconButton
@@ -59,6 +60,7 @@ import com.aacomposetest.ui.theme.Theme
 import kotlinx.serialization.Serializable
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import ui.components.BottomSheets.Content.BottomSheet_SongInfo
 import ui.components.SongItem
 
 @Serializable
@@ -75,6 +77,7 @@ data class Page_ViewPlaylist(val title: String) {
          bottomPadding: Dp = 0.dp,
          thumbNailSize:Dp = 150.dp,
          onPlusClick:(()-> Unit)? =null,
+         sheetLayerVM: SheetViewmodel,
          optionsMenu: SimpleDropdownMenuState? = null
       ) {
          Theme.RenderDefaultBackground()
@@ -352,6 +355,11 @@ data class Page_ViewPlaylist(val title: String) {
                               listOf(
                                  "Remove" to {
                                     removeItemOnClickListener.invoke(song)
+                                 },
+                                 "Info" to {
+                                    sheetLayerVM.createAndAddSheet{
+                                       BottomSheet_SongInfo(song)
+                                    }
                                  }
                               )
                            )

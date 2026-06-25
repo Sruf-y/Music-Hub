@@ -1,6 +1,8 @@
 package com.aacomposetest.Activities
 
 import ExoPlayer.myExoPlayer
+import MyViewModels.BottomSheet.BottomSheetInstance.Companion.BottomSheetFactory
+import MyViewModels.BottomSheet.MyModalBottomSheet2
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
 import Navigation.Destinations.EqualizerDest
@@ -17,14 +19,12 @@ import TestLayouts.TestActivityCore
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseInOutElastic
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.displayCutoutPadding
@@ -50,7 +50,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentSanitizer
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
@@ -71,10 +70,9 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
-import MyViewModels.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
-import MyViewModels.SheetViewmodel
 import Navigation.Destinations.SettingsDest
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -84,7 +82,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -92,6 +89,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aacomposetest.R
 import com.aacomposetest.hasPermission
 import com.aacomposetest.toDpSize
@@ -109,6 +108,11 @@ class MainActivityView : CustomComponentActivity() {
       get() {
          return MyApplication.instance.songViewModel
       }
+   
+   
+   
+   // Create viewmodel with factory
+   val globalBottomSheetVM: MyViewModels.BottomSheet.SheetViewmodel by viewModels()
    
    val refreshState = RefreshState()
    
@@ -240,12 +244,14 @@ class MainActivityView : CustomComponentActivity() {
       
       
       
+      
+      
       setContent {
          SrufTheme {
             
             Theme.RenderDefaultBackground()
             
-            MainView()
+            MainView(globalBottomSheetVM = globalBottomSheetVM)
             
          }
       }
@@ -268,9 +274,9 @@ class MainActivityView : CustomComponentActivity() {
    
    @OptIn(FlowPreview::class)
    @Composable
-   private fun MainView(){
+   private fun MainView(globalBottomSheetVM:MyViewModels.BottomSheet.SheetViewmodel){
       
-      val globalBottomSheetVM : SheetViewmodel = viewModel()
+      //val globalBottomSheetVM : MyViewModels.BottomSheet.SheetViewmodel = viewModel()
       
       val contextRef = LocalContext.current
       
@@ -297,7 +303,7 @@ class MainActivityView : CustomComponentActivity() {
          globalBottomSheetVM = globalBottomSheetVM,
          refreshState = refreshState
       )
-      MyModalBottomSheet(modifier = Modifier.fillMaxSize(),state = globalBottomSheetVM)
+      MyModalBottomSheet2(modifier = Modifier.fillMaxSize(), globalBottomSheetVM)
       
    }
 }
@@ -305,7 +311,7 @@ class MainActivityView : CustomComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
 @Composable
 private fun ParentContainer(
-   globalBottomSheetVM: SheetViewmodel,
+   globalBottomSheetVM: MyViewModels.BottomSheet.SheetViewmodel,
    refreshState: RefreshState,
 ) {
    val contextRef = LocalContext.current
@@ -459,7 +465,7 @@ private fun ParentContainer(
                         localNavController = playerBS_mainContentNavController,
                         refreshBoxState = refreshBoxState,
                         refreshState = refreshState,
-                        globalBottomSheetVM = globalBottomSheetVM,
+                        sheetLayerVM = globalBottomSheetVM,
                         drawerState = drawerState,
                         onClickAddPlaylist = { args ->
                            navController.safeNavigate(PlaylistAddSongsPage(args.title))

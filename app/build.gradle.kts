@@ -16,7 +16,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.aacomposetest"
+        applicationId = "com.aacomposetestt"
         minSdk = 33
         targetSdk = 35
         versionCode = 1

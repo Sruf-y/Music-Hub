@@ -12,8 +12,10 @@ import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
 
-// Used for Player bottom sheet, just a coagulation class.
-data class BottomSheetConfig(
+/**
+ * Used for ***Player*** bottom sheet, just a coagulation class.
+ */
+data class PlayerBottomSheetConfig(
     val peekHeight: Dp? = BSConfigDefaults.peekHeight,
     val expandedHeight: Dp = BSConfigDefaults.expandedHeight,
     val isExpandedByDefault: Boolean,
@@ -78,8 +80,8 @@ fun rememberBottomSheetConfig(
     isExpandedByDefault: Boolean = true,
     isHideable: Boolean = false,
     alpha:Float = 1f
-): BottomSheetConfig = remember(peekHeight, expandedHeight, isHideable) {
-    BottomSheetConfig(
+): PlayerBottomSheetConfig = remember(peekHeight, expandedHeight, isHideable) {
+    PlayerBottomSheetConfig(
        peekHeight = peekHeight,
        expandedHeight = expandedHeight,
        isExpandedByDefault = isExpandedByDefault,

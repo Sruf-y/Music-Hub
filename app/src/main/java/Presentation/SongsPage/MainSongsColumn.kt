@@ -5,12 +5,9 @@ import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
-import MyViewModels.SheetViewmodel
-import MyViewModels.rememberBottomSheetInstance
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -32,7 +29,7 @@ import com.aacomposetest.Classes.rememberSimpleDropdownMenu
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
-import ui.components.BottomSheets.Content.BottomSheet_SongData
+import ui.components.BottomSheets.Content.BottomSheet_SongInfo
 import ui.components.BottomSheets.Content.SongsSort_Content
 import ui.components.Overlay
 import ui.components.SongItem
@@ -59,7 +56,7 @@ fun MainSongsColumn(
          playlistTitle = null
       )
    },
-   settingsBottomSheetVM: SheetViewmodel? = null,
+   settingsBottomSheetVM: MyViewModels.BottomSheet.SheetViewmodel? = null,
    songs:List<Song>
 ) {
    val scope = rememberCoroutineScope()
@@ -72,32 +69,6 @@ fun MainSongsColumn(
    val curentSortDirection by ListFeedingVM.SortedSongs.sortDirectionFlow.stateFlow.collectAsState()
    
    val prefs = remember { MyPrefs.getPrefs(contextRef, MyPrefs.PrefDirs.VisualData) }
-   
-   val songsSortContent = rememberBottomSheetInstance {
-      SongsSort_Content(
-         currentType = curentSortType,
-         currentDirection = curentSortDirection,
-         sortTypeOptions = ListFeedingVM.SongSortType.entries.map { it.name },
-         sortDirectionOptions = ListFeedingVM.SongSortDirection.entries.map { it.name },
-         onConfirm = { type, direction->
-            ListFeedingVM.SortedSongs.setSortType(type)
-            ListFeedingVM.SortedSongs.setSortDirection(direction)
-            
-            prefs.edit {
-               putCursorValue(MyPrefs._prefs_globalSongsSortType,type)
-               putCursorValue(MyPrefs._prefs_globalSongsSortDirection,direction)
-            }
-            
-            scope.launch {
-               settingsBottomSheetVM?.dismissCurrent()
-            }
-         }, onCancel = {
-            scope.launch {
-               settingsBottomSheetVM?.dismissCurrent()
-            }
-         }
-      )
-   }
    
    val mockupState = rememberLazyListState(initialFirstVisibleItemIndex = state.firstVisibleItemIndex, initialFirstVisibleItemScrollOffset = state.firstVisibleItemScrollOffset)
    
@@ -142,7 +113,33 @@ fun MainSongsColumn(
                SortHeader(
                   songs = songs,
                   onFilterClick = {
-                     settingsBottomSheetVM?.addSheet(songsSortContent)
+                     settingsBottomSheetVM?.createAndAddSheet {
+                        SongsSort_Content(
+                           currentType = curentSortType,
+                           currentDirection = curentSortDirection,
+                           sortTypeOptions = ListFeedingVM.SongSortType.entries.map { it.name },
+                           sortDirectionOptions = ListFeedingVM.SongSortDirection.entries.map { it.name },
+                           onConfirm = { type, direction ->
+                              ListFeedingVM.SortedSongs.setSortType(type)
+                              ListFeedingVM.SortedSongs.setSortDirection(direction)
+                              
+                              prefs.edit {
+                                 putCursorValue(MyPrefs._prefs_globalSongsSortType, type)
+                                 putCursorValue(MyPrefs._prefs_globalSongsSortDirection, direction)
+                              }
+                              
+                              scope.launch {
+                                 settingsBottomSheetVM?.dismissCurrent()
+                              }
+                           }, onCancel = {
+                              scope.launch {
+                                 settingsBottomSheetVM?.dismissCurrent()
+                              }
+                           }
+                        )
+                     }
+                     
+                     
                   }
                )
             
@@ -189,14 +186,13 @@ fun MainSongsColumn(
                }
                else{
                   // Everything works as intended
-                  val datasheet = rememberBottomSheetInstance {
-                     BottomSheet_SongData(songSentToData!!)
-                  }
                   
                   val menu = rememberSimpleDropdownMenu(listOf(
                      "Info" to{
                         songSentToData = song
-                        settingsBottomSheetVM?.addSheet(datasheet)
+                        settingsBottomSheetVM?.createAndAddSheet{
+                           BottomSheet_SongInfo(songSentToData!!)
+                        }
                      }
                   ))
                   
