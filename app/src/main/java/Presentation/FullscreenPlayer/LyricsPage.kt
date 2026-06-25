@@ -1,18 +1,21 @@
 package Presentation.FullscreenPlayer
 
 
+import AppDatabase.SongRelated.Song
 import ExoPlayer.myExoPlayer
 import MyViewModels.rememberLyricsManager
 import SrufComposeComponents.IconButton
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -30,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -37,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
+import ui.components.LoopingText
 import ui.components.Text.BasicTextFieldExpanded
 
 @Composable
@@ -66,52 +71,54 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
           * */
          Row(modifier = Modifier
             .fillMaxWidth()
-            .background(Theme.Sourcesets.ToolbarBackground())
+            .background(Theme.Sourcesets.ToolbarBackground()),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
          ) {
-            val buttonsSize = remember { 40.dp }
             
-            if(isEditing){
-               Spacer(modifier = Modifier.weight(1f))
-               // Confirm button
-               IconButton(
-                  imageVector = Icons.Default.Check,
-                  onClick = {
-                     isEditing = false
-                     
-                     if(lyricsManager.lyrics.value !=null){
+            LoopingText(curSong?.title?: Song.defaultTitle,modifier = Modifier.weight(2f,true))
+            
+            Row(modifier = Modifier.weight(1f,false)) {
+               if (isEditing) {
+                  // Confirm button
+                  IconButton(
+                     imageVector = Icons.Default.Check,
+                     onClick = {
+                        isEditing = false
+                        
+                        if (lyricsManager.lyrics.value != null) {
+                           scope.launch {
+                              lyricsManager.saveCurrentLyric(contextRef)
+                           }
+                           
+                        }
+                     }
+                  )
+                  // Close Button
+                  IconButton(
+                     imageVector = Icons.Default.Close,
+                     onClick = {
+                        isEditing = false
                         scope.launch {
-                           lyricsManager.saveCurrentLyric(contextRef)
+                           lyricsManager.loadLyricsForSong(curSong?.id, contextRef)
                         }
                         
                      }
-                  }
-               )
-               // Close Button
-               IconButton(
-                  imageVector = Icons.Default.Close,
-                  onClick = {
-                     isEditing = false
-                     scope.launch {
-                        lyricsManager.loadLyricsForSong(curSong?.id,contextRef)
+                  )
+               } else {
+                  IconButton(
+                     imageVector = Icons.Default.Build,
+                     onClick = {
+                        isEditing = true
                      }
+                  )
+                  IconButton(
+                     imageVector = Icons.Default.Settings,
+                     onClick = {
                      
-                  }
-               )
-            }
-            else{
-               Spacer(modifier = Modifier.weight(1f))
-               IconButton(
-                  imageVector = Icons.Default.Build,
-                  onClick = {
-                     isEditing = true
-                  }
-               )
-               IconButton(
-                  imageVector = Icons.Default.Settings,
-                  onClick = {
-                  
-                  }
-               )
+                     }
+                  )
+               }
             }
          }
          
@@ -122,9 +129,11 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
             onValueChange = {
                lyricsManager.lyrics.value = it
             },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+               .weight(1f)
                .fillMaxWidth()
-               .verticalScroll(textScroll),
+               .verticalScroll(textScroll)
+               .padding(horizontal = 5.dp),
             enabled = isEditing,
             textStyle = TextStyle(
                color = MyColor.TextColor(),

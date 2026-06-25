@@ -75,7 +75,26 @@ import MyViewModels.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
 import MyViewModels.SheetViewmodel
 import Navigation.Destinations.SettingsDest
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.sp
+import com.aacomposetest.R
 import com.aacomposetest.hasPermission
+import com.aacomposetest.toDpSize
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
 
@@ -313,49 +332,83 @@ private fun ParentContainer(
       SafeDrawer(
          state = drawerState,
          drawerContent = {
-            DrawerStandardLayout(
-               modifier = Modifier
-                  .fillMaxHeight()
-                  .graphicsLayer {
-                     this.alpha = drawerState.currentOffset
-                  }
-                  .background(tempDrawerColor)
-                  .pointerInput(Unit) {
-                     detectTapGestures()
-                  }
-                  .padding(
-                     start = 10.dp,
-                     top = 10.dp
-                  )
-            ) {
-               item(key = "settings"){
-                  Button({
-                     navController.safeNavigate(SettingsDest)
-                     drawerState.close()
-                  }) {
-                     Text("Settings")
-                  }
-               }
-               item(key = "equalizer"){
-                  // Your item content
-                  Button({
-                     navController.safeNavigate(EqualizerDest)
-                     drawerState.close()
-                  }) {
-                     Text("Open Equalizer")
-                  }
-               }
+            Box(Modifier.wrapContentSize()){
+               var intsize by remember { mutableStateOf(IntSize(0,0)) }
+               val density = LocalDensity.current
                
-               item(key = "Tests") {
-                  Button({
-                     val intent = Intent(contextRef, TestActivityCore::class.java)
-                     contextRef.startActivity(intent)
-                  }){
-                     Text("Tests")
+               Theme.RenderDefaultBackground(
+                  Modifier
+                     .size(intsize.toDpSize(density = density))
+                     .graphicsLayer {
+                        this.alpha = drawerState.currentOffset
+                     },
+                  alpha = 0f
+               )
+               
+               DrawerStandardLayout(
+                  modifier = Modifier
+                     .fillMaxHeight()
+                     .wrapContentWidth()
+                     .onSizeChanged{
+                        intsize = it
+                     }
+                     .graphicsLayer {
+                        this.alpha = drawerState.currentOffset
+                     }
+                     .pointerInput(Unit) {
+                        detectTapGestures() // to not close the drawer on any normal tap inside it
+                     }
+                     .padding(
+                        start = 10.dp,
+                        top = 10.dp,
+                        end = 10.dp
+                     )
+                     
+                     
+               ) {
+                  
+                  stickyHeader {
+                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(painterResource(
+                           id = R.drawable.ic_appicon),
+                           tint = Theme.IconTint(),
+                           contentDescription = null,
+                           modifier = Modifier.size(60.dp)
+                        )
+                        Text(stringResource(R.string.app_name), fontSize = 36.sp, fontWeight = FontWeight.Bold)
+                     }
+                  }
+                  item(key = "settings"){
+                     Button({
+                        navController.safeNavigate(SettingsDest)
+                        drawerState.close()
+                     }) {
+                        Text("Settings")
+                     }
+                  }
+                  item(key = "equalizer"){
+                     // Your item content
+                     Button({
+                        navController.safeNavigate(EqualizerDest)
+                        drawerState.close()
+                     }) {
+                        Text("Open Equalizer")
+                     }
                   }
                   
+                  item(key = "Tests") {
+                     Button({
+                        val intent = Intent(contextRef, TestActivityCore::class.java)
+                        contextRef.startActivity(intent)
+                     }){
+                        Text("Tests")
+                     }
+                     
+                  }
                }
             }
+            
+            
          },
          mainContent = {
             Box(

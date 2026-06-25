@@ -43,16 +43,19 @@ open class CustomComponentActivity(): ComponentActivity(){
    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
       super.onCreate(savedInstanceState, persistentState)
       
-      setupKeyboardPanMode()
-   }
-   
-   init {
+      MySettings.initialize(this@CustomComponentActivity)
       lifecycleScope.launch {
-         MySettings.initialize(this@CustomComponentActivity)
+         
          MySettings.settings!!.orientation.stateFlow.collect {
             this@CustomComponentActivity.requestedOrientation = it
          }
       }
+      
+      setupKeyboardPanMode()
+   }
+   
+   init {
+   
    }
    
    

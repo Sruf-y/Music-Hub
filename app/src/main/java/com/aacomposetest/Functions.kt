@@ -29,6 +29,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -60,7 +61,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -651,6 +654,13 @@ fun countIf(vararg expr:Boolean): Int{
          a++
    }
    return a
+}
+
+fun IntSize.toDpSize(density: Density): DpSize{
+   return DpSize(
+      width = width.toDp(density),
+      height = height.toDp(density)
+   )
 }
 
 

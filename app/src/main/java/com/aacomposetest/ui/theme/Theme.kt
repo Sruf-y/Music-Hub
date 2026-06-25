@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.aacomposetest.R
 import com.valentinilk.shimmer.LocalShimmerTheme
 import com.valentinilk.shimmer.defaultShimmerTheme
 import com.valentinilk.shimmer.shimmer
@@ -88,7 +89,7 @@ object Theme{
    @SuppressLint("ComposableNaming")
    @Composable
    fun DefaultBackground():Int{
-      return remember{ com.aacomposetest.R.drawable.gradient1 }
+      return remember{ R.drawable.gradient1 }
    }
    
    @SuppressLint("ComposableNaming")
@@ -152,9 +153,9 @@ object Theme{
    
    
    @Composable
-   fun RenderDefaultBackground(modifier: Modifier = Modifier.fillMaxSize(), @DrawableRes id:Int = Theme.DefaultBackground()){
+   fun RenderDefaultBackground(modifier: Modifier = Modifier.fillMaxSize(), @DrawableRes id:Int = Theme.DefaultBackground(),alpha:Float = 0.15f){
       Overlay(overlay = {
-         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.15f)))
+         Box(modifier.background(Color.Black.copy(alpha = alpha)))
       }) {
          AsyncImage(ImageRequest.Builder(LocalContext.current)
             .data(id)

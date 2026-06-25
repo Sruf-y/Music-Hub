@@ -19,8 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
@@ -30,6 +32,7 @@ import com.aacomposetest.Classes.rememberSimpleDropdownMenu
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
+import ui.components.BottomSheets.Content.BottomSheet_SongData
 import ui.components.BottomSheets.Content.SongsSort_Content
 import ui.components.Overlay
 import ui.components.SongItem
@@ -124,6 +127,9 @@ fun MainSongsColumn(
       }
    }
    else{
+      
+      var songSentToData by remember { mutableStateOf<Song?>(null) }
+      
       // Succesful load
       LazyColumn(
          modifier = modifier,
@@ -164,6 +170,8 @@ fun MainSongsColumn(
                         Theme.Glint.GlintBox(Modifier.fillMaxSize())
                      }
                   ) {
+                     
+                     
                      SongItem(
                         song = song,
                         textColor = textColor,
@@ -174,13 +182,24 @@ fun MainSongsColumn(
                                  onItemClick.invoke(song)
                               }
                            ),
-                        optionsMenu = null // TODO
+                        optionsMenu = null
                      )
                   }
                   
                }
                else{
                   // Everything works as intended
+                  val datasheet = rememberBottomSheetInstance {
+                     BottomSheet_SongData(songSentToData!!)
+                  }
+                  
+                  val menu = rememberSimpleDropdownMenu(listOf(
+                     "Info" to{
+                        songSentToData = song
+                        settingsBottomSheetVM?.addSheet(datasheet)
+                     }
+                  ))
+                  
                   SongItem(
                      song = song,
                      textColor = textColor,
@@ -192,9 +211,7 @@ fun MainSongsColumn(
                            }
                         )
                      ,
-                     optionsMenu = rememberSimpleDropdownMenu(
-                        listOf() // TODO: add options for songs globally. This shouldn't be hard (make an object with callbacks)
-                     ),
+                     optionsMenu = menu,
                   )
                }
                

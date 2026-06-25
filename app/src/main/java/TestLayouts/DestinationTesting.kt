@@ -77,7 +77,8 @@ fun DestinationTesting(){
          }, drawerContent = {
             Box(modifier = Modifier
                .fillMaxSize()
-               .background(MyColor.SemiTransparentDark))
+               .background(MyColor.SemiTransparentDark)
+            )
          })
          
          
