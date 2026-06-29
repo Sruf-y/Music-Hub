@@ -167,7 +167,7 @@ object myExoPlayer {
    private var songsVM : SongsViewModel? = null
    
    private var exoPlayer: External_ExoPlayer? = null
-   var equalizerController: EqualizerController2? = null
+   var equalizerController: EqualizerController? = null
       private set
    var isPrepared = false
    
@@ -216,7 +216,7 @@ object myExoPlayer {
                            isPrepared = true
                            if(equalizerController==null){
                               /** Is initialized here because the audioSessionId is not valid until exoplayer is "prepared" */
-                              equalizerController = EqualizerController2(this@apply.audioSessionId)
+                              equalizerController = EqualizerController(this@apply.audioSessionId)
                            }
                         }
                         Player.STATE_ENDED -> {
