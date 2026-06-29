@@ -97,7 +97,7 @@ import com.aacomposetest.hasPermission
 import com.aacomposetest.toDpSize
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
-
+import com.aacomposetest.Toast
 
 class MainActivityView : CustomComponentActivity() {
    
@@ -136,11 +136,13 @@ class MainActivityView : CustomComponentActivity() {
                   if (refreshState.state == true) {
                      
                      withContext(Dispatchers.Main) {
-                        Toast.makeText(
+                        
+                        Toast(
                            this@MainActivityView,
                            "Update successful!",
-                           Toast.LENGTH_SHORT
-                        ).show()
+                           Toast.LENGTH_SHORT,
+                           true
+                        )
                      }
                      
                      refreshState.state = false

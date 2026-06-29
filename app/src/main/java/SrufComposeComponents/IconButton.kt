@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.aacomposetest.clickableNoRipple
 import com.aacomposetest.ui.theme.Theme
 
 @Composable
@@ -34,7 +33,7 @@ fun IconButton(
    tint:Color = IconButtonDefaults.iconTint(),
    ripple:Indication? = IconButtonDefaults.ripple(),
    enabled:Boolean = true,
-   onclick:(()->Unit)
+   onClick:(()->Unit)
 ) {
     _baseIconButton(
         data = resId,
@@ -43,7 +42,7 @@ fun IconButton(
         iconTint = tint,
         ripple = ripple,
         enabled = enabled,
-        onclick = onclick
+        onclick = onClick
     )
 }
 

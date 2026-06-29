@@ -44,7 +44,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-
+import com.aacomposetest.Toast
 interface MyPlayerListener{
    fun onToggle(value:Boolean)
    fun onStart()
@@ -497,7 +497,7 @@ object myExoPlayer {
    fun playPreviousInPlaylist(
       allowWrapAround: Boolean = false,
       onError: () -> Unit = {
-         Toast.makeText(MyApplication.instance, "CurSong not found", Toast.LENGTH_SHORT).show()
+         Toast(MyApplication.instance, "CurSong not found", Toast.LENGTH_SHORT)
          
          playActionLogError()
       },
@@ -628,7 +628,7 @@ object myExoPlayer {
    fun playNextInPlaylist(
       allowLoop: Boolean = true,
       onError: () -> Unit = {
-         Toast.makeText(MyApplication.instance, "CurSong not found", Toast.LENGTH_SHORT).show()
+         Toast(MyApplication.instance, "CurSong not found", Toast.LENGTH_SHORT)
          playActionLogError()
       },
    ) {

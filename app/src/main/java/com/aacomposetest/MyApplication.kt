@@ -15,6 +15,7 @@ import android.os.Process
 import android.provider.MediaStore
 import android.util.Log
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import coil.ImageLoaderFactory
@@ -28,6 +29,7 @@ import com.aacomposetest.MyApplication.MusicNotification.name
 import com.aacomposetest.Classes.NotificationPoster.Companion.openMediaStoreUriPendingIntent
 import com.aacomposetest.Services.MusicService
 import com.aacomposetest.Services.ServiceBindManager
+import com.google.android.material.snackbar.BaseTransientBottomBar
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -169,6 +171,7 @@ class MyApplication: Application(), ImageLoaderFactory {
             parentContext: Context,  // Any Activity, not just AppCompatActivity
             title: String,
             message: String,
+            onOkTitle:String = "Ok",
             onOk: () -> Unit = {},
             onCancel:(()->Unit)? = null
         ) {
@@ -178,7 +181,7 @@ class MyApplication: Application(), ImageLoaderFactory {
             )
                 .setTitle(title)
                 .setMessage(message)
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                .setPositiveButton(onOkTitle) { dialog, _ ->
                     dialog.dismiss()
                     onOk()
                 }.let {
@@ -246,6 +249,20 @@ fun Log(
         else -> "WTF"
     }
     handleInternalLog(message, tagString, type)
+}
+fun Toast(
+    context: Context,
+    text:String,
+    @BaseTransientBottomBar.Duration duration:Int = Toast.LENGTH_SHORT,
+    showInProd:Boolean = false
+){
+    if(showInProd) {
+        Toast.makeText(
+            context,
+            text,
+            duration
+        ).show()
+    }
 }
 /**
  * @param throwAnyway will first throw the exception anyway THEN call onError. This is to ensure the error is first NOT handled. Just for testing purposes this can be enabled

@@ -5,21 +5,18 @@ import AppDatabase.SongRelated.Song
 import ExoPlayer.myExoPlayer
 import MyViewModels.rememberLyricsManager
 import SrufComposeComponents.IconButton
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
@@ -38,6 +35,9 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import com.aacomposetest.MyApplication
+import com.aacomposetest.R
+import com.aacomposetest.Toast
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
@@ -45,7 +45,7 @@ import ui.components.LoopingText
 import ui.components.Text.BasicTextFieldExpanded
 
 @Composable
-internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle = TextStyle.Default){
+fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle = TextStyle.Default){
    val contextRef = LocalContext.current
    val scope = rememberCoroutineScope()
    
@@ -59,7 +59,20 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
    }
    
    BackHandler(isEditing) {
-      Toast.makeText(contextRef,"Implement popups and confirmations for this. ",Toast.LENGTH_SHORT).show()
+      
+      MyApplication.showSystemAlert(
+         parentContext = contextRef,
+         title = "Unsaved changes!",
+         message = "Changes will not be saved upon quiting EDIT.",
+         onOkTitle = "Confirm",
+         onOk = {
+            isEditing = false
+            scope.launch {
+               lyricsManager.loadLyricsForSong(curSong?.id, contextRef)
+            }
+         },
+         onCancel = {}
+      )
    }
    
    
@@ -107,7 +120,7 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
                   )
                } else {
                   IconButton(
-                     imageVector = Icons.Default.Build,
+                     resId = R.drawable.pen,
                      onClick = {
                         isEditing = true
                      }
@@ -115,7 +128,7 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
                   IconButton(
                      imageVector = Icons.Default.Settings,
                      onClick = {
-                     
+                        Toast(contextRef,"Not implemented yet")
                      }
                   )
                }

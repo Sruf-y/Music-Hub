@@ -39,7 +39,7 @@ import ui.components.CancelConfirm
 import ui.components.Text.BasicTextFieldExpanded
 import ui.components.PriorityLayout
 import ui.components.Text.OutlinedTextFieldExpanded
-
+import com.aacomposetest.Toast
 
 @Preview(
    showBackground = true,
@@ -112,11 +112,11 @@ fun PlaylistAddOrEdit_Content(
                      
                      
                   } else {
-                     Toast.makeText(contextRef, "Playlist already exists!", Toast.LENGTH_SHORT)
-                        .show()
+                     Toast(contextRef, "Playlist already exists!", Toast.LENGTH_SHORT,true)
+                     
                   }
                } else {
-                  Toast.makeText(contextRef, "Title must not be blank!", Toast.LENGTH_SHORT).show()
+                  Toast(contextRef, "Title must not be blank!", Toast.LENGTH_SHORT,true)
                }
             }
          )

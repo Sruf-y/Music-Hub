@@ -60,6 +60,7 @@ import kotlinx.serialization.Serializable
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import ui.components.SongItem
+import com.aacomposetest.Toast
 
 @Serializable
 data class Page_ViewPlaylist(val title: String) {
@@ -333,15 +334,16 @@ data class Page_ViewPlaylist(val title: String) {
                                              playlist?.songsIdList?.addAll(auxList)
                                              
                                              playlist?.save(contextRef)
-                                             Toast.makeText(
+                                             
+                                             Toast(
                                                 contextRef,
                                                 "Playlist saved!",
                                                 Toast.LENGTH_SHORT
-                                             ).show()
+                                             )
                                           }
                                        ),
                                     ripple = null,
-                                    onclick = {
+                                    onClick = {
                                     
                                     }
                                  )
