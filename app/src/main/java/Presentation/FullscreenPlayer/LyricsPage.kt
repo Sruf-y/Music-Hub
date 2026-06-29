@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import com.aacomposetest.R
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.launch
@@ -106,13 +108,13 @@ internal fun LyricsPage(modifier: Modifier = Modifier,lyricsTextStyle: TextStyle
                   )
                } else {
                   IconButton(
-                     imageVector = Icons.Default.Build,
-                     onClick = {
+                     resId = R.drawable.pen,
+                     onclick = {
                         isEditing = true
                      }
                   )
                   IconButton(
-                     imageVector = Icons.Default.Settings,
+                     imageVector = Icons.Default.MoreVert,
                      onClick = {
                      
                      }
