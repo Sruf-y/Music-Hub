@@ -135,6 +135,8 @@ class MyApplication: Application(), ImageLoaderFactory {
     companion object{
         lateinit var instance: MyApplication
             private set
+        
+        var startupQueryPerformed = false
 
         val allertPoster by lazy {
             NotificationPoster(

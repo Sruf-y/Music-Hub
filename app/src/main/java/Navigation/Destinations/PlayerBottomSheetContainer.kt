@@ -217,6 +217,7 @@ object PlayerBottomSheetContainer {
                }
             }
             
+            val curSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
             
             NestedScrollingFront(
                appbar = {
@@ -285,7 +286,7 @@ object PlayerBottomSheetContainer {
                                  state = refreshBoxState,
                                  modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(bottom = songBS_Config.bottomHeight),
+                                    .padding(bottom = if(curSong!=null) songBS_Config.bottomHeight else 0.dp), // PADDING AGAINST THE PLAYER BOTTOM SHEET
                                  isRefreshing = refreshState.state,
                                  onRefresh = {
                                     refreshState.state = true

@@ -205,7 +205,7 @@ class MainActivityView : CustomComponentActivity() {
          handleReceivedAudioIntent(intent)
       }
    }
-   var firstQuery = true
+   
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
       
@@ -219,13 +219,13 @@ class MainActivityView : CustomComponentActivity() {
       */
       songViewModel.viewModelScope.launch {
          try {
-            if(firstQuery){
+            if(!MyApplication.startupQueryPerformed){
                songViewModel.resyncALL_withMediaStore(
                   context = this@MainActivityView,
                   alsoPictures = true,
                   forceUpdate = false
                )
-               firstQuery = false
+               MyApplication.startupQueryPerformed = true
             }
             
          }catch (ex: Exception){

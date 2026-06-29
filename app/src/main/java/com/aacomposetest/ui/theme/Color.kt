@@ -3,6 +3,7 @@ package com.aacomposetest.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 
 object MyColor{
@@ -52,49 +53,63 @@ object MyColor{
 
     @Composable
     fun SemiTransparent(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
-        return if(isDarkMode)
-            SemiTransparentDark
-        else
-            SemiTransparentLight
+        return remember {
+            if (isDarkMode)
+                SemiTransparentDark
+            else
+                SemiTransparentLight
+        }
     }
     @Composable
     fun TextColor(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
-        return if(isDarkMode)
-            White
-        else
-            Black
+        return remember {
+            if (isDarkMode)
+                White
+            else
+                Black
+        }
     }
     
     @Composable
     fun SystemColor(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
-        return if(isDarkMode)
-            Black
-        else
-            White
+        return remember {
+            if (isDarkMode)
+                Black
+            else
+                White
+        }
     }
 
     @Composable
     fun Background(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
-        return if(isDarkMode)
-            BackgroundDark
-        else
-            BackgroundLight
+        return remember {
+            if(isDarkMode)
+                BackgroundDark
+            else
+                BackgroundLight
+        }
+        
+        
     }
     
     @Composable
     fun OnBackground(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
-        return if(isDarkMode)
-            Black
-        else
-            White
+        return remember {
+            if (isDarkMode)
+                Black
+            else
+                White
+        }
     }
     
     @Composable
     fun IconTint(isDarkMode:Boolean = isSystemInDarkTheme()): Color{
-        return if(isDarkMode)
-            White
-        else
-            Black
+        return remember {
+            if (isDarkMode)
+                White
+            else
+                Black
+        }
     }
     
 }

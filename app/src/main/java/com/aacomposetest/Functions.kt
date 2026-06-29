@@ -24,7 +24,9 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.OverscrollEffect
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -77,6 +79,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -663,6 +666,60 @@ fun IntSize.toDpSize(density: Density): DpSize{
    )
 }
 
+object FlingBehaviors {
+   val fastFling = object : FlingBehavior {
+      override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+         var velocity = initialVelocity
+         while (kotlin.math.abs(velocity) > 0.5f) {
+            val delta = velocity * 0.016f
+            if (delta == 0f) break
+            val scrolled = scrollBy(delta)
+            if (scrolled != delta) break
+            velocity *= 0.97f // Fast fling
+            yield()
+         }
+         return velocity
+      }
+   }
+   
+   val slowFling = object : FlingBehavior {
+      override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+         var velocity = initialVelocity
+         while (kotlin.math.abs(velocity) > 0.5f) {
+            val delta = velocity * 0.016f
+            if (delta == 0f) break
+            val scrolled = scrollBy(delta)
+            if (scrolled != delta) break
+            velocity *= 0.92f // Slow fling
+            yield()
+         }
+         return velocity
+      }
+   }
+   
+   val springFling = object : FlingBehavior {
+      override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+         var velocity = initialVelocity
+         var distance = 0f
+         
+         while (kotlin.math.abs(velocity) > 1f) {
+            val delta = velocity * 0.016f
+            if (delta == 0f) break
+            
+            distance += delta
+            val scrolled = scrollBy(delta)
+            if (scrolled != delta) break
+            
+            // Spring-like behavior
+            val springForce = -distance * 0.1f // Spring constant
+            velocity = velocity * 0.95f + springForce * 0.016f
+            
+            yield()
+         }
+         return velocity
+      }
+   }
+}
 
 
 

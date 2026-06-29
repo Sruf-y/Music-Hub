@@ -31,9 +31,8 @@ fun SafeDrawer(
     
     val localDensity = LocalDensity.current
     
-    BackHandler {
-        if(state.currentValue == ViewDrawerValue.Open)
-            state.close()
+    BackHandler(state.currentValue == ViewDrawerValue.Open) {
+        state.close()
     }
     ViewDrawer(
         modifier = Modifier

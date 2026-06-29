@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import com.aacomposetest.MyApplication
 import com.composables.core.SheetDetent
 
 class SheetConfig() {
@@ -19,8 +20,8 @@ class SheetConfig() {
 }
 
 data class BottomSheetInstance(
-   val state: BottomSheetState = BottomSheetState(),
-   val sheetConfig: @Composable () -> SheetConfig = { SheetConfig()},
+   val state: BottomSheetState,
+   val sheetConfig: SheetConfig = SheetConfig(),
    val sheetModifier: Modifier = Modifier,
    val content: @Composable SimpleBottomSheetScope.() -> Unit,
 ) {
@@ -40,13 +41,11 @@ data class BottomSheetInstance(
    
    companion object{
       class BottomSheetFactory() {
-         private val sheetStates = mutableMapOf<BottomSheetInstance, String>()
+         //private val sheetStates = mutableMapOf<BottomSheetInstance, String>()
          
          fun create(
             initialDetent: SheetDetent = SheetDetent.Hidden,
-            sheetConfig: @Composable () -> SheetConfig = {
-               SheetConfig()
-            },
+            sheetConfig: SheetConfig = SheetConfig(),
             content: @Composable SimpleBottomSheetScope.() -> Unit
          ): BottomSheetInstance {
             val stateHolder = BottomSheetState(initialDetent)
@@ -58,12 +57,11 @@ data class BottomSheetInstance(
             )
             
             // Store initial state for restoration
-            sheetStates[instance] = initialDetent.identifier
+            //sheetStates[instance] = initialDetent.identifier
             
             // Store cleanup
             instance.setOnDispose{
-               //lifecycleOwner.lifecycle.removeObserver(observer)
-               sheetStates.remove(instance)
+               //sheetStates.remove(instance)
             }
             
             return instance

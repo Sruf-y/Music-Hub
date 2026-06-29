@@ -4,6 +4,15 @@ import ViewModels.BottomSheet.BottomSheetInstance.Companion.BottomSheetFactory
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.wrapContentSize
@@ -28,8 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -38,8 +51,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.lifecycle.ViewModel
+import com.aacomposetest.FlingBehaviors
 import com.aacomposetest.clickableNoRipple
 import com.aacomposetest.exceptIndex
+import com.aacomposetest.toDp
 import com.aacomposetest.ui.theme.MyColor
 import com.composables.core.SheetDetent
 import kotlinx.coroutines.Dispatchers
@@ -58,9 +73,7 @@ class SheetViewmodel(
    
    fun createAndAddSheet(
       initialDetent: SheetDetent = SheetDetent.Hidden,
-      config: @Composable () ->  SheetConfig = {
-         SheetConfig().apply { backgroundColor =  MyColor.Background() }
-      },
+      config: SheetConfig = SheetConfig(),
       content: @Composable SimpleBottomSheetScope.() -> Unit,
    ) {
       val instance = sheetFactory.create(
@@ -88,6 +101,7 @@ class SheetViewmodel(
          withContext(Dispatchers.Main) {
             if(stack.isNotEmpty()) {
                stack.last().state.animateTo(SheetDetent.Hidden)
+               stack.last().dispose()
                stack = stack.dropLast(1)
             }
          }
@@ -152,6 +166,7 @@ internal fun SheetViewmodel.renderAll() {
             }
             
             // On Dismiss - using stateHolder
+            
             LaunchedEffect(it.state.targetDetent, it.state.currentDetent) {
                if (it.state.currentDetent == SheetDetent.FullyExpanded && !wasShown) {
                   wasShown = true
@@ -172,22 +187,46 @@ internal fun SheetViewmodel.renderAll() {
             var intHeight by remember { mutableIntStateOf(0) }
             
             
-            val config = it.sheetConfig()
+            val config = it.sheetConfig
             val sheetScope = remember { SimpleBottomSheetScope() }
+            val sysCol = MyColor.Background()
+            val backgroundColor by remember {
+               derivedStateOf {
+                  config.backgroundColor.let { if(it==Color.Unspecified) sysCol else it }
+               }
+            }
             
             
-            CustomBottomSheet(
-               state = it.state,
-               shape = config.shape,
-               backgroundColor = config.backgroundColor,
-               modifier = Modifier
-                  .align(Alignment.BottomCenter)
-                  .onSizeChanged {
-                     intHeight = it.height
-                  }
-                  then it.sheetModifier,
-               contentPadding = config.contentPadding
-            ) {
+            // Bottom sheet Actual component
+            Box(Modifier
+               .align(Alignment.BottomCenter)
+               .offset(y =it.state.offset)
+               .onSizeChanged {
+                  intHeight = it.height
+               }
+               .pointerInput(null){
+                  detectDragGestures(orientationLock = Orientation.Vertical,
+                     onDragStart = {down,change,offset->
+                        it.state.onDragStart(down,change,offset)
+                     },
+                     onDrag = {change,offset->
+                        it.state.onDrag(change,offset)
+                     },
+                     onDragEnd = {change->
+                        it.state.onDragEnd(change)
+                     },
+                     onDragCancel = {
+                        it.state.onDragCancel()
+                     }
+                  )
+               }
+               .clip(config.shape)
+               .background(backgroundColor, config.shape)
+               .padding(config.contentPadding)
+               .wrapContentSize()
+               .clickableNoRipple { }
+               then it.sheetModifier
+            ){
                it.content.invoke(sheetScope)
             }
          }
@@ -201,34 +240,7 @@ class SimpleBottomSheetScope {
    // this can be empty or contain minimal implementation
 }
 
-@Composable
-private fun CustomBottomSheet(
-   state: BottomSheetState,
-   shape: Shape,
-   backgroundColor: Color,
-   modifier: Modifier = Modifier,
-   contentPadding: PaddingValues = PaddingValues(0.dp),
-   content: @Composable () -> Unit
-) {
-   val progress = state.progress
-   val density = LocalDensity.current
-   val isExpanded = state.currentDetent == SheetDetent.FullyExpanded
-   
-   
-   Box(
-      modifier = Modifier
-         .clickableNoRipple{} // To prevent clicking through the sheet
-         then modifier
-         .wrapContentSize()
-         // TODO: add dragging AND with dragging add the settling and auto-dispose functionalities. These should really be in the state i think
-         .background(backgroundColor, shape)
-         .clip(shape)
-         .padding(contentPadding),
-      content = {
-         content.invoke()
-      }
-   )
-}
+
 
 /**
  * Composable holding the stack of sheets.
