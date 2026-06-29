@@ -85,13 +85,9 @@ dependencies {
 
     //Room
     val room_version = "2.7.2"
-
     implementation("androidx.room:room-runtime:$room_version")
-
     implementation("androidx.room:room-ktx:$room_version")
-
     implementation("androidx.room:room-paging:$room_version")
-
     ksp("androidx.room:room-compiler:$room_version")
 
 
@@ -139,7 +135,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     // SLF4J No-Op implementation
-    implementation("org.slf4j:slf4j-nop:2.0.13")
+    //implementation("org.slf4j:slf4j-nop:2.0.13")
 
     // ColorPicker
     implementation("com.github.skydoves:colorpicker-compose:1.0.0")

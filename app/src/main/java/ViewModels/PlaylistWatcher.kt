@@ -1,11 +1,10 @@
-package MyViewModels
+package ViewModels
 
 import AppDatabase.PlaylistRelated.Playlist
-import MyViewModels.FileWatcher.Companion.FileWatchListener
+import ViewModels.FileWatcher.Companion.FileWatchListener
 import android.content.Context
 import android.os.FileObserver
 import android.os.FileObserver.CLOSE_WRITE
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,7 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.io.File
 import java.lang.ref.WeakReference
 import java.util.UUID
-import kotlin.random.Random
 
 /**
  * Strictly persists a playlist as a state. That is this class' one and ONLY purpose.

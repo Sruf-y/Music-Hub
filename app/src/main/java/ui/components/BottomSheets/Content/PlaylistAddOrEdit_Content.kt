@@ -1,21 +1,15 @@
 package ui.components.BottomSheets.Content
 
 import AppDatabase.PlaylistRelated.Playlist
-import MyViewModels.SheetViewmodel
 import SrufComposeComponents.Text
 import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -29,14 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.aacomposetest.Functions.rename
 import com.aacomposetest.ui.theme.SrufTheme
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.launch
 import ui.components.BottomSheets.Content.BottomSheetContentDefaults.VerticalPadding
 import ui.components.CancelConfirm
-import ui.components.Text.BasicTextFieldExpanded
 import ui.components.PriorityLayout
 import ui.components.Text.OutlinedTextFieldExpanded
 
@@ -65,7 +56,7 @@ private fun Preview(){
 @Composable
 fun PlaylistAddOrEdit_Content(
    existingPlaylists: List<Playlist>? = null,
-   bottomSheetVM: MyViewModels.BottomSheet.SheetViewmodel? = null,
+   bottomSheetVM: ViewModels.BottomSheet.SheetViewmodel? = null,
    playlist: String? = null
 ) {
    val contextRef = LocalContext.current

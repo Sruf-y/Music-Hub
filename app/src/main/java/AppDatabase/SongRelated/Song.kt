@@ -1,8 +1,6 @@
 package AppDatabase.SongRelated
 
-import MyViewModels.SongsViewModel
 import android.content.Context
-import android.net.Uri
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey

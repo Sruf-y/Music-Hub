@@ -1,24 +1,18 @@
-package MyViewModels.BottomSheet
+package ViewModels.BottomSheet
 
-import MyViewModels.BlackBackground
-import MyViewModels.BottomSheet.BottomSheetInstance.Companion.BottomSheetFactory
-import MyViewModels.SheetConfig
+import ViewModels.BottomSheet.BottomSheetInstance.Companion.BottomSheetFactory
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,12 +32,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.lifecycle.ViewModel
-import com.aacomposetest.Log
+import com.aacomposetest.clickableNoRipple
 import com.aacomposetest.exceptIndex
 import com.aacomposetest.ui.theme.MyColor
 import com.composables.core.SheetDetent
@@ -99,10 +94,6 @@ class SheetViewmodel(
       }
    }
    
-   
-   
-   // TODO: replace the entire SheetState class with a copied and modifier version of my own from AOSP
-   //  It does work for now but i'd REALLY like to get this done sometime
    suspend fun removeItemFromStack(item: BottomSheetInstance){
       actionMutex.withLock {
          if(stack.isNotEmpty()) {
@@ -132,6 +123,23 @@ internal fun SheetViewmodel.renderAll() {
          parentHeight = it.height
       }
    ){
+      val density = LocalDensity.current
+      
+      // Clickable Invisible Overlay
+      if(stack.isNotEmpty())
+         Box(
+            modifier = Modifier
+               .fillMaxWidth()
+               .fillMaxHeight()
+               .clickableNoRipple(role = Role.Button){
+                  if (stack.last().state.currentDetent == SheetDetent.FullyExpanded && stack.last().state.isIdle) {
+                     scope.launch {
+                        dismissCurrent()
+                     }
+                  }
+               }
+         )
+      
       stack.forEachIndexed { index, it ->
          key("bottomSheetStack_#${index}") {
             var wasShown by remember { mutableStateOf(false) }
@@ -162,25 +170,7 @@ internal fun SheetViewmodel.renderAll() {
             
             
             var intHeight by remember { mutableIntStateOf(0) }
-            val density = LocalDensity.current
             
-            // Clickable Invisible Overlay
-            if(!(it.state.targetDetent == SheetDetent.Hidden && it.state.progress >= 0.5f))
-               Box(
-                  modifier = Modifier
-                     .fillMaxWidth()
-                     .height(with(density) { (parentHeight - intHeight).toDp() })
-                     .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                     ) {
-                        if (it.state.currentDetent == SheetDetent.FullyExpanded && it.state.isIdle) {
-                           scope.launch {
-                              dismissCurrent()
-                           }
-                        }
-                     }
-               )
             
             val config = it.sheetConfig()
             val sheetScope = remember { SimpleBottomSheetScope() }
@@ -191,11 +181,11 @@ internal fun SheetViewmodel.renderAll() {
                shape = config.shape,
                backgroundColor = config.backgroundColor,
                modifier = Modifier
-                  .wrapContentSize()
                   .align(Alignment.BottomCenter)
                   .onSizeChanged {
                      intHeight = it.height
-                  } then it.sheetModifier,
+                  }
+                  then it.sheetModifier,
                contentPadding = config.contentPadding
             ) {
                it.content.invoke(sheetScope)
@@ -210,10 +200,10 @@ class SimpleBottomSheetScope {
    // Since you're not using any specific BottomSheetScope features,
    // this can be empty or contain minimal implementation
 }
-// Custom BottomSheet composable that works with our state holder
+
 @Composable
-fun CustomBottomSheet(
-   state: BottomSheetStateHolder,
+private fun CustomBottomSheet(
+   state: BottomSheetState,
    shape: Shape,
    backgroundColor: Color,
    modifier: Modifier = Modifier,
@@ -226,8 +216,10 @@ fun CustomBottomSheet(
    
    
    Box(
-      modifier = modifier
-         .fillMaxWidth()
+      modifier = Modifier
+         .clickableNoRipple{} // To prevent clicking through the sheet
+         then modifier
+         .wrapContentSize()
          // TODO: add dragging AND with dragging add the settling and auto-dispose functionalities. These should really be in the state i think
          .background(backgroundColor, shape)
          .clip(shape)
@@ -286,10 +278,19 @@ fun MyModalBottomSheet2(
    
 }
 
-private fun calculateHeight(progress: Float,density: Density): Dp {
-   // Calculate height based on progress
-   return with(density) {
-      // Example: 0f -> 0.dp, 1f -> 500.dp
-      (progress * 500).dp
-   }
-}
+@Composable
+internal fun BlackBackground(
+   alpha:Float,
+   color:Color = MyColor.SemiTransparent()
+) =
+   Box(modifier = Modifier
+      .fillMaxSize()
+      .alpha(alpha)
+      .background(color)
+      .clickable(
+         interactionSource = remember { MutableInteractionSource() },
+         indication = null
+      ) {
+         // NO-OP
+      }
+   )

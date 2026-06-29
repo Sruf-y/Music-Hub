@@ -1,4 +1,4 @@
-package MyViewModels
+package ViewModels
 
 import androidx.annotation.OptIn
 import androidx.lifecycle.ViewModel

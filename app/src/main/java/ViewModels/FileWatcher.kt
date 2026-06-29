@@ -1,6 +1,5 @@
-package MyViewModels
+package ViewModels
 
-import android.content.Context
 import android.os.FileObserver
 import android.os.FileObserver.CLOSE_WRITE
 import android.os.FileObserver.CREATE

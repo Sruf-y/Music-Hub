@@ -1,4 +1,4 @@
-package MyViewModels
+package ViewModels
 
 import AppDatabase.AndroidDatabase
 import AppDatabase.MyDatabaseProvider
@@ -9,11 +9,9 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Size
-import androidx.annotation.RequiresOptIn
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.room.Delete
 import com.aacomposetest.concatenateWith
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

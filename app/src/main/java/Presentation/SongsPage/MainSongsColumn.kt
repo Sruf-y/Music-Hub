@@ -4,7 +4,7 @@ import AppDatabase.AndroidDatabase
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
-import MyViewModels.ListFeedingVM
+import ViewModels.ListFeedingVM
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,7 +56,7 @@ fun MainSongsColumn(
          playlistTitle = null
       )
    },
-   settingsBottomSheetVM: MyViewModels.BottomSheet.SheetViewmodel? = null,
+   settingsBottomSheetVM: ViewModels.BottomSheet.SheetViewmodel? = null,
    songs:List<Song>
 ) {
    val scope = rememberCoroutineScope()

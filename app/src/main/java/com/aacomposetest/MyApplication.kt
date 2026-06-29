@@ -2,8 +2,8 @@ package com.aacomposetest
 
 import AppDatabase.PlaylistRelated.Playlist
 import ExoPlayer.myExoPlayer
-import MyViewModels.FileWatcher
-import MyViewModels.SongsViewModel
+import ViewModels.FileWatcher
+import ViewModels.SongsViewModel
 import Settings.MySettings
 import android.Manifest
 import android.app.Application

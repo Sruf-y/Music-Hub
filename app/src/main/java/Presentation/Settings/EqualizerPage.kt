@@ -1,8 +1,8 @@
 package Presentation.Settings
 
-import ExoPlayer.EqualizerController2
-import ExoPlayer.EqualizerController2.Companion.BAND_LOWER_BOUNDS
-import ExoPlayer.EqualizerController2.Companion.BAND_UPPER_BOUNDS
+import ExoPlayer.EqualizerController
+import ExoPlayer.EqualizerController.Companion.BAND_LOWER_BOUNDS
+import ExoPlayer.EqualizerController.Companion.BAND_UPPER_BOUNDS
 import ExoPlayer.myExoPlayer
 import SrufComposeComponents.Text
 import androidx.compose.foundation.Canvas
@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,10 +26,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -45,6 +48,7 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.aacomposetest.clickableNoRipple
 import com.aacomposetest.totalLength
@@ -53,14 +57,13 @@ import com.aacomposetest.ui.theme.Theme
 import ui.components.CenteredPriorityLayout
 import ui.components.CubicControl
 import ui.components.Overlay
-import ui.components.PriorityLayout
 import ui.components.VerticalSlider
 import ui.components.rememberSliderState
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EqualizerPage(modifier: Modifier = Modifier.fillMaxSize(),equalizer: EqualizerController2) {
+fun EqualizerPage(modifier: Modifier = Modifier.fillMaxSize(),equalizer: EqualizerController) {
    // Background
    Theme.RenderDefaultBackground()
    
@@ -109,7 +112,9 @@ fun EqualizerPage(modifier: Modifier = Modifier.fillMaxSize(),equalizer: Equaliz
          }
          
          // Spacer box
-         Box(Modifier.fillMaxWidth().height(10.dp))
+         Box(Modifier
+            .fillMaxWidth()
+            .height(10.dp))
          
          // Bands modulation
          data?.let { data ->
@@ -282,40 +287,34 @@ fun EqualizerPage(modifier: Modifier = Modifier.fillMaxSize(),equalizer: Equaliz
                               valueRange = BAND_LOWER_BOUNDS..BAND_UPPER_BOUNDS
                            )
                            // set onValueChange for the STATE
-                           state.onValueChange = { newVal ->
-                              val roundedvalue =
-                                 if (newVal < centerAnchorSnapRange && newVal > -centerAnchorSnapRange) {
-                                    0f
-                                 } else newVal
-                              state.value = roundedvalue  // Update the state
-                              equalizer.updateBand(index, roundedvalue)
+                           LaunchedEffect(null) {
+                              state.onValueChange = { newVal ->
+                                 val roundedvalue =
+                                    if (newVal < centerAnchorSnapRange && newVal > -centerAnchorSnapRange) {
+                                       0f
+                                    } else newVal
+                                 state.value = roundedvalue  // Update the state
+                                 equalizer.updateBand(index, roundedvalue)
+                              }
                            }
+                           
+                           val fontSize = remember { 14.sp }
                            
                            // UI
                            CenteredPriorityLayout(
                               bottom = {
+                                 // Display Hertz
                                  Text(
-                                    """
-                                    ${
-                                       data[index].first.let {
-                                          if (it > 999) {
-                                             String.format(
-                                                Locale.current.platformLocale,
-                                                "%1.0fk",
-                                                it / 1000
-                                             )
-                                          } else {
-                                             String.format(
-                                                Locale.current.platformLocale,
-                                                "%1.0f",
-                                                it
-                                             )
-                                          }
-                                       }
+                                    data[index].first.let {
+                                       String.format(
+                                          Locale.current.platformLocale,
+                                          "%1.0f${if (it > 999) "K" else ""}",
+                                          if (it > 999) it / 1000 else it
+                                       )
                                     }
-                                    hz
-                                 """.trimIndent(),
-                                    textAlign = TextAlign.Center
+                                    ,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = fontSize
                                  )
                               }
                            ) {
@@ -323,10 +322,15 @@ fun EqualizerPage(modifier: Modifier = Modifier.fillMaxSize(),equalizer: Equaliz
                                  horizontalAlignment = Alignment.CenterHorizontally,
                                  modifier = Modifier.width(35.dp)
                               ) {
-                                 // Value
+                                 // Display Value of band
                                  Text(
-                                    state.value.roundToInt().toString(),
-                                    textAlign = TextAlign.Center
+                                    String.format(
+                                       Locale.current.platformLocale,
+                                       "%1.1f",
+                                       state.value
+                                    ),
+                                    textAlign = TextAlign.Center,
+                                    fontSize = fontSize
                                  )
                                  
                                  VerticalSlider(

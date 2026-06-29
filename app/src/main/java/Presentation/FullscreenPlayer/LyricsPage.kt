@@ -3,7 +3,7 @@ package Presentation.FullscreenPlayer
 
 import AppDatabase.SongRelated.Song
 import ExoPlayer.myExoPlayer
-import MyViewModels.rememberLyricsManager
+import ViewModels.rememberLyricsManager
 import SrufComposeComponents.IconButton
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding

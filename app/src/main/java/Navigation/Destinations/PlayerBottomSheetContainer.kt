@@ -1,12 +1,12 @@
 package Navigation.Destinations
 
 import ExoPlayer.myExoPlayer
-import MyViewModels.ListFeedingVM
-import MyViewModels.RefreshState
+import ViewModels.ListFeedingVM
+import ViewModels.RefreshState
 import Navigation.NavExtensions.safeNavigate
 import Presentation.Navigation.MyNavigation
 import Presentation.SongsPage.MainSongsColumn
-import MyViewModels.SongsViewModel
+import ViewModels.SongsViewModel
 import android.app.Activity
 import Navigation.Destinations.MainPager.MainPagerState
 import Navigation.Destinations.MainPager.SearchTopBar
@@ -79,7 +79,7 @@ object PlayerBottomSheetContainer {
       localNavController: NavHostController,
       refreshBoxState: PullToRefreshState,
       refreshState: RefreshState,
-      sheetLayerVM: MyViewModels.BottomSheet.SheetViewmodel,
+      sheetLayerVM: ViewModels.BottomSheet.SheetViewmodel,
       drawerState: ViewDrawerState,
       onClickAddPlaylist:(Page_ViewPlaylist)->Unit,
       onBottomSheetClick:()->Unit

@@ -3,9 +3,9 @@ package Navigation.Destinations
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
-import MyViewModels.BottomSheet.SheetViewmodel
-import MyViewModels.ListFeedingVM
-import MyViewModels.PlaylistWatcher
+import ViewModels.BottomSheet.SheetViewmodel
+import ViewModels.ListFeedingVM
+import ViewModels.PlaylistWatcher
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.widget.Toast

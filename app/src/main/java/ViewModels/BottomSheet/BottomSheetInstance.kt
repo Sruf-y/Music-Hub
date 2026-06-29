@@ -1,17 +1,25 @@
-package MyViewModels.BottomSheet
+package ViewModels.BottomSheet
 
-import MyViewModels.SheetConfig
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import com.composables.core.BottomSheetScope
 import com.composables.core.SheetDetent
 
+class SheetConfig() {
+   var backgroundColor by mutableStateOf(Color.Unspecified)
+   var contentPadding by mutableStateOf(PaddingValues(0.dp))
+   var shape by mutableStateOf<Shape>(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+}
+
 data class BottomSheetInstance(
-   val state: BottomSheetStateHolder = BottomSheetStateHolder(),
+   val state: BottomSheetState = BottomSheetState(),
    val sheetConfig: @Composable () -> SheetConfig = { SheetConfig()},
    val sheetModifier: Modifier = Modifier,
    val content: @Composable SimpleBottomSheetScope.() -> Unit,
@@ -31,10 +39,7 @@ data class BottomSheetInstance(
    }
    
    companion object{
-      class BottomSheetFactory(
-         //private val lifecycleOwner: LifecycleOwner
-      )
-      {
+      class BottomSheetFactory() {
          private val sheetStates = mutableMapOf<BottomSheetInstance, String>()
          
          fun create(
@@ -44,7 +49,7 @@ data class BottomSheetInstance(
             },
             content: @Composable SimpleBottomSheetScope.() -> Unit
          ): BottomSheetInstance {
-            val stateHolder = BottomSheetStateHolder(initialDetent)
+            val stateHolder = BottomSheetState(initialDetent)
             
             val instance = BottomSheetInstance(
                state = stateHolder,
@@ -54,31 +59,6 @@ data class BottomSheetInstance(
             
             // Store initial state for restoration
             sheetStates[instance] = initialDetent.identifier
-            /*
-            {// Setup lifecycle observer
-               val observer = object : DefaultLifecycleObserver {
-                  override fun onPause(owner: LifecycleOwner) {
-                     sheetStates[instance] = stateHolder.currentDetent.identifier
-                  }
-                  
-                  override fun onResume(owner: LifecycleOwner) {
-                     val savedDetent = sheetStates[instance] ?: "hidden"
-                     val targetDetent = when (savedDetent) {
-                        "hidden" -> SheetDetent.Hidden
-                        "fully_expanded" -> SheetDetent.FullyExpanded
-                        else -> SheetDetent.Hidden
-                     }
-                     
-                     if (stateHolder.currentDetent != targetDetent) {
-                        stateHolder.jumpTo(targetDetent)
-                     }
-                  }
-               }
-               
-               lifecycleOwner.lifecycle.addObserver(observer)
-            }
-            
-             */
             
             // Store cleanup
             instance.setOnDispose{

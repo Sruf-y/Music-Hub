@@ -1,4 +1,4 @@
-package MyViewModels
+package ViewModels
 
 import android.content.Context
 import androidx.compose.runtime.Composable

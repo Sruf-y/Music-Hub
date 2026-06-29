@@ -1,6 +1,6 @@
 package com.aacomposetest.Activities
 
-import MyViewModels.SongsViewModel
+import ViewModels.SongsViewModel
 import Presentation.FullscreenPlayer.FullscreenPlayerPage
 import android.os.Bundle
 import androidx.activity.compose.setContent

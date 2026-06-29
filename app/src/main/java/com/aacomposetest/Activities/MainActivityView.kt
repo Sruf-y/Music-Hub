@@ -1,10 +1,9 @@
 package com.aacomposetest.Activities
 
 import ExoPlayer.myExoPlayer
-import MyViewModels.BottomSheet.BottomSheetInstance.Companion.BottomSheetFactory
-import MyViewModels.BottomSheet.MyModalBottomSheet2
-import MyViewModels.RefreshState
-import MyViewModels.SongsViewModel
+import ViewModels.BottomSheet.MyModalBottomSheet2
+import ViewModels.RefreshState
+import ViewModels.SongsViewModel
 import Navigation.Destinations.EqualizerDest
 import Navigation.Destinations.MainPager
 import Navigation.Destinations.PlayerBottomSheetContainer
@@ -89,8 +88,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aacomposetest.R
 import com.aacomposetest.hasPermission
 import com.aacomposetest.toDpSize
@@ -112,7 +109,7 @@ class MainActivityView : CustomComponentActivity() {
    
    
    // Create viewmodel with factory
-   val globalBottomSheetVM: MyViewModels.BottomSheet.SheetViewmodel by viewModels()
+   val globalBottomSheetVM: ViewModels.BottomSheet.SheetViewmodel by viewModels()
    
    val refreshState = RefreshState()
    
@@ -208,6 +205,7 @@ class MainActivityView : CustomComponentActivity() {
          handleReceivedAudioIntent(intent)
       }
    }
+   var firstQuery = true
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
       
@@ -221,11 +219,15 @@ class MainActivityView : CustomComponentActivity() {
       */
       songViewModel.viewModelScope.launch {
          try {
-            songViewModel.resyncALL_withMediaStore(
-               context = this@MainActivityView,
-               alsoPictures = true,
-               forceUpdate = false
-            )
+            if(firstQuery){
+               songViewModel.resyncALL_withMediaStore(
+                  context = this@MainActivityView,
+                  alsoPictures = true,
+                  forceUpdate = false
+               )
+               firstQuery = false
+            }
+            
          }catch (ex: Exception){
             MyApplication.crashLogger.writeCrashToFile(
                throwable = ex,
@@ -274,7 +276,7 @@ class MainActivityView : CustomComponentActivity() {
    
    @OptIn(FlowPreview::class)
    @Composable
-   private fun MainView(globalBottomSheetVM:MyViewModels.BottomSheet.SheetViewmodel){
+   private fun MainView(globalBottomSheetVM:ViewModels.BottomSheet.SheetViewmodel){
       
       //val globalBottomSheetVM : MyViewModels.BottomSheet.SheetViewmodel = viewModel()
       
@@ -311,7 +313,7 @@ class MainActivityView : CustomComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
 @Composable
 private fun ParentContainer(
-   globalBottomSheetVM: MyViewModels.BottomSheet.SheetViewmodel,
+   globalBottomSheetVM: ViewModels.BottomSheet.SheetViewmodel,
    refreshState: RefreshState,
 ) {
    val contextRef = LocalContext.current

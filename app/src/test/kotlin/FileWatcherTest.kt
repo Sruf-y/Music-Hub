@@ -1,11 +1,8 @@
-import MyViewModels.FileWatcher
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
+import ViewModels.FileWatcher
 import junit.framework.TestCase.assertEquals
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import kotlin.concurrent.thread
 import kotlin.test.Test
 import kotlin.test.assertSame
 import kotlin.test.fail
