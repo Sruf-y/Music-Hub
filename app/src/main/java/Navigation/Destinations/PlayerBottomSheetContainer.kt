@@ -414,6 +414,7 @@ object PlayerBottomSheetContainer {
                onPlusClick = {
                   onClickAddPlaylist.invoke(args)
                },
+               globalBottomSheet = globalBottomSheetVM,
                optionsMenu = null // TODO
             )
             

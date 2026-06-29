@@ -140,7 +140,7 @@ object MainPager {
          else {
             
             LaunchedEffect(isFocused) {
-               //focusRequester.requestFocus()
+               focusRequester.requestFocus()
             }
             OutlinedTextFieldExpanded(
                singleLine = true,

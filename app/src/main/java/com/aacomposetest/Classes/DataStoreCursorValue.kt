@@ -11,6 +11,9 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.aacomposetest.Log
+import com.aacomposetest.MyApplication
+import com.aacomposetest.Toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -51,7 +55,8 @@ class DataStoreCursorValue<T : Any>(
             immediateFlow.setValue(initial)
          }
          
-         var firstEmit = true
+         var firstWrite = true
+         
          immediateFlow.stateFlow
             /**
              * Debounce writes to safe write cycles
@@ -59,13 +64,14 @@ class DataStoreCursorValue<T : Any>(
             .debounce { writeDebounce }
             .collect { newImmediateValue ->
                
-               if (newImmediateValue != initial && firstEmit) {
-                  datastoreDir.edit {
-                     it[key] = newImmediateValue
+               if(!firstWrite){
+                  if (newImmediateValue != initial) {
+                     datastoreDir.edit {
+                        it[key] = newImmediateValue
+                     }
                   }
-               }
-               if (firstEmit) {
-                  firstEmit = false
+               } else {
+                  firstWrite = false
                }
             }
          

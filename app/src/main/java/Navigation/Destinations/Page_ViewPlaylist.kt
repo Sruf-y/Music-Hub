@@ -5,6 +5,8 @@ import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistWatcher
+import MyViewModels.SheetViewmodel
+import MyViewModels.rememberBottomSheetInstance
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.widget.Toast
@@ -61,6 +63,7 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import ui.components.SongItem
 import com.aacomposetest.Toast
+import ui.components.BottomSheets.Content.BottomSheet_SongData
 
 @Serializable
 data class Page_ViewPlaylist(val title: String) {
@@ -76,6 +79,7 @@ data class Page_ViewPlaylist(val title: String) {
          bottomPadding: Dp = 0.dp,
          thumbNailSize:Dp = 150.dp,
          onPlusClick:(()-> Unit)? =null,
+         globalBottomSheet: SheetViewmodel,
          optionsMenu: SimpleDropdownMenuState? = null
       ) {
          Theme.RenderDefaultBackground()
@@ -172,6 +176,11 @@ data class Page_ViewPlaylist(val title: String) {
                it.add(to.index-2, it.removeAt(from.index-2))
                it
             }
+         }
+         
+         var songToSendToInfo by remember { mutableStateOf<Song?>(null) }
+         val datasheet = rememberBottomSheetInstance {
+            BottomSheet_SongData(songToSendToInfo)
          }
          
          Box(modifier = modifier) {
@@ -297,6 +306,7 @@ data class Page_ViewPlaylist(val title: String) {
                   }
                   
                   
+                  
                   ReorderableItem(reorderableLazyListState, key = song.id) { isDragging ->
                      val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
                      
@@ -354,6 +364,10 @@ data class Page_ViewPlaylist(val title: String) {
                               listOf(
                                  "Remove" to {
                                     removeItemOnClickListener.invoke(song)
+                                 },
+                                 "Info" to {
+                                    songToSendToInfo = song
+                                    globalBottomSheet.addSheet(datasheet)
                                  }
                               )
                            )

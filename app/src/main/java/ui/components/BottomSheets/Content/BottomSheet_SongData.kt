@@ -52,10 +52,10 @@ import com.composables.core.HorizontalSeparator
 import java.io.File
 
 @Composable
-fun BottomSheet_SongData(song:Song){
+fun BottomSheet_SongData(song:Song?){
    val data = remember {
       queryMediaStoreFile(
-         uri = song.songUri.toUri(),
+         uri = song?.songUri?.toUri(),
          contentResolver = MyApplication.instance.contentResolver,
       )
    }
@@ -136,10 +136,13 @@ data class MediaStoreFileInfo(
 /**
  * Query a file from MediaStore using its URI
  */
-fun queryMediaStoreFile(uri: Uri, contentResolver: ContentResolver): MediaStoreFileInfo? {
+fun queryMediaStoreFile(uri: Uri?, contentResolver: ContentResolver): MediaStoreFileInfo? {
    var cursor: Cursor? = null
    
    return try {
+      if(uri == null){
+         return null
+      }
       // For content URIs from MediaStore
       if (uri.scheme == "content" && uri.authority == "media") {
          val projection = arrayOf(

@@ -11,11 +11,16 @@ import androidx.annotation.CallSuper
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.aacomposetest.Log
 import com.aacomposetest.buildSystemBarsStyle
 import com.aacomposetest.ui.theme.MyColor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 open class CustomComponentActivity(): ComponentActivity(){
@@ -39,24 +44,46 @@ open class CustomComponentActivity(): ComponentActivity(){
       enableEdgeToEdge(statusBarStyle = statusBarStyle, navigationBarStyle = navigationBarStyle)
    }
    
+   // The call that us usually used
+   @CallSuper
+   override fun onCreate(savedInstanceState: Bundle?) {
+      super.onCreate(savedInstanceState)
+      
+      _defaultOnCreate()
+   }
+   
+   // WARNING!! This call is not used often but its best to override it too.
    @CallSuper
    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
       super.onCreate(savedInstanceState, persistentState)
       
+      _defaultOnCreate()
+   }
+   
+   /**
+    * Starts watching the orientation flow and sets the IME input pan mode.
+    * */
+   private var orientationJob:Job? = null
+   private fun _defaultOnCreate(){
+      orientationJob?.cancel()
+      orientationJob = null
+      
       MySettings.initialize(this@CustomComponentActivity)
       lifecycleScope.launch {
+         // Wait for settings to be initialized
+         while (MySettings.settings == null) {
+            delay(50)
+         }
          
-         MySettings.settings!!.orientation.stateFlow.collect {
-            this@CustomComponentActivity.requestedOrientation = it
+         // Now safe to collect
+         repeatOnLifecycle(Lifecycle.State.STARTED) {
+            MySettings.settings!!.orientation.stateFlow.collect { value ->
+               Log("Received value: $value")
+               this@CustomComponentActivity.requestedOrientation = value
+            }
          }
       }
       
       setupKeyboardPanMode()
    }
-   
-   init {
-   
-   }
-   
-   
 }

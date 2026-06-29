@@ -6,6 +6,7 @@ import SrufComposeComponents.Text
 import android.view.RoundedCorner
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -34,8 +35,10 @@ import com.aacomposetest.ui.theme.Theme
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import com.aacomposetest.Classes.SimpleDropdownMenuState
 import com.composables.core.HorizontalSeparator
 import kotlinx.serialization.Serializable
+import ui.components.Overlay
 
 private val settings: SettingsRepository?
    get() {return MySettings.settings}
@@ -65,33 +68,41 @@ object SettingsDest {
             }
             settings?.let {settings->
                item("Shuffle") {
-                  SettingItem("Player Shuffle") {
-                     val value by settings.playerAllowShuffle.stateFlow.collectAsState()
+                  val value by settings.playerAllowShuffle.stateFlow.collectAsState()
+                  SettingItem("Player Shuffle",{
+                     settings.playerAllowShuffle.setValue(!value)
+                  }) {
+                     
                      Switch(
                         checked = value,
                         onCheckedChange = {
-                           settings.playerAllowShuffle.setValue(it)
+                        
                         }
                      )
                   }
                   HorizontalSeparator(MyColor.SeparatorGray)
                }
                item("Orientation"){
-                  SettingItem("Orientation") {
-                     val value by settings.orientation.stateFlow.collectAsState()
+                  val value by settings.orientation.stateFlow.collectAsState()
+                  val dropdownState = rememberSimpleDropdownMenu(
+                     listOf(
+                        MySettings.ScreenOrientation.Auto.name to {
+                           settings.orientation.setValue(MySettings.ScreenOrientation.Auto.value)
+                        },
+                        MySettings.ScreenOrientation.Portrait.name to {
+                           settings.orientation.setValue(MySettings.ScreenOrientation.Portrait.value)
+                        },
+                        MySettings.ScreenOrientation.LandScape.name to {
+                           settings.orientation.setValue(MySettings.ScreenOrientation.LandScape.value)
+                        }
+                     )
+                  )
+                  SettingItem("Orientation",{
+                     dropdownState.open()
+                  }) {
                      ChoiceButton(
                         text = MySettings.ScreenOrientation.fromInt(value).name,
-                        items = listOf(
-                           MySettings.ScreenOrientation.Auto.name to {
-                              settings.orientation.setValue(MySettings.ScreenOrientation.Auto.value)
-                           },
-                           MySettings.ScreenOrientation.Portrait.name to {
-                              settings.orientation.setValue(MySettings.ScreenOrientation.Portrait.value)
-                           },
-                           MySettings.ScreenOrientation.LandScape.name to {
-                              settings.orientation.setValue(MySettings.ScreenOrientation.LandScape.value)
-                           }
-                        )
+                        dropdownState = dropdownState
                      )
                   }
                }
@@ -102,11 +113,23 @@ object SettingsDest {
    }
    
    @Composable
-   fun SettingItem(title:String, component: @Composable ()-> Unit){
-      Row(
+   fun SettingItem(
+      title:String,
+      onClick:()-> Unit,
+      component: @Composable ()-> Unit
+   ){
+      Overlay(
+         overlay = {
+         Box(
+            Modifier.clickable(onClick = onClick)
+         )
+      }
+      ) {
+         Row(
          modifier = Modifier
-            .defaultMinSize(Dp.Infinity,45.dp)
-            .padding(horizontal = 10.dp, vertical = 5.dp),
+            .height(60.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp),
          verticalAlignment = Alignment.CenterVertically,
          horizontalArrangement = Arrangement.SpaceBetween
       ) {
@@ -114,14 +137,16 @@ object SettingsDest {
          
          component.invoke()
       }
+      }
+      
    }
    private val shape = RoundedCornerShape(5.dp)
    @Composable
    fun ChoiceButton(
       text: String,
-      items:List<Pair<String,()-> Unit>>
+      dropdownState: SimpleDropdownMenuState
    ){
-      val dropdownState = rememberSimpleDropdownMenu(items)
+      
       Box(modifier = Modifier
          .wrapContentSize()
          .border(
@@ -130,10 +155,7 @@ object SettingsDest {
             shape
          )
          .background(Theme.background())
-         .padding(vertical = 5.dp, horizontal = 8.dp)
-         .clickableNoRipple {
-            dropdownState.open()
-         },
+         .padding(vertical = 5.dp, horizontal = 8.dp),
          contentAlignment = Alignment.Center
       ){
          Text(text = text)
