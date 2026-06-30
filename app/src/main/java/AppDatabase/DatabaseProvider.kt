@@ -40,12 +40,13 @@ object MyDatabaseProvider {
     private var INSTANCE: MyAppsDatabase? = null
 
     fun getDatabase(context: Context): MyAppsDatabase{
-
         return INSTANCE?:synchronized(this){
-            Room.databaseBuilder(context,
+            Room.databaseBuilder(
+                context,
                 MyAppsDatabase::class.java,
-                "my-database")
-                .addMigrations(MIGRATION_2_3,MIGRATION_3_4,MIGRATION_4_5,MIGRATION_5_6)
+                "my-database"
+            )
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .fallbackToDestructiveMigration()
                 .build()
                 .also {
