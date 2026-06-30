@@ -1,5 +1,6 @@
 package com.aacomposetest.Activities
 
+import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
@@ -192,7 +193,7 @@ class MainActivityView : CustomComponentActivity() {
          // Since this uses data from outside, it is prone to errors and mistakes.
          tryTo {
             val song = songViewModel.getSongFromUri(audioUri,this)
-            myExoPlayer.setSong(song)
+            ExoPlayerViewModel.setSong(song)
             startActivity(fullScreenPageIntent)
          }
          

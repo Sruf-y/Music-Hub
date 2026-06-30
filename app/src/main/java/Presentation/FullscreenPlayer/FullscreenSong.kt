@@ -163,7 +163,7 @@ private fun _ButtonsSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()
                 modifier = Modifier
                     .size(sideIconsSize)
                     .clickableNoRipple {
-                        ExoPlayerViewModel.playPrevious(true)
+                        ExoPlayerViewModel.playPrevious()
                     }
             )
 
@@ -178,7 +178,7 @@ private fun _ButtonsSpace(song:Song?,modifier: Modifier = Modifier.fillMaxSize()
                 modifier = Modifier
                     .size(sideIconsSize)
                     .clickableNoRipple {
-                        ExoPlayerViewModel.playNext(true)
+                        ExoPlayerViewModel.playNext()
                     }
             )
 

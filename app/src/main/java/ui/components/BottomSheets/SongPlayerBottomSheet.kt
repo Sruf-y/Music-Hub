@@ -234,7 +234,7 @@ private fun ButtonsRow(
                interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                indication = null, onClick = {
                   if (isEnabled) {
-                     ExoPlayerViewModel.playPrevious(true)
+                     ExoPlayerViewModel.playPrevious()
                   }
                })
       )
@@ -251,9 +251,10 @@ private fun ButtonsRow(
                interactionSource = remember { MutableInteractionSource() }, // to get rid of the default ripple effect
                indication = null, onClick = {
                   if (isEnabled) {
-                     ExoPlayerViewModel.playNext(true)
+                     ExoPlayerViewModel.playNext()
                   }
-               })
+               }
+            )
       )
    }
 }

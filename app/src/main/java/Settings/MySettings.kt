@@ -2,7 +2,6 @@ package Settings
 
 import android.content.Context
 import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -25,6 +24,9 @@ class SettingsRepository(context: Context) {
       val playerPosition_WriteIntervalPossibleRange = 20000L..10000L
       
       private val PLAYER_ALLOW_SHUFFLE_KEY = "PLAYER_ALLOW_SHUFFLE"
+      private val PLAYER_ALLOW_LOOP_KEY = "PLAYER_ALLOW_LOOP"
+      private val PLAYER_ALLOW_LOOP_TO_END_KEY = "PLAYER_ALLOW_LOOP_TO_END"
+      private val PLAYER_ALLOW_LOOP_TO_START_KEY = "PLAYER_ALLOW_LOOP_TO_START"
    }
    
    val playerPosition_WriteInterval = DataStoreCursorValue(
@@ -41,6 +43,34 @@ class SettingsRepository(context: Context) {
       defaultValue = false,
       writeCondition = {true},
       key = genericKey(PLAYER_ALLOW_SHUFFLE_KEY),
+      datastoreDir = context.settingsDataStore,
+      scope = settingsScope
+   )
+   
+   val playerAllowLoopSong = DataStoreCursorValue(
+      defaultValue = false,
+      writeCondition = {true},
+      key = genericKey(PLAYER_ALLOW_LOOP_KEY),
+      datastoreDir = context.settingsDataStore,
+      scope = settingsScope
+   )
+   /**
+    * When looping from the first song to the last.
+    * */
+   val playerAllowLoopAround = DataStoreCursorValue(
+      defaultValue = false,
+      writeCondition = {true},
+      key = genericKey(PLAYER_ALLOW_LOOP_TO_END_KEY),
+      datastoreDir = context.settingsDataStore,
+      scope = settingsScope
+   )
+   /**
+    * When the player gets to the the last song.
+    * */
+   val playerAllowLoopBack = DataStoreCursorValue(
+      defaultValue = true,
+      writeCondition = {true},
+      key = genericKey(PLAYER_ALLOW_LOOP_TO_START_KEY),
       datastoreDir = context.settingsDataStore,
       scope = settingsScope
    )

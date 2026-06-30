@@ -158,12 +158,6 @@ object myExoPlayer {
       }
    }
    
-   
-   /**
-    * If when automatically playing, the songs can loop around or not.
-    * */
-   var isLoopAllowed:Boolean = false
-   
    private var songsVM : SongsViewModel? = null
    
    private var exoPlayer: External_ExoPlayer? = null
@@ -220,7 +214,7 @@ object myExoPlayer {
                            }
                         }
                         Player.STATE_ENDED -> {
-                           playNextInPlaylist(allowLoop = isLoopAllowed)
+                           playNextInPlaylist()
                         }
                         Player.STATE_IDLE -> {
                            isPrepared = false
@@ -626,18 +620,20 @@ object myExoPlayer {
     * [allowLoop] - If function is allowed to loop back to the first son in the playlist.
     * */
    fun playNextInPlaylist(
-      allowLoop: Boolean = true,
+      allowLoop: Boolean = MySettings.settings?.playerAllowLoopBack?.stateFlow?.value == true,
       onError: () -> Unit = {
          Toast(MyApplication.instance, "CurSong not found", Toast.LENGTH_SHORT)
          playActionLogError()
       },
    ) {
       try {
-         
-         
+         val shouldLoop = MySettings.settings?.playerAllowLoopSong?.stateFlow?.value == true
          
          currentlyPlayingSong.getValue?.let {currentSong->
-            
+            if(shouldLoop){
+               rewind()
+               return@let
+            }
             val curList = curPlaylistVM.playlist.value?.songsIdList?:allSongs.value.map { it.id }
             
             val curIndex = curList.indexOf(currentSong.id)

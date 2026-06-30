@@ -1,6 +1,7 @@
 package ExoPlayer
 
 import AppDatabase.SongRelated.Song
+import Settings.MySettings
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.StateFlow
 
@@ -12,7 +13,7 @@ class ExoPlayerViewModel() : ViewModel() {
          * Null playlist = plays songs in the default order of MediaStore
          *
          * */
-        fun setSong(song:Song?, initialPosition:Long = 0L, startOnPrepared:Boolean, playlistTitle: String?= null){
+        fun setSong(song:Song?, initialPosition:Long = 0L, startOnPrepared:Boolean = true, playlistTitle: String?= null){
             myExoPlayer.setSong(
                 song = song,
                 startOnPrepared = startOnPrepared,
@@ -37,10 +38,12 @@ class ExoPlayerViewModel() : ViewModel() {
 
         fun rewind() = myExoPlayer.rewind()
 
-        fun playNext(allowLoop:Boolean = false) = myExoPlayer.playNextInPlaylist(allowLoop = allowLoop)
+        fun playNext(){
+            myExoPlayer.playNextInPlaylist()
+        }
 
 
-        fun playPrevious(allowLoopAround:Boolean = false, forcePrevious:Boolean = false, onBackTreshold: Long = 5 *1000){
+        fun playPrevious(allowLoopAround:Boolean = MySettings.settings?.playerAllowLoopAround?.stateFlow?.value == true, forcePrevious:Boolean = false, onBackTreshold: Long = 5 *1000){
             if(myExoPlayer.getCurrentPosition()<(onBackTreshold) || forcePrevious)
                 myExoPlayer.playPreviousInPlaylist(allowWrapAround = allowLoopAround)
             else
