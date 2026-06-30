@@ -417,6 +417,7 @@ private fun ParentContainer(
             Box(
                modifier = Modifier
                   .fillMaxSize()
+                  .navigationBarsPadding()
                   
                   .graphicsLayer {
                      shape = RoundedCornerShape(
@@ -429,7 +430,6 @@ private fun ParentContainer(
                      scaleY = scalar
                      transformOrigin = TransformOrigin.Center
                   }
-                  .navigationBarsPadding()
                   .displayCutoutPadding()
                   .systemBarsPadding()
             ) {

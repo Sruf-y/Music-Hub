@@ -153,10 +153,10 @@ object SettingsDest {
    ){
       Overlay(
          overlay = {
-         Box(
-            Modifier.clickable(onClick = onClick)
-         )
-      }
+            Box(
+               Modifier.clickable(onClick = onClick)
+            )
+         }
       ) {
          Row(
          modifier = Modifier
@@ -167,11 +167,10 @@ object SettingsDest {
          horizontalArrangement = Arrangement.SpaceBetween
       ) {
          Text(title)
-         
-         component.invoke()
+            
+            component.invoke()
+         }
       }
-      }
-      
    }
    private val shape = RoundedCornerShape(5.dp)
    @Composable
