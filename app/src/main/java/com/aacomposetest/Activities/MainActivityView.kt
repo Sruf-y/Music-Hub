@@ -400,7 +400,8 @@ private fun ParentContainer(
                modifier = Modifier
                   .fillMaxSize()
                   .navigationBarsPadding()
-                  
+                  .displayCutoutPadding()
+                  .systemBarsPadding()
                   .graphicsLayer {
                      shape = RoundedCornerShape(
                         size = 20.dp.times(drawerState.currentOffset)
@@ -412,8 +413,7 @@ private fun ParentContainer(
                      scaleY = scalar
                      transformOrigin = TransformOrigin.Center
                   }
-                  .displayCutoutPadding()
-                  .systemBarsPadding()
+                  
             ) {
                
                val prefs by lazy {
@@ -510,7 +510,7 @@ private fun ParentContainer(
                         lazyListState = addsongstoplaylistState,
                         playlistTitle = playlistTitle,
                         onBack = {
-                           navController.popBackStack()
+                           navController.navigateUp()
                         }
                      )
                   }

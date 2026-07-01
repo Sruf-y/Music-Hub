@@ -70,7 +70,7 @@ fun DestinationTesting(){
                   val dest = backstack.toRoute<SecondDest>()
                   
                   dest.invoke({
-                     navController.popBackStack()
+                     navController.navigateUp()
                   },localNavController)
                }
             }

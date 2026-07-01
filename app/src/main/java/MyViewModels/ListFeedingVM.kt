@@ -6,6 +6,7 @@ import AppDatabase.SongRelated.Song
 import AppDatabase.SongRelated.SongRepository
 import MyViewModels.FileWatcher.Companion.FileWatchListener
 import android.content.Context
+import android.os.FileObserver
 import com.aacomposetest.Classes.AutoStateFlow
 import com.aacomposetest.Classes.MyPrefs
 import com.aacomposetest.Classes.Setting
@@ -48,12 +49,14 @@ object ListFeedingVM {
 
 
     init {
-
-
+        
         // Add listener listening to any folder changes.
         MyApplication.playlistFolderWatcher.addOnChangeListener(
             FileWatchListener(
                 key = "folderWatcher",
+                eventFilter = {
+                    it == FileObserver.CLOSE_WRITE
+                },
                 onEvent = { event,filename ->
                     playlistHolder.updateList(MyApplication.instance)
                 }

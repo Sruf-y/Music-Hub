@@ -57,12 +57,14 @@ import com.aacomposetest.Classes.PersistentState
 import com.aacomposetest.Classes.Setting
 import com.aacomposetest.Classes.getCursorValue
 import com.aacomposetest.Classes.putCursorValue
+import com.aacomposetest.Log
 import com.aacomposetest.MyApplication
 import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -409,7 +411,7 @@ object PlayerBottomSheetContainer {
                playlistTitle = args.title,
                lazyListState = playlistViewingLazyListState,
                onBack = {
-                  localNavController.popBackStack()
+                  localNavController.navigateUp()
                },
                bottomPadding = songBS_Config.bottomHeight,
                onPlusClick = {
@@ -440,7 +442,6 @@ object PlayerBottomSheetContainer {
                   myExoPlayer.currentlyPlayingSong.getValue?.id?.let {id->
                      scope.launch {
                         PrimaryNavigator.navigateToSong(id, myExoPlayer.curPlaylistVM.playlist.value?.title,localNavController)
-                        
                      }
                   }
                }
@@ -519,18 +520,14 @@ object PrimaryNavigator{
    
    suspend fun navigateToHome(navigator: NavHostController){
       
-      if(navigator.currentDestination == Page_ViewPlaylist){
-         navigator.popBackStack()
-      }
-      
       if(navigator.currentDestination != MainPager){
-         navigator.safeNavigate(MainPager)
+         
+         navigator.navigateUp()
       }
+      delay(50)
       _pagerState?.run {
          if(MainPages.parse(this.currentPage)!= MainPages.Home){
-            
-               this@run.animateScrollToPage(MainPages.Home.toInt())
-            
+            this@run.animateScrollToPage(MainPages.Home.toInt())
          }
       }
       
@@ -538,7 +535,7 @@ object PrimaryNavigator{
    suspend fun navigateToPlaylists(navigator: NavHostController){
       
       if(navigator.currentDestination == Page_ViewPlaylist){
-         navigator.popBackStack()
+         navigator.navigateUp()
       }
       
       if(navigator.currentDestination != MainPager){
@@ -546,9 +543,7 @@ object PrimaryNavigator{
       }
       _pagerState?.run {
          if (MainPages.parse(this.currentPage) != MainPages.Playlists) {
-            
-               this@run.animateScrollToPage(MainPages.Playlists.toInt())
-            
+            this@run.animateScrollToPage(MainPages.Playlists.toInt())
          }
       }
    }
@@ -564,13 +559,15 @@ object PrimaryNavigator{
             // Song is in a playlist
             navigateToAPlaylist(playlist, navigator)
             //TODO: handle hidden songs too later when i add that. Then i will need to refactor this to use flows
-            _playlistList?.let { _playlistLazyList?.scrollToItem(it.indexOf(id)) }
+            _playlistList?.let { _playlistLazyList?.animateScrollToItem(it.indexOf(id)) }
          } else {
             // song is not in playlist
             navigateToHome(navigator)
+            delay(50)
             _mainList?.let {
+               
                val index = it.indexOf(id)
-               _mainLazyList?.scrollToItem(index)
+               _mainLazyList?.animateScrollToItem(index)
             }
          
       }
