@@ -127,13 +127,14 @@ class MainActivityView : CustomComponentActivity() {
    
    val mediaPermissionLauncher = createPermissionLauncher(
       permission = MyApplication.Permissions.READ_MEDIA_AUDIO,
-      onGrant = {
+      onFinish = {hasPermission->
          songViewModel.viewModelScope.launch {
             songViewModel.resyncALL_withMediaStore(
                context = this@MainActivityView,
                alsoPictures = true,
                forceUpdate = true,
                onFinish = {
+                  
                   if (refreshState.state == true) {
                      
                      withContext(Dispatchers.Main) {
@@ -214,25 +215,6 @@ class MainActivityView : CustomComponentActivity() {
       
       // Setup navbars colors
       this.defaultSetupNavBars()
-      
-      /**
-       * Try running the query for the first time if i have the permissions
-      */
-      songViewModel.viewModelScope.launch {
-         try {
-            songViewModel.resyncALL_withMediaStore(
-               context = this@MainActivityView,
-               alsoPictures = true,
-               forceUpdate = false
-            )
-         }catch (ex: Exception){
-            MyApplication.crashLogger.writeCrashToFile(
-               throwable = ex,
-               context = this@MainActivityView,
-               headerDetails = "Resync with mediaStore failed when called from MainActivityView's onCreate"
-            )
-         }
-      }
       
       /**
        * Remove cyclic referencing by simply setting onRefresh later than the initialization of the state.

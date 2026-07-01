@@ -2,6 +2,7 @@ package AppDatabase
 
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
+import ExoPlayer.myExoPlayer
 import MyViewModels.SongsViewModel
 import android.content.ContentResolver
 import android.content.ContentUris
@@ -19,15 +20,18 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.Database
 import com.aacomposetest.Functions
 import com.aacomposetest.Functions.Images
+import com.aacomposetest.Log
 import com.aacomposetest.Logs
 import com.aacomposetest.MyApplication
 import com.aacomposetest.concatenateWith
 import com.aacomposetest.hasPermission
 import com.aacomposetest.ui.theme.Theme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import java.time.Duration
 import java.time.LocalTime
@@ -49,7 +53,7 @@ object AndroidDatabase {
       withContext(Dispatchers.IO) {
          
          //TODO handle permissions removal better
-         if(!context.hasPermission(MyApplication.Permissions.READ_MEDIA_AUDIO)){
+         if( false && !context.hasPermission(MyApplication.Permissions.READ_MEDIA_AUDIO)){
             onFinish?.invoke()
             finishRefresh()
             return@withContext 0
@@ -188,32 +192,44 @@ object AndroidDatabase {
                
             }
             
+            val databaseList = try {
+               // Wait up to 10 seconds for the flow to emit
+               withTimeout(10000) {
+                  viewmodel?.getAllSongsFlow?.first {
+                     it.isNotEmpty()
+                  }
+               }
+            } catch (e: TimeoutCancellationException) {
+               Log.w("SongQuery", "Timeout waiting for flow, using current value")
+               viewmodel?.getAllSongsFlow?.value
+            } catch (e: Exception) {
+               Log.e("SongQuery", "Error getting flow", e)
+               null
+            }
+            
             // Delete inexistent items from database
-            viewmodel?.getAllSongsFlow?.first()?.let {databaseList->
-               
+            
+            databaseList?.let {databaseList->
+               Log("New existings size: ${newExistings.size}. DatabaseList size: ${databaseList.size}")
                databaseList.forEach {
                   // if the newly written database doesn't contain an old item,
                   // consider the old item as inexistent in MediaStore
                   if(!newExistings.contains(it.id)){
-                     
+                     Log("Deleting song ${it.title}")
                      // Deleting the song will also delete its thumbnail from memory.
-                     File(File(context.filesDir, SONGS_DIR),it.songUri.toUri().lastPathSegment.toString()+".jpeg").delete()
-                     viewmodel.deleteSong(it.id,context)
+                     viewmodel?.deleteSong(it.id,context)
                   }
                }
             }
             
             // Delete inexistent entry refferences from every playlist
-            
-            
             Playlist.getFolder(context).listFiles()?.forEach {
                val openedPlaylist: Playlist? = Playlist.getFromFile(it)
-               
                
                openedPlaylist?.let { playlist->
                   // Walk the playlist
                   val newlist =  playlist.songsIdList.toMutableList().let {
-                     it.forEach { item ->
+                     it.toList().forEach { item ->
                         // Delete an item upon finding that it is not in newExistings
                         if (!newExistings.contains(item)) {
                            it.remove(element = item)
@@ -227,12 +243,6 @@ object AndroidDatabase {
                }
             }
             
-            
-            
-            
-            
-            
-            
             Log.i(
                Logs.RUNNING_INFO.name,
                "(AndroidDataBase) Query took ${
@@ -241,10 +251,18 @@ object AndroidDatabase {
             )
             
             
-            onFinish?.invoke()
             
-            finishRefresh()
          }
+         
+         // If song was removed, remove the currently playing song too
+         myExoPlayer.currentlyPlayingSong.getValue?.let {currenSong->
+            if(!newExistings.contains(currenSong.id)){
+               myExoPlayer.setSong(null,false)
+            }
+         }
+         
+         onFinish?.invoke()
+         finishRefresh()
          
          return@withContext counter
       }

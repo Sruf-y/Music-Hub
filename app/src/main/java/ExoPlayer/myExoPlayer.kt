@@ -9,6 +9,7 @@ import MyViewModels.SongsViewModel
 import Settings.MySettings
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
@@ -45,6 +46,8 @@ import kotlinx.coroutines.withContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.aacomposetest.Toast
+import kotlinx.io.files.FileNotFoundException
+
 interface MyPlayerListener{
    fun onToggle(value:Boolean)
    fun onStart()
@@ -339,20 +342,40 @@ object myExoPlayer {
    
    fun seekTo(pos: Long, rawPosition: Boolean = true) {
       exoPlayer?.let { player ->
-         val positionMs =
-            if (rawPosition) pos else (pos / 100) * player.duration.coerceAtLeast(1)
-         
-         val seekedPosition = positionMs.coerceIn(0, currentlyPlayingSong.stateFlow.value?.duration)
-         
-         player.seekTo(seekedPosition)
-         
-         
-         // If paused and seek goes to end, clear _isPlaying for clarity
-         if (!player.isPlaying && positionMs >= player.duration) {
-            _isPlaying.value = false
+         currentlyPlayingSong.getValue?.let {
+            tryTo {
+               val positionMs =
+                  if (rawPosition) pos else (pos / 100) * player.duration.coerceAtLeast(1)
+               
+               val seekedPosition = positionMs.coerceIn(0, currentlyPlayingSong.stateFlow.value?.duration)
+               
+               player.seekTo(seekedPosition)
+               
+               
+               // If paused and seek goes to end, clear _isPlaying for clarity
+               if (!player.isPlaying && positionMs >= player.duration) {
+                  _isPlaying.value = false
+               }
+            }
+            
          }
-         
-         
+      }
+   }
+   
+   private fun hasMediaAccess(context: Context, uri: Uri): Boolean {
+      return try {
+         context.contentResolver.openFileDescriptor(uri, "r")?.use {
+            true // Successfully opened, so we have access
+         } ?: false
+      } catch (e: SecurityException) {
+         Log.e("MediaAccess", "SecurityException for $uri", e)
+         false
+      } catch (e: FileNotFoundException) {
+         Log.e("MediaAccess", "File not found: $uri", e)
+         false
+      } catch (e: Exception) {
+         Log.e("MediaAccess", "Error checking access", e)
+         false
       }
    }
    
@@ -366,10 +389,21 @@ object myExoPlayer {
       exoPlayer?.let { player ->
          try {
             song?.let {
-               currentlyPlayingSong.setValue(song)
+               val uri = song.songUri.toUri()
                
+               // === CHECK ACCESS FIRST ===
+               if (!hasMediaAccess(MyApplication.instance, uri)) {
+                  Log("Missing media permission at [privSetSong]", Logs.EXOPLAYER.name)
+                  
+                  currentlyPlayingSong.setValue(null)
+                  player.clearMediaItems()
+                  
+                  return@let
+               }
+               
+               // Only create MediaItem if we have access
                val mediaItem = MediaItem.Builder()
-                  .setUri(song.songUri.toUri())
+                  .setUri(uri)
                   .setMediaMetadata(
                      MediaMetadata.Builder()
                         .setTitle(song.title)
@@ -379,6 +413,7 @@ object myExoPlayer {
                   .setTag(song) // Store original Song object
                   .build()
                
+               currentlyPlayingSong.setValue(song)
                player.setMediaItem(mediaItem)
                player.prepare()
                
@@ -395,11 +430,6 @@ object myExoPlayer {
                
                
             }
-            
-            
-            
-            
-            
          } catch (ex: Exception) {
             Log.e(Logs.DATA_ERROR.toString(), "Error setting song", ex)
             if(!throwErrorOnError) {
@@ -435,19 +465,20 @@ object myExoPlayer {
       seekTo(initialPosition)
       
       // Update song in database if its not null
-      song?.let {
-         songsVM?.updateSong(it)
+      playScope.launch {
+         song?.let {
+            songsVM?.updateSong(it)
+         }
       }
+      
       // dispatch post-set
       myListeners.dispatchSongSet()
-      
-      
-      
       prefs?.edit(){
          putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.getValue?.id?:-1)
          
          putCursorValue(MyPrefs._prefs_LastPlaylistTitle,playlistTitle?:"")
       }
+      
    }
    
    

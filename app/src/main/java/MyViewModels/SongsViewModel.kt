@@ -7,6 +7,7 @@ import AppDatabase.SongRelated.SongRepository
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Trace
 import android.provider.MediaStore
 import android.util.Size
 import androidx.annotation.RequiresOptIn
@@ -102,33 +103,29 @@ class SongsViewModel(context: Context): ViewModel() {
         return null
     }
 
-    fun deleteSong(id: Long,context: Context){
-        viewModelScope.launch {
-
-            // First delete the thumbnail if it exists
-
-            repo.getSongById(id)?.tryGetThumbnail(context)
-
-            repo.deleteSongById(id)
-        }
+    suspend fun deleteSong(id: Long,context: Context){
+        // First delete the thumbnail if it exists
+        repo.getSongById(id)?.tryGetThumbnail(context)?.delete()
+        
+        repo.deleteSongById(id)
+        
     }
 
-    fun deleteSong(song: Song, context: Context){
-        viewModelScope.launch {
+    suspend fun deleteSong(song: Song, context: Context){
+        
 
             // First delete the thumbnail if it exists
 
             repo.getSongById(song.id)?.tryGetThumbnail(context)
 
             repo.deleteSong(song)
-        }
+        
     }
 
 
-    fun updateSong(song: Song){
-        viewModelScope.launch {
+    suspend fun updateSong(song: Song){
             repo.updateSong(song)
-        }
+        
     }
 
     suspend fun getSongById(id: Long): Song?{
@@ -142,7 +139,7 @@ class SongsViewModel(context: Context): ViewModel() {
      * TODO: Create functions also for singleResync and multipleResync
      * */
     suspend fun resyncALL_withMediaStore(context: Context, alsoPictures:Boolean, forceUpdate:Boolean, onFinish:( suspend ()->Unit)? = null):Int{
-
+        
         return AndroidDatabase.doSongsQuery(
             viewmodel = this@SongsViewModel,
             context = context,

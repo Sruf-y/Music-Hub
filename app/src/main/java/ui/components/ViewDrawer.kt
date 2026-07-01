@@ -228,7 +228,7 @@ fun ViewDrawer(
    
    val mainFrameId = remember { View.generateViewId() }
    val composeMainId = remember { View.generateViewId() }
-   val composeDrawerId = rememberSaveable { View.generateViewId() }
+   val composeDrawerId = remember { View.generateViewId() }
    
    AndroidView(
       modifier = modifier,
@@ -288,11 +288,9 @@ fun ViewDrawer(
          drawerLayout
       },
       update = { view ->
-         
          // Set content to the ComposeViews
          val composeMain = view.findViewById<ComposeView>(composeMainId)
          val composeDrawer = view.findViewById<ComposeView>(composeDrawerId)
-         
          
          composeMain.setContent {
             

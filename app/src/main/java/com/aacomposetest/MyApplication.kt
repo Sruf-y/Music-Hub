@@ -1,5 +1,7 @@
 package com.aacomposetest
 
+import AppDatabase.AndroidDatabase
+import AppDatabase.MyDatabaseProvider
 import AppDatabase.PlaylistRelated.Playlist
 import ExoPlayer.myExoPlayer
 import MyViewModels.FileWatcher
@@ -24,6 +26,7 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import com.aacomposetest.Activities.MainActivityView
 import com.aacomposetest.Classes.NotificationPoster
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
@@ -38,9 +41,8 @@ import kotlinx.serialization.json.Json
 class MyApplication: Application(), ImageLoaderFactory {
     
     
-    val songViewModel: SongsViewModel by lazy {
-        SongsViewModel(this)
-    }
+    lateinit var songViewModel: SongsViewModel
+        private set
     
     var mediastoreObserver: ContentObserver? = null
         private set
@@ -51,6 +53,7 @@ class MyApplication: Application(), ImageLoaderFactory {
 
         instance = this
         myExoPlayer.initializePlayer(this)
+        songViewModel = SongsViewModel(this)
 
         val musicNotificationChannel = NotificationChannel(
             id,
@@ -60,7 +63,7 @@ class MyApplication: Application(), ImageLoaderFactory {
         Log.i(Logs.RUNNING_INFO.name,"Notification channel created.")
         getSystemService(NotificationManager::class.java).createNotificationChannel(musicNotificationChannel)
         
-        
+        MyDatabaseProvider.getDatabase(this)
         /**
          * Hook database to MediaStore database
          */
@@ -70,7 +73,8 @@ class MyApplication: Application(), ImageLoaderFactory {
                 
                 with(songViewModel){
                     viewModelScope.launch {
-                        resyncALL_withMediaStore(this@MyApplication, alsoPictures = true, forceUpdate = false)
+                        resyncALL_withMediaStore(this@MyApplication, alsoPictures = true, forceUpdate = false){
+                        }
                     }
                 }
             }
@@ -111,6 +115,26 @@ class MyApplication: Application(), ImageLoaderFactory {
                 context = this,
                 pendingIntent = openMediaStoreUriPendingIntent(this,uri)
             )
+        }
+        
+        /**
+         * Try running the query for the first time if i have the permissions
+         */
+        songViewModel.viewModelScope.launch {
+            try {
+                songViewModel.resyncALL_withMediaStore(
+                    context = this@MyApplication,
+                    alsoPictures = true,
+                    forceUpdate = true
+                )
+            }catch (ex: Exception){
+                
+                MyApplication.crashLogger.writeCrashToFile(
+                    throwable = ex,
+                    context = this@MyApplication,
+                    headerDetails = "Resync with mediaStore failed when called from MainActivityView's onCreate"
+                )
+            }
         }
         
     }

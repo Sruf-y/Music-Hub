@@ -133,6 +133,7 @@ object PlayerBottomSheetContainer {
       val allPlaylists by ListFeedingVM.SortedPlaylists.filteredPlaylists.collectAsState(
          emptyList()
       )
+      val curSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
       
       
       /**
@@ -288,7 +289,7 @@ object PlayerBottomSheetContainer {
                                  state = refreshBoxState,
                                  modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(bottom = songBS_Config.bottomHeight),
+                                    .padding(bottom = if(curSong!=null)songBS_Config.bottomHeight else 0.dp),
                                  isRefreshing = refreshState.state,
                                  onRefresh = {
                                     refreshState.state = true
@@ -423,7 +424,6 @@ object PlayerBottomSheetContainer {
       }
       
       if (songBS_Config.alpha.value > 0f) {
-         val curSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
          
          if(curSong!=null)
             ResponsivePlayerBS(
