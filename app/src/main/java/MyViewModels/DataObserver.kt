@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
  *
  * */
 @kotlin.OptIn(FlowPreview::class)
-class DataObserverViewModel<T>(
+class DataObserver<T>(
    val observingFunction:()->T,
    val initialValue:T,
    var delayMillis: ()->Long = {250},

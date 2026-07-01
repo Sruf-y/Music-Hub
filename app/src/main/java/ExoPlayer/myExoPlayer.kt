@@ -2,7 +2,7 @@ package ExoPlayer
 
 import AppDatabase.PlaylistRelated.Playlist
 import AppDatabase.SongRelated.Song
-import MyViewModels.DataObserverViewModel
+import MyViewModels.DataObserver
 import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistWatcher
 import MyViewModels.SongsViewModel
@@ -118,7 +118,7 @@ object myExoPlayer {
    
    private val diskWriteFlow = AutoStateFlow<Long>(prefs?.getCursorValue(MyPrefs._prefs_LastSongPosition,0) ?: 0)
    // Handles song position saving.
-   private val progressVM = DataObserverViewModel<Long>(
+   private val progressVM = DataObserver<Long>(
       // For shorter audio set the progress to update faster
       delayMillis = {if(isSongDurationShort) 50 else 250 },
       initialValue = prefs?.getCursorValue(MyPrefs._prefs_LastSongPosition, 0) ?: 0,

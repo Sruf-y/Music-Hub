@@ -50,6 +50,8 @@ import com.aacomposetest.ui.theme.MyColor
 import com.aacomposetest.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
 import java.io.File
+import java.time.LocalDateTime
+import java.util.Date
 
 @Composable
 fun BottomSheet_SongData(song:Song?){
@@ -82,14 +84,15 @@ fun BottomSheet_SongData(song:Song?){
             fontWeight = FontWeight.Bold
          )
          data?.apply {
-            DataItem("ID", id.toString());HorizontalSeparator(Theme.TextColor())
-            DataItem("Display Name", displayName);HorizontalSeparator(Theme.TextColor())
-            DataItem("Path", path ?: "N/A");HorizontalSeparator(Theme.TextColor())
-            DataItem("Size", getFormattedSize());HorizontalSeparator(Theme.TextColor())
-            DataItem("MIME Type", mimeType ?: "Unknown");HorizontalSeparator(MyColor.TextColor())
-            DataItem("Date Added", dateAdded.toString());HorizontalSeparator(MyColor.TextColor())
-            DataItem("Date Modified", dateModified.toString());HorizontalSeparator(MyColor.TextColor())
-            DataItem("URI", uri.toString())
+            DataItem("ID", id.toString());                                          HorizontalSeparator(Theme.TextColor())
+            DataItem("Display Name", displayName);                                  HorizontalSeparator(Theme.TextColor())
+            DataItem("Path", path ?: "N/A");                                        HorizontalSeparator(Theme.TextColor())
+            DataItem("Size", getFormattedSize());                                   HorizontalSeparator(Theme.TextColor())
+            DataItem("MIME Type", mimeType ?: "Unknown");                           HorizontalSeparator(MyColor.TextColor())
+            DataItem("Date Added", Date(dateAdded*1000).toString());          HorizontalSeparator(MyColor.TextColor())
+            DataItem("Date Modified", Date(dateModified*1000).toString());    HorizontalSeparator(MyColor.TextColor())
+            DataItem("URI", uri.toString());                                        HorizontalSeparator(MyColor.TextColor())
+            DataItem("Times played",song!!.timesPlayed.toString())
          }
          
          

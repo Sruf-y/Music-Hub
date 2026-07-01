@@ -11,6 +11,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.os.Process
 import android.provider.MediaStore
 import android.util.Log
@@ -22,7 +24,6 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
-import com.aacomposetest.Classes.ContentObserver_Impl
 import com.aacomposetest.Classes.NotificationPoster
 import com.aacomposetest.MyApplication.MusicNotification.id
 import com.aacomposetest.MyApplication.MusicNotification.name
@@ -63,16 +64,17 @@ class MyApplication: Application(), ImageLoaderFactory {
         /**
          * Hook database to MediaStore database
          */
-        mediastoreObserver = ContentObserver_Impl(
-            onAnyChange = { selfChange->
+        mediastoreObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                super.onChange(selfChange)
                 
                 with(songViewModel){
                     viewModelScope.launch {
-                        resyncALL_withMediaStore(MyApplication.instance, alsoPictures = true, forceUpdate = false)
+                        resyncALL_withMediaStore(this@MyApplication, alsoPictures = true, forceUpdate = false)
                     }
                 }
             }
-        ).apply {
+        }.apply {
             /**
              * Register the created implementation for updates from MediaStore
              */
