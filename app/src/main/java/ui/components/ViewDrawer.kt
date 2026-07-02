@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import SrufComposeComponents.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -225,7 +225,6 @@ fun ViewDrawer(
    drawerContent: @Composable () -> Unit = {},
    @ColorInt scrimColor: Int = Color.Black.copy(alpha = 0.5f).toArgb(),
 ) {
-   
    val mainFrameId = remember { View.generateViewId() }
    val composeMainId = remember { View.generateViewId() }
    val composeDrawerId = remember { View.generateViewId() }
@@ -248,7 +247,6 @@ fun ViewDrawer(
                   ViewGroup.LayoutParams.MATCH_PARENT,
                   ViewGroup.LayoutParams.MATCH_PARENT
                )
-               
             }
             
             // Create main ComposeView - fill parent
@@ -258,7 +256,6 @@ fun ViewDrawer(
                   ViewGroup.LayoutParams.WRAP_CONTENT,
                   ViewGroup.LayoutParams.WRAP_CONTENT
                )
-               
             }
             
             // Create drawer ComposeView with specific width

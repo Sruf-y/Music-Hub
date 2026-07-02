@@ -3,10 +3,10 @@ package com.musichub.ui.theme
 import android.annotation.SuppressLint
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -40,8 +40,9 @@ object Theme{
 
      var DarkColorScheme = darkColorScheme(
         primary = MyColor.Myprimary,
-        secondary = MyColor.Inactive,
-        inversePrimary = MyColor.Inactive
+        secondary = MyColor.BackgroundLight,
+        inversePrimary = MyColor.PurpleGrey40,
+        inverseSurface = MyColor.Unselected
      )
    
    var LightColorScheme = lightColorScheme(
@@ -196,8 +197,9 @@ fun SrufTheme(
    forceDarkMode:Boolean = false,
    content: @Composable () -> Unit
 ) {
-   
    CompositionLocalProvider(
+      LocalContentColor provides Color.White,
+      com.composeunstyled.LocalContentColor provides Color.White,
       LocalShimmerTheme provides myShimmerTheme
    ) {
       
@@ -214,6 +216,10 @@ fun SrufTheme(
 @Preview
 private fun ShimmerPreview(){
    SrufTheme {
+      CompositionLocalProvider(
+         LocalContentColor provides Color.White,
+         com.composeunstyled.LocalContentColor provides Color.White
+      ) {
          Box(
             modifier = Modifier
                .shimmer()
@@ -222,7 +228,7 @@ private fun ShimmerPreview(){
          ) {
             SongItem()
          }
-      
+      }
       
    }
 }

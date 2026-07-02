@@ -36,8 +36,9 @@ fun PlaylistDelete_Content(playlist: Playlist?, bottomSheetVM: SheetViewmodel?){
    val myTitle = playlist?.title
    
    val question = buildAnnotatedString {
-      append("Are you sure you want to ")
-      
+      withStyle(style = SpanStyle(color = Theme.TextColor()) ) {
+         append("Are you sure you want to ")
+      }
       withStyle(style = SpanStyle(color = Color.Red, fontWeight = FontWeight.Bold)) {
          append("DELETE")
       }

@@ -31,8 +31,7 @@ fun CancelConfirm(
                 ElevatedButton(
                     modifier = buttonsModifier,
                     colors =ButtonDefaults.elevatedButtonColors(
-                        containerColor = Theme.colorScheme().inversePrimary,
-                        contentColor = Theme.colorScheme().inverseSurface
+                        containerColor = Theme.cancel
                     ),
                     onClick = {
                         onCancel.invoke()

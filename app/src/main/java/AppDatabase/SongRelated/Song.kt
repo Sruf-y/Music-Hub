@@ -44,8 +44,6 @@ data class Song (
     var year: Int?,
     @ColumnInfo(name = "album_id")
     var albumId:Long?
-
-
 ){
 
 

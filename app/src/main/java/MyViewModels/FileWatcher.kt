@@ -22,7 +22,6 @@ class FileWatcher(
    onChangeListeners:List<FileWatchListener> = emptyList()
 ): ViewModel()
 {
-   
    private val onChangeListenerList: ArrayList<FileWatchListener> = ArrayList()
    
    init {

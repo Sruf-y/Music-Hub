@@ -492,8 +492,6 @@ private fun ParentContainer(
                   }.invoke(),
                   navController = navController
                ) {
-                  
-                  
                   composable<PlayerBottomSheetContainer> {
                      
                      PlayerBottomSheetContainer.RenderBottomSheetContainer(
@@ -513,11 +511,9 @@ private fun ParentContainer(
                         }
                      )
                   }
-                  
                   composable<SettingsDest>{
                      SettingsDest.Page()
                   }
-                  
                   composable<EqualizerDest>(
                      enterTransition = {
                         val duration = 250

@@ -27,6 +27,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
@@ -97,7 +99,7 @@ fun EqualizerPage(
       ) {
          
          if (equalizer != null) {
-            Card() {
+            Card(colors = CardDefaults.cardColors(containerColor = Theme.colorScheme().inversePrimary)) {
                // Enable switch
                val density = LocalDensity.current
                Overlay(
@@ -318,7 +320,7 @@ fun EqualizerPage(
                            // UI
                            CenteredPriorityLayout(
                               bottom = {
-                                 androidx.compose.material3.Text(
+                                 Text(
                                     data[index].first.let {
                                        if (it > 999) {
                                           String.format(
@@ -344,7 +346,7 @@ fun EqualizerPage(
                                  modifier = Modifier.width(35.dp)
                               ) {
                                  // Value
-                                 androidx.compose.material3.Text(
+                                 Text(
                                     String.format(
                                        Locale.current.platformLocale,
                                        "%1.1f",

@@ -4,7 +4,6 @@ import AppDatabase.PlaylistRelated.Playlist
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -44,6 +46,7 @@ import ui.components.Text.BasicTextFieldExpanded
 import ui.components.PriorityLayout
 import ui.components.Text.OutlinedTextFieldExpanded
 import com.musichub.Toast
+import com.musichub.ui.theme.Theme
 import kotlinx.coroutines.delay
 
 @Preview(
@@ -160,7 +163,7 @@ fun PlaylistAddOrEdit_Content(
                textStyle = textStyle,
                isError = errorText!=null,
                placeholder = {
-                  Text("Title",color = MyColor.Inactive, style = textStyle)
+                  Text("Title",color = Theme.HintColor(), style = textStyle)
                }
             )
             LaunchedEffect(null) { focusRequester.requestFocus() }

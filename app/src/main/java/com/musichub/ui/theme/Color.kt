@@ -1,12 +1,12 @@
 package com.musichub.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 
 object MyColor{
-
+    
     @Stable val Pink80 = Color(0xFFEFB8C8)
 
     @Stable val Purple40 = Color(0xFF6650a4)
@@ -22,8 +22,8 @@ object MyColor{
     @Stable val Black = Color(0xFF000000)
     @Stable val White = Color(0xFFFFFFFF)
 
-    @Stable private val BackgroundLight = Color(0xFFE5E5E5)
-    @Stable private val BackgroundDark = Color(0xFF2B2B2B)
+    @Stable val BackgroundLight = Color(0xFFE5E5E5)
+    @Stable val BackgroundDark = Color(0xFF2B2B2B)
 
     @Stable val Yellow = Color(0xFFFFFB00)
     @Stable val Orange = Color(0xFFFF9900)
@@ -97,5 +97,9 @@ object MyColor{
             Black
     }
     
+}
+@Composable
+fun isSystemInDarkTheme():Boolean{
+    return remember { true }
 }
 

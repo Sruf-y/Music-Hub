@@ -590,9 +590,13 @@ inline fun <T>List<T>.repeat(count:Int):List<T>{
  *
  * @return [Boolean] true if the system is in dark mode, false otherwise.
  * */
-fun Context.isDarkMode() = when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
-   Configuration.UI_MODE_NIGHT_YES -> true
-   else -> false
+fun Context.isDarkMode(): Boolean {
+   return true
+   return when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+      Configuration.UI_MODE_NIGHT_YES -> true
+      else -> false
+   }
+
 }
 fun Context.buildSystemBarsStyle(lightMode:Int = MyColor.SemiTransparentLight.toArgb(),darkMode:Int = MyColor.SemiTransparentDark.toArgb()): SystemBarStyle{
    

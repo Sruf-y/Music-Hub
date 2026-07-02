@@ -22,7 +22,7 @@ import com.composeunstyled.LocalTextStyle
 fun LoopingText(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = Theme. colorScheme().inverseSurface,
+    color: Color = Theme.TextColor(),
     textAlign: TextAlign? = TextAlign.Center,
     fontSize: TextUnit = 16.sp,
     style: TextStyle = LocalTextStyle.current,

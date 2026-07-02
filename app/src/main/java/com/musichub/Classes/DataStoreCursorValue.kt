@@ -74,7 +74,6 @@ class DataStoreCursorValue<T : Any>(
                   firstWrite = false
                }
             }
-         
       }
    }
    

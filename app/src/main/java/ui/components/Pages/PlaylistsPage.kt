@@ -158,7 +158,7 @@ private fun TopBar(
             // PLUS ICON
             IconButton(
                 resId = R.drawable.ic_add,
-                tint = Theme.colorScheme().inverseSurface,
+                tint = Theme.TextColor(),
                 modifier = Modifier
                     .size(buttonsSize)
                     .clip(CircleShape),
@@ -173,7 +173,7 @@ private fun TopBar(
             Box{
                 IconButton(
                     imageVector = Icons.Default.MoreVert,
-                    tint = Theme.colorScheme().inverseSurface,
+                    tint = Theme.TextColor(),
                     modifier = Modifier
                         .size(buttonsSize)
                         .clip(CircleShape),

@@ -31,7 +31,7 @@ fun Text(
     fontSize: TextUnit = TextStyle.Default.fontSize,
     letterSpacing: TextUnit = TextStyle.Default.letterSpacing,
     fontWeight: FontWeight? = null,
-    color: Color = Theme.colorScheme().inverseSurface, // text color
+    color: Color = Theme.TextColor(), // text color
     singleLine: Boolean = false,
     minLines: Int = 1,
     maxLines: Int = Int.MAX_VALUE,

@@ -47,6 +47,7 @@ import com.composables.core.BottomSheetScope
 import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent
 import com.composables.core.rememberBottomSheetState
+import com.musichub.ui.theme.Theme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -332,7 +333,9 @@ fun rememberBottomSheetInstance(
    initialDetent: SheetDetent = SheetDetent.Hidden,
    state: BottomSheetState = rememberBottomSheetState(SheetDetent.Hidden),
    sheetConfig: @Composable ()-> SheetConfig = {
-      SheetConfig.rememberSheetConfig(MyColor.Background())
+      SheetConfig.rememberSheetConfig(
+         Theme.colorScheme().inversePrimary // sheet background
+      )
    },
    content: @Composable BottomSheetScope.() -> Unit,
 ): BottomSheetInstance {
