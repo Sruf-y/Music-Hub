@@ -138,6 +138,19 @@ object SettingsDest {
                      Switch(value,{})
                   }
                }
+               
+               item("View tests"){
+                  HorizontalSeparator(MyColor.SeparatorGray)
+                  val value by settings.displayTests.stateFlow.collectAsState()
+                  SettingItem(
+                     title = "View tests",
+                     onClick = {
+                        settings.displayTests.setValue(!value)
+                     }
+                  ) {
+                     Switch(value,{})
+                  }
+               }
             }
          }
             

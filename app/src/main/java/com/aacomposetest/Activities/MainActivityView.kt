@@ -76,12 +76,23 @@ import MyViewModels.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
 import MyViewModels.SheetViewmodel
 import Navigation.Destinations.SettingsDest
+import Settings.MySettings
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -99,6 +110,7 @@ import com.aacomposetest.toDpSize
 import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
 import com.aacomposetest.Toast
+import com.aacomposetest.toDp
 
 class MainActivityView : CustomComponentActivity() {
    
@@ -320,6 +332,7 @@ private fun ParentContainer(
             Box(Modifier.wrapContentSize()){
                var intsize by remember { mutableStateOf(IntSize(0,0)) }
                val density = LocalDensity.current
+               var width by remember { mutableIntStateOf(0) }
                
                Theme.RenderDefaultBackground(
                   Modifier
@@ -329,12 +342,12 @@ private fun ParentContainer(
                      },
                   alpha = 0f
                )
-               
+               val displayTests = MySettings.settings?.displayTests?.stateFlow?.collectAsState()
                DrawerStandardLayout(
                   modifier = Modifier
                      .fillMaxHeight()
                      .wrapContentWidth()
-                     .onSizeChanged{
+                     .onSizeChanged {
                         intsize = it
                      }
                      .graphicsLayer {
@@ -348,48 +361,93 @@ private fun ParentContainer(
                         top = 10.dp,
                         end = 10.dp
                      )
-                     
-                     
                ) {
                   
                   stickyHeader {
-                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(painterResource(
-                           id = R.drawable.ic_appicon),
-                           tint = Theme.IconTint(),
-                           contentDescription = null,
-                           modifier = Modifier.size(60.dp)
+                     Column {
+                        Row(
+                           verticalAlignment = Alignment.CenterVertically,
+                           modifier = Modifier.wrapContentSize().onSizeChanged{
+                              width = it.width
+                           }
+                        ) {
+                           Icon(
+                              painterResource(
+                                 id = R.drawable.ic_appicon
+                              ),
+                              tint = Theme.IconTint(),
+                              contentDescription = null,
+                              modifier = Modifier.size(60.dp)
+                           )
+                           Text(
+                              stringResource(R.string.app_name),
+                              fontSize = 36.sp,
+                              fontWeight = FontWeight.Bold
+                           )
+                        }
+                        
+                        HorizontalDivider(
+                           modifier = Modifier.width(width.toDp(density)),
+                           thickness = 2.dp,
+                           color = Theme.SemiTransparent()
                         )
-                        Text(stringResource(R.string.app_name), fontSize = 36.sp, fontWeight = FontWeight.Bold)
                      }
+                     
                   }
-                  item(key = "settings"){
-                     Button({
+                  item(key = "settings") {
+                     DrawerButton(
+                        modifier = Modifier.width(width.toDp(density)),
+                        onClick = {
                         navController.safeNavigate(SettingsDest)
                         drawerState.close()
                      }) {
                         Text("Settings")
                      }
                   }
-                  item(key = "equalizer"){
-                     // Your item content
-                     Button({
-                        navController.safeNavigate(EqualizerDest)
-                        drawerState.close()
-                     }) {
-                        Text("Open Equalizer")
-                     }
-                  }
-                  
-                  item(key = "Tests") {
-                     Button({
-                        val intent = Intent(contextRef, TestActivityCore::class.java)
-                        contextRef.startActivity(intent)
-                     }){
-                        Text("Tests")
+                  item(key = "equalizer") {
+                     Column(
+                        Modifier.width(width.toDp(density))
+                     ) {
+                        HorizontalDivider(
+                           modifier = Modifier.fillMaxWidth(),
+                           color = Theme.SemiTransparent()
+                        )
+                        
+                        DrawerButton(
+                           modifier = Modifier.fillMaxWidth(),
+                           onClick = {
+                              navController.safeNavigate(EqualizerDest)
+                              drawerState.close()
+                           }) {
+                           Text("Open Equalizer")
+                        }
                      }
                      
                   }
+                  if (displayTests?.value == true) {
+                     item(key = "Tests") {
+                        Column(
+                           Modifier.width(width.toDp(density))
+                        ) {
+                           HorizontalDivider(
+                              modifier = Modifier.fillMaxWidth(),
+                              color = Theme.SemiTransparent()
+                           )
+                           
+                           DrawerButton(
+                              modifier = Modifier.fillMaxWidth(),
+                              onClick = {
+                                 val intent = Intent(contextRef, TestActivityCore::class.java)
+                                 contextRef.startActivity(intent)
+                              }
+                           ) {
+                              Text("Tests")
+                           }
+                        }
+                        
+                     }
+                  }
+                  
                }
             }
             
@@ -527,6 +585,22 @@ private fun ParentContainer(
       
    }
    
+}
+
+@Composable
+private fun DrawerButton(
+   modifier: Modifier = Modifier,
+   onClick:()->Unit,
+   content: @Composable ()->Unit
+){
+   Box(
+      modifier = modifier
+         .heightIn(min = 40.dp)
+         .clickable(onClick = onClick),
+      contentAlignment = Alignment.Center
+   ){
+      content.invoke()
+   }
 }
 
 val tempDrawerColor = MyColor.SemiTransparentDark

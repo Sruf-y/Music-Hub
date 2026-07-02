@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -30,6 +31,7 @@ fun DrawerStandardLayout(
     modifier: Modifier = Modifier
         .fillMaxHeight()
         .padding(5.dp),
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     items: LazyListScope.() -> Unit
 ) {
     val lazyListState = rememberLazyListState()
@@ -56,7 +58,8 @@ fun DrawerStandardLayout(
             modifier = Modifier
                 .fillMaxHeight(),
             state = lazyListState,
-            contentPadding = contentPadding
+            contentPadding = contentPadding,
+            horizontalAlignment = horizontalAlignment
         ) {
             items.invoke(this)
         }

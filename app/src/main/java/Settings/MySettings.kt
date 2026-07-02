@@ -27,6 +27,7 @@ class SettingsRepository(context: Context) {
       private val PLAYER_ALLOW_LOOP_KEY = "PLAYER_ALLOW_LOOP"
       private val PLAYER_ALLOW_LOOP_TO_END_KEY = "PLAYER_ALLOW_LOOP_TO_END"
       private val PLAYER_ALLOW_LOOP_TO_START_KEY = "PLAYER_ALLOW_LOOP_TO_START"
+      private val DISPLAY_TESTS_KEY = "DISPLAY_TESTS"
    }
    
    val playerPosition_WriteInterval = DataStoreCursorValue(
@@ -81,6 +82,14 @@ class SettingsRepository(context: Context) {
          MySettings.ScreenOrientation.contains(it)
       },
       key = genericKey(PLAYER_WRITE_MAX_DEBOUNCE_KEY),
+      datastoreDir = context.settingsDataStore,
+      scope = settingsScope
+   )
+   
+   val displayTests = DataStoreCursorValue(
+      defaultValue = false,
+      writeCondition = {true},
+      key = genericKey(DISPLAY_TESTS_KEY),
       datastoreDir = context.settingsDataStore,
       scope = settingsScope
    )
