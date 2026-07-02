@@ -23,18 +23,18 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import com.aacomposetest.Classes.AutoStateFlow
+import com.musichub.Classes.AutoStateFlow
 import androidx.media3.exoplayer.ExoPlayer as External_ExoPlayer
-import com.aacomposetest.Classes.MyPrefs
-import com.aacomposetest.Classes.MyPrefs.open
-import com.aacomposetest.Classes.getCursorValue
-import com.aacomposetest.Classes.putCursorValue
-import com.aacomposetest.Log
-import com.aacomposetest.Logs
-import com.aacomposetest.MyApplication
-import com.aacomposetest.MyApplication.Companion.JsonFormat
-import com.aacomposetest.getRandom
-import com.aacomposetest.tryTo
+import com.musichub.Classes.MyPrefs
+import com.musichub.Classes.MyPrefs.open
+import com.musichub.Classes.getCursorValue
+import com.musichub.Classes.putCursorValue
+import com.musichub.Log
+import com.musichub.Logs
+import com.musichub.MyApplication
+import com.musichub.MyApplication.Companion.JsonFormat
+import com.musichub.getRandom
+import com.musichub.tryTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -45,7 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import com.aacomposetest.Toast
+import com.musichub.Toast
 import kotlinx.io.files.FileNotFoundException
 
 interface MyPlayerListener{
@@ -263,19 +263,19 @@ object myExoPlayer {
                      override fun onPlaybackStateChanged(state: Int) {
                         when (state) {
                            Player.STATE_READY -> {
-                              com.aacomposetest.Log("Ready")
+                              com.musichub.Log("Ready")
                            }
                            
                            Player.STATE_ENDED -> {
-                              com.aacomposetest.Log("Ended")
+                              com.musichub.Log("Ended")
                            }
                            
                            Player.STATE_IDLE -> {
-                              com.aacomposetest.Log("Idle")
+                              com.musichub.Log("Idle")
                            }
                            
                            Player.STATE_BUFFERING -> {
-                              com.aacomposetest.Log("Buffering")
+                              com.musichub.Log("Buffering")
                            }
                         }
                      }

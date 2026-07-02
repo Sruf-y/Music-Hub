@@ -69,11 +69,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.aacomposetest.R
-import com.aacomposetest.clickableNoRipple
-import com.aacomposetest.invert
-import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.R
+import com.musichub.clickableNoRipple
+import com.musichub.invert
+import com.musichub.ui.theme.MyColor
+import com.musichub.ui.theme.Theme
 import com.composables.core.BottomSheet
 import com.composables.core.BottomSheetState
 import com.composables.core.SheetDetent

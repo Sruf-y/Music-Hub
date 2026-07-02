@@ -56,11 +56,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
-import com.aacomposetest.clickableNoRipple
-import com.aacomposetest.toDp
-import com.aacomposetest.totalLength
-import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.clickableNoRipple
+import com.musichub.toDp
+import com.musichub.totalLength
+import com.musichub.ui.theme.MyColor
+import com.musichub.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
 import ui.components.CenteredPriorityLayout
 import ui.components.CubicControl

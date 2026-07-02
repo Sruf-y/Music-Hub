@@ -31,8 +31,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aacomposetest.of
-import com.aacomposetest.ui.theme.SrufTheme
+import com.musichub.of
+import com.musichub.ui.theme.SrufTheme
 import ui.components.CancelConfirm
 import ui.components.Overlay
 

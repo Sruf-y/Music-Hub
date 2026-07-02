@@ -22,9 +22,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import com.aacomposetest.toDp
-import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.toDp
+import com.musichub.ui.theme.MyColor
+import com.musichub.ui.theme.Theme
 
 @Composable
 fun DrawerStandardLayout(

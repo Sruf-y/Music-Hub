@@ -31,10 +31,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aacomposetest.Classes.SimpleDropdownMenuState
-import com.aacomposetest.Classes.rememberSimpleDropdownMenu
-import com.aacomposetest.ui.theme.SrufTheme
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.Classes.SimpleDropdownMenuState
+import com.musichub.Classes.rememberSimpleDropdownMenu
+import com.musichub.ui.theme.SrufTheme
+import com.musichub.ui.theme.Theme
 
 @Composable
 fun PlaylistItem(

@@ -23,11 +23,11 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
-import com.aacomposetest.Classes.ActivityLifecycleCallbacks_Open
-import com.aacomposetest.Classes.ActivityLifecycleEffect
-import com.aacomposetest.Classes.CursorValue
-import com.aacomposetest.Classes.MyPrefs.open
-import com.aacomposetest.tryValue
+import com.musichub.Classes.ActivityLifecycleCallbacks_Open
+import com.musichub.Classes.ActivityLifecycleEffect
+import com.musichub.Classes.CursorValue
+import com.musichub.Classes.MyPrefs.open
+import com.musichub.tryValue
 import kotlin.math.roundToInt
 
 /**

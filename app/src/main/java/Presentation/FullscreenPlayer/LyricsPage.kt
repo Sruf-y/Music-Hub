@@ -43,11 +43,11 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import com.aacomposetest.MyApplication
-import com.aacomposetest.R
-import com.aacomposetest.Toast
-import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.MyApplication
+import com.musichub.R
+import com.musichub.Toast
+import com.musichub.ui.theme.MyColor
+import com.musichub.ui.theme.Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ui.components.LoopingText

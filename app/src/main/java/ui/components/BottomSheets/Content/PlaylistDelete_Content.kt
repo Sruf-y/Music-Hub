@@ -20,8 +20,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.ui.theme.MyColor
+import com.musichub.ui.theme.Theme
 import kotlinx.coroutines.launch
 import ui.components.BottomSheets.Content.BottomSheetContentDefaults.VerticalPadding
 import ui.components.CancelConfirm

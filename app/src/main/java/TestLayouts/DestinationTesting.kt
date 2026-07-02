@@ -24,9 +24,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.aacomposetest.Log
-import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.SrufTheme
+import com.musichub.Log
+import com.musichub.ui.theme.MyColor
+import com.musichub.ui.theme.SrufTheme
 import kotlinx.serialization.Serializable
 import ui.components.ViewDrawer
 import ui.components.ViewDrawerValue

@@ -13,7 +13,7 @@ import android.os.FileObserver.MOVE_SELF
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aacomposetest.Logs
+import com.musichub.Logs
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -71,7 +71,7 @@ class FileWatcher(
                MOVE_SELF -> "MOVE_SELF"
                else -> "UNKNOWN($event)"
             }
-         com.aacomposetest.Log("Event type : [ ${eventType} ]",Logs.FILE_IO)
+         com.musichub.Log("Event type : [ ${eventType} ]",Logs.FILE_IO)
          viewModelScope.launch {
             onChangeListenerList.toList().forEach {
                //filter the event

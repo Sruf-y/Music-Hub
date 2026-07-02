@@ -17,8 +17,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.aacomposetest.TestSource
-import com.aacomposetest.ui.theme.SrufTheme
+import com.musichub.TestSource
+import com.musichub.ui.theme.SrufTheme
 
 class TestActivityCore : ComponentActivity() {
    

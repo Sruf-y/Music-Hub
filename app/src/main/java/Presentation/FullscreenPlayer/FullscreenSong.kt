@@ -35,11 +35,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.aacomposetest.R
-import com.aacomposetest.clickableNoRipple
-import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.SrufTheme
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.R
+import com.musichub.clickableNoRipple
+import com.musichub.ui.theme.MyColor
+import com.musichub.ui.theme.SrufTheme
+import com.musichub.ui.theme.Theme
 import ui.components.BottomSheets.PlayPauseButton
 import ui.components.BottomSheets.ResponsiveSlider
 import ui.components.LoopingText

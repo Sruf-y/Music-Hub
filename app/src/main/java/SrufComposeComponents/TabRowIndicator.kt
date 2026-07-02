@@ -1,7 +1,7 @@
 package SrufComposeComponents
 
 
-import com.aacomposetest.Classes.Storeables
+import com.musichub.Classes.Storeables
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.updateTransition
@@ -29,7 +29,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.aacomposetest.ui.theme.MyColor
+import com.musichub.ui.theme.MyColor
 
 @Composable
 fun TabRowIndicator(tabPositions:List<TabPosition>, pagerState: PagerState, separatorHeight: Dp){

@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aacomposetest.ui.theme.SrufTheme
+import com.musichub.ui.theme.SrufTheme
 import SrufComposeComponents.Text as Text
 import SrufComposeComponents.ElevatedButton as ElevatedButton
 

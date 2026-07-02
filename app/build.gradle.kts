@@ -12,11 +12,11 @@ plugins {
 }
 
 android {
-    namespace = "com.aacomposetest"
+    namespace = "com.musichub"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.aacomposetest"
+        applicationId = "com.musichub"
         minSdk = 33
         targetSdk = 35
         versionCode = 1

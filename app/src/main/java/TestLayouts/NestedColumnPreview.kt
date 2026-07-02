@@ -24,7 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.aacomposetest.ui.theme.MyColor
+import com.musichub.ui.theme.MyColor
 import kotlinx.coroutines.launch
 
 @Composable

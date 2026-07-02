@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.ui.theme.Theme
 import androidx.compose.material3.ElevatedButton as OriginalElevatedButton
 
 @Composable

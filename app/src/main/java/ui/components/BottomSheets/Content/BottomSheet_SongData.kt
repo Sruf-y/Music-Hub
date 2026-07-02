@@ -43,11 +43,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import com.aacomposetest.MyApplication
-import com.aacomposetest.toDp
-import com.aacomposetest.toDpSize
-import com.aacomposetest.ui.theme.MyColor
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.MyApplication
+import com.musichub.toDp
+import com.musichub.toDpSize
+import com.musichub.ui.theme.MyColor
+import com.musichub.ui.theme.Theme
 import com.composables.core.HorizontalSeparator
 import java.io.File
 import java.time.LocalDateTime

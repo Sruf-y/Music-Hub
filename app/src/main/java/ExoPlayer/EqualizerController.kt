@@ -32,7 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
-import com.aacomposetest.Log
+import com.musichub.Log
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -48,9 +48,9 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
-import com.aacomposetest.clickableNoRipple
-import com.aacomposetest.totalLength
-import com.aacomposetest.ui.theme.MyColor
+import com.musichub.clickableNoRipple
+import com.musichub.totalLength
+import com.musichub.ui.theme.MyColor
 import ui.components.CenteredPriorityLayout
 import ui.components.CubicControl
 import ui.components.Overlay

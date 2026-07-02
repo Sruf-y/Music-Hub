@@ -45,9 +45,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
-import com.aacomposetest.Functions.map
-import com.aacomposetest.Log
-import com.aacomposetest.ui.theme.MyColor
+import com.musichub.Functions.map
+import com.musichub.Log
+import com.musichub.ui.theme.MyColor
 
 /**
  * Animation state enum for [ViewDrawerState]

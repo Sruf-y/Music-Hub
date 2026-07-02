@@ -13,7 +13,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aacomposetest.ui.theme.Theme
+import com.musichub.ui.theme.Theme
 import com.composeunstyled.LocalTextStyle
 /**
  * @param fontWeight the typeface thickness to use when painting the text (e.g., [FontWeight.Bold]).
