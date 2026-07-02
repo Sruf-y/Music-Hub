@@ -55,7 +55,12 @@ object ListFeedingVM {
             FileWatchListener(
                 key = "folderWatcher",
                 eventFilter = {
-                    it == FileObserver.CLOSE_WRITE
+                    it and (FileObserver.CLOSE_WRITE or
+                       FileObserver.DELETE or
+                       FileObserver.DELETE_SELF or
+                       FileObserver.MOVE_SELF or
+                       FileObserver.MOVE_SELF
+                    )>0
                 },
                 onEvent = { event,filename ->
                     playlistHolder.updateList(MyApplication.instance)

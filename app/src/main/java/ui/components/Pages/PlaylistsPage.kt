@@ -59,7 +59,6 @@ fun PlaylistsPage(
     onPlusClick: (()-> Unit)? = null,
     optionsButtonMenu:SimpleDropdownMenuState? = null,
     onPlaylistClick: ((Playlist) -> Unit)? = null,
-    itemOptionsDropdownMenu: SimpleDropdownMenuState? = null,
     globalBottomSheetViewModel: SheetViewmodel
 ) {
     var playlistToEdit by remember { mutableStateOf<Playlist?>(null) }
@@ -106,13 +105,17 @@ fun PlaylistsPage(
                         optionsDropdownMenu = rememberSimpleDropdownMenu(
                             listOf(
                                 "Rename" to {
+                                    playlistToEdit = item
+                                    
                                     globalBottomSheetViewModel.addSheet(
-                                        renameItem_Content.apply { playlistToEdit = item }
+                                        renameItem_Content
                                     )
                                 },
                                 "Delete" to {
+                                    playlistToEdit = item
+                                    
                                     globalBottomSheetViewModel.addSheet(
-                                        deleteItem_Content.apply { playlistToEdit = item }
+                                        deleteItem_Content
                                     )
                                 }
                             )

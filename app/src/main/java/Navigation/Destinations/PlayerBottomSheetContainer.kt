@@ -337,8 +337,7 @@ object PlayerBottomSheetContainer {
                                     }
                                  },
                                  onPlusClick = {
-                                    globalBottomSheetVM
-                                       .addSheet(plusClickContent)
+                                    globalBottomSheetVM.addSheet(plusClickContent)
                                  },
                                  globalBottomSheetViewModel = globalBottomSheetVM
                               )

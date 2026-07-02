@@ -78,7 +78,8 @@ class PlaylistWatcher(fileWatcher: FileWatcher, val logger: CrashReporter  = MyA
             name == file?.name
         },
         eventFilter = {event->
-            event and (CLOSE_WRITE or FileObserver.MODIFY or FileObserver.MOVED_FROM or FileObserver.MOVED_TO or FileObserver.DELETE) >0
+            (event and (CLOSE_WRITE or FileObserver.MODIFY or FileObserver.MOVED_FROM or
+               FileObserver.MOVED_TO or FileObserver.DELETE or FileObserver.DELETE_SELF)) > 0
         },
         onEvent = { event, name ->
             
