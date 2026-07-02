@@ -47,9 +47,6 @@ import ui.components.BottomSheets.Content.PlaylistAddOrEdit_Content
 import ui.components.BottomSheets.Content.PlaylistDelete_Content
 import ui.components.PlaylistItem
 
-
-
-
 @Composable
 fun PlaylistsPage(
     state: LazyListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() },
