@@ -138,6 +138,8 @@ class MyApplication: Application(), ImageLoaderFactory {
         }
         
     }
+    
+    
 
     override fun newImageLoader(): ImageLoader {
         return ImageLoader(this).newBuilder()
@@ -264,6 +266,9 @@ private fun handleInternalLog(message:String, tag:String, type:String){
         }
     }
 }
+/**
+ * Accepts [String] as tag or [Logs]
+ * */
 fun Log(
     message: String,
     tag: Any = "WTF",  // Accept either String or Logs enum

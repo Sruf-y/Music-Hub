@@ -392,7 +392,8 @@ class MusicService: Service() {
       // If task is not on the tasktray, stop the service, marking the proccess for deletion
       if(!isAppTaskStillExists()){
          
-         myExoPlayer.destroy()
+         //myExoPlayer.destroy()
+         myExoPlayer.onSaveLogic()
          
          // when its paused, it becomes a background service. StopForeground will not work on a background service. I need to manually cancel the notification.
          removeNotification()
@@ -400,6 +401,8 @@ class MusicService: Service() {
          stopSelf()
          MyApplication.killProccess()
       }else{ // When trying to close the notification itself
+         Log("Just notification closed")
+         
          removeNotification()
          stopForeground(STOP_FOREGROUND_REMOVE)
          currentLayerState = LayerState.NONE

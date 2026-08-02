@@ -47,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.musichub.Toast
 import kotlinx.io.files.FileNotFoundException
+import java.time.LocalTime
 
 interface MyPlayerListener{
    fun onToggle(value:Boolean)
@@ -131,7 +132,6 @@ object myExoPlayer {
          val currentPos = getCurrentPosition()
          val duration = curSong?.duration ?: 0
          
-         
          val progress = if (duration > 0) {
             currentPos
          } else {
@@ -145,19 +145,27 @@ object myExoPlayer {
          diskWriteFlow.setValue(it)
       }
    ).apply {
-      /** Is already delayed Look after the first write */
-      viewModelScope.launch {
-         diskWriteFlow.stateFlow
-            .collect {
-               prefs?.edit(true){
-                  Log.i(Logs.SHARED_PREFFERENCES.name,"PUT current song position Value [${it}]")
-                  putCursorValue(MyPrefs._prefs_LastSongPosition,it)
+      /**
+       * It's not ok to write data to disk so much. At most it should be written when destructive lifecycle events happen such as proccess termination.
+       *
+       * Moved write logic to the service and to [com.musichub.Classes.CustomComponentActivity]
+       * */
+      if(false) {
+         /** Is already delayed Look after the first write */
+         viewModelScope.launch {
+            diskWriteFlow.stateFlow
+               .collect {
+                  prefs?.edit(true) {
+                     Log.i(Logs.SHARED_PREFFERENCES.name, "PUT current song position Value [${it}]")
+                     putCursorValue(MyPrefs._prefs_LastSongPosition, it)
+                  }
+                  
+                  if (isPlaying.value) {
+                     delay(MySettings.settings?.let { it.playerPosition_WriteInterval.stateFlow.value }
+                        ?: 2000L)
+                  }
                }
-               
-               if(isPlaying.value){
-                  delay(MySettings.settings?.let{it.playerPosition_WriteInterval.stateFlow.value}?:2000L)
-               }
-            }
+         }
       }
    }
    
@@ -772,9 +780,9 @@ object myExoPlayer {
    fun destroy(){
       
       Log.i(Logs.EXOPLAYER.name,"Attempting to DESTROY exoplayer.")
-      
+      onSaveLogic()
       progressVM.stopUpdates()
-      onDestroy_SaveLogic()
+      
       
       //currentlyPlayingSong.setValue(null)
       //setCurrentPlaylist(null)
@@ -796,13 +804,25 @@ object myExoPlayer {
       exoPlayer?.release()
    }
    
-   private fun onDestroy_SaveLogic(){
-      Log("On destroy save logic")
-      prefs?.edit(true) {
-         putCursorValue(MyPrefs._prefs_LastSongPosition,getCurrentPosition())
-         putCursorValue(MyPrefs._prefs_LastSongId,currentlyPlayingSong.getValue?.id?:-1)
-         putCursorValue(MyPrefs._prefs_LastPlaylistTitle,curPlaylistVM.playlist.value?.title?:"")
+   private var _lastSave = 0
+   private val _saveDebounceSecs = 3
+   fun onSaveLogic() {
+      val curTime = LocalTime.now().toSecondOfDay()
+      
+      if (curTime - _lastSave > _saveDebounceSecs) {
+         _lastSave = curTime
+         Log("Saved position of current song", Logs.EXOPLAYER)
+         
+         Log("On destroy save logic")
+         prefs?.edit(true) {
+            putCursorValue(MyPrefs._prefs_LastSongPosition, getCurrentPosition())
+            putCursorValue(MyPrefs._prefs_LastSongId, currentlyPlayingSong.getValue?.id ?: -1)
+            putCursorValue(
+               MyPrefs._prefs_LastPlaylistTitle,
+               curPlaylistVM.playlist.value?.title ?: ""
+            )
+         }
+         equalizerController?.onSaveLogic()
       }
-      equalizerController?.onSaveLogic()
    }
 }

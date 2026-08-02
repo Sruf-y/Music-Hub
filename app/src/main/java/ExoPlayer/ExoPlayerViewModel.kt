@@ -49,10 +49,6 @@ class ExoPlayerViewModel() : ViewModel() {
             else
                 myExoPlayer.rewind()
         }
-
-        fun destroyPlayer(){
-            myExoPlayer.destroy()
-        }
     }
 
 }

@@ -1,5 +1,6 @@
 package com.musichub.Classes
 
+import ExoPlayer.myExoPlayer
 import Settings.MySettings
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -60,6 +61,12 @@ open class CustomComponentActivity(): ComponentActivity(){
       _defaultOnCreate()
    }
    
+   @CallSuper
+   override fun onStop() {
+      super.onStop()
+      myExoPlayer.onSaveLogic()
+   }
+   
    /**
     * Starts watching the orientation flow and sets the IME input pan mode.
     * */
@@ -78,7 +85,6 @@ open class CustomComponentActivity(): ComponentActivity(){
          // Now safe to collect
          repeatOnLifecycle(Lifecycle.State.STARTED) {
             MySettings.settings!!.orientation.stateFlow.collect { value ->
-               Log("Received value: $value")
                this@CustomComponentActivity.requestedOrientation = value
             }
          }

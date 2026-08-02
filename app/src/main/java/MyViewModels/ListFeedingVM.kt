@@ -221,8 +221,7 @@ private class PlaylistLISTHolder(val IOscope: CoroutineScope){
                     }
 
                 }
-
-                Log("New list is ${newlist.map{it.title}}")
+                
                 _allPlaylists.value = newlist
                 
                 onfinished?.invoke()
