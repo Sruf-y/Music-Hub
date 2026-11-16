@@ -622,7 +622,7 @@ sealed interface Destination : Parcelable {
                   modifier = modifier
                      .height(60.dp)
                      .fillMaxWidth()
-                     .background(Theme.Sourcesets.AppbarBackground())
+                     .background(Theme.Sourcesets.ToolbarBackground())
                      .clipToBounds()
                ) {
                   
