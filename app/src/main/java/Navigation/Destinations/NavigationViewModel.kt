@@ -69,8 +69,8 @@ class NavigationViewModel(
    
    private fun persist() {
       val state = _uiState.value
-      savedStateHandle["currentDest"] = state.currentDestination
-      savedStateHandle["backStack"] = ArrayList(state.backStack)
+      savedStateHandle[KEY_CURRENT_DEST] = state.currentDestination
+      savedStateHandle[KEY_BACK_STACK] = ArrayList(state.backStack)
    }
    
    fun navigateTo(destination: Destination) {

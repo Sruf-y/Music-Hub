@@ -34,9 +34,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
@@ -71,7 +69,6 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.musichub.R
 import com.musichub.clickableNoRipple
-import com.musichub.invert
 import com.musichub.ui.theme.MyColor
 import com.musichub.ui.theme.Theme
 import com.composables.core.BottomSheet
@@ -640,7 +637,7 @@ private fun SmallPlayer(
                      gotoSong.invoke()
                   }
                },
-               iconSize = Size(0.8f, 0.8f),
+               iconScale = Size(0.8f, 0.8f),
                tint = MyColor.White,
                enabled = isMinimizedEnabled
             )

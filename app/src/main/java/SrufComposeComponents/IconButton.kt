@@ -49,19 +49,19 @@ fun IconButton(
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun IconButton(
-    imageVector: ImageVector,
-    modifier: Modifier = IconButtonDefaults.modifier,
-    /**Float scalar. Must be between 0f and 1f*/
-    iconSize:Size = IconButtonDefaults.iconSize,
-    tint:Color = IconButtonDefaults.iconTint(),
-    ripple:Indication? = IconButtonDefaults.ripple(),
-    enabled:Boolean = true,
-    onClick:()->Unit
+   imageVector: ImageVector,
+   modifier: Modifier = IconButtonDefaults.modifier,
+   /**Float scalar. Must be between 0f and 1f*/
+    iconScale:Size = IconButtonDefaults.iconSize,
+   tint:Color = IconButtonDefaults.iconTint(),
+   ripple:Indication? = IconButtonDefaults.ripple(),
+   enabled:Boolean = true,
+   onClick:()->Unit
 ) {
     _baseIconButton(
         data = imageVector,
         modifier = modifier,
-        iconSize= iconSize,
+        iconSize= iconScale,
         iconTint = tint,
         ripple = ripple,
         enabled = enabled,

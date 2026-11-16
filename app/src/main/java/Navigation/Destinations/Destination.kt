@@ -89,7 +89,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.edit
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
@@ -303,9 +302,9 @@ sealed interface Destination : Parcelable {
                   onBack?.invoke()
                }
                
-               // Use this value for searching/filtering in the playlist. TODO
-               val isSearching = remember { false }
                
+               var isSearching by rememberSaveable { mutableStateOf(false) }
+               var searchWord by rememberSaveable { mutableStateOf("") }
                
                val contextRef = LocalContext.current
                
@@ -326,8 +325,8 @@ sealed interface Destination : Parcelable {
                
                val const_PlaylistSongs by remember {
                   derivedStateOf {
-                     
-                     allSongs.mapByOrderOf(playlist?.songsIdList ?: emptyList()) { it.id }
+                     // Searching is applied here
+                     allSongs.mapByOrderOf(playlist?.songsIdList ?: emptyList()) { it.id }.filter { it.title.lowercase().contains(searchWord.lowercase()) }
                      
                   }
                }
@@ -336,6 +335,8 @@ sealed interface Destination : Parcelable {
                   mutableStateOf(
                      allSongs.filter {
                         playlist?.songsIdList?.contains(it.id) == true
+                     }.filter {
+                        it.title.contains(searchWord)
                      }
                   )
                }
@@ -387,6 +388,8 @@ sealed interface Destination : Parcelable {
                   BottomSheet_SongData(songToSendToInfo)
                }
                
+               
+               
                Box(modifier = modifier) {
                   
                   
@@ -413,7 +416,20 @@ sealed interface Destination : Parcelable {
                         playlist?.save(contextRef)
                      }
                   }
-                  
+                  if(isSearching) {
+                     PlaylistSearchBar(
+                        modifier = Modifier.zIndex(1f),
+                        isSearching = isSearching,
+                        searchWord = searchWord,
+                        onSearchCanceled = {
+                           searchWord = ""
+                           isSearching = false
+                        },
+                        onSearchWordChanged = {
+                           searchWord = it
+                        },
+                     )
+                  }
                   
                   LazyColumn(
                      modifier = Modifier
@@ -465,6 +481,13 @@ sealed interface Destination : Parcelable {
                               verticalAlignment = Alignment.CenterVertically
                            ) {
                               
+                              IconButton(
+                                 imageVector = Icons.Default.Search,
+                                 iconScale = Size(0.75f, 0.75f),
+                                 modifier = Modifier.size(MyIcons.sizeMedium, MyIcons.sizeMedium)
+                              ){
+                                 isSearching = true
+                              }
                               
                               // PLUS ICON
                               IconButton(
@@ -483,7 +506,7 @@ sealed interface Destination : Parcelable {
                                  IconButton(
                                     imageVector = Icons.Default.MoreVert,
                                     modifier = Modifier.size(MyIcons.sizeMedium, MyIcons.sizeMedium),
-                                    iconSize = Size(0.75f, 0.75f)
+                                    iconScale = Size(0.75f, 0.75f)
                                  ) {
                                     optionsMenu?.open()
                                  }
@@ -537,7 +560,7 @@ sealed interface Destination : Parcelable {
                                           resId = R.drawable.ic_drag_handle,
                                           modifier = Modifier
                                              .fillMaxHeight(0.8f)
-                                             .aspectRatio(1f,true)
+                                             .aspectRatio(1f, true)
                                              .draggableHandle(
                                                 onDragStopped = {
                                                    
@@ -586,6 +609,86 @@ sealed interface Destination : Parcelable {
                
                
             }
+            
+            @Composable
+            fun PlaylistSearchBar(
+               modifier:Modifier = Modifier,
+               isSearching:Boolean,
+               searchWord: String,
+               onSearchCanceled:()-> Unit,
+               onSearchWordChanged:(String)->Unit,
+            ){
+               Box(
+                  modifier = modifier
+                     .height(60.dp)
+                     .fillMaxWidth()
+                     .background(Theme.Sourcesets.AppbarBackground())
+                     .clipToBounds()
+               ) {
+                  
+                  val isSearchInProgress by remember {
+                     derivedStateOf {
+                        !searchWord.isBlank()
+                     }
+                  }
+                  
+                  val focusRequester = remember { FocusRequester() }
+                  var focusState by remember { mutableStateOf<FocusState?>(null) }
+                  
+                  val focusManager = LocalFocusManager.current
+                  
+                  var shouldBeFocused by remember { mutableStateOf(false) }
+                  
+                  LaunchedEffect(isSearchInProgress,  focusState?.hasFocus, shouldBeFocused) {
+                     ListFeedingVM.SortedSongs.setSearching(isSearchInProgress || focusState?.hasFocus == true || shouldBeFocused)
+                  }
+                  
+                  
+                  val iconModifier = remember {
+                     Modifier
+                        .fillMaxHeight()
+                        .padding(vertical = 10.dp)
+                        .aspectRatio(1f, true)
+                  }
+                  
+                  
+                  
+                  LaunchedEffect(isSearching) {
+                     focusRequester.requestFocus()
+                  }
+                  OutlinedTextFieldExpanded(
+                     singleLine = true,
+                     value = searchWord,
+                     onValueChange = {
+                        onSearchWordChanged.invoke(it)
+                     },
+                     modifier = Modifier
+                        .fillMaxSize()
+                        .focusRequester(focusRequester)
+                        .onFocusChanged {
+                           focusState = it
+                        },
+                     placeholder = @Composable {
+                        Text("Search")
+                     },
+                     trailingIcon = @Composable {
+                        IconButton(
+                           modifier = iconModifier,
+                           imageVector = Icons.Default.Close,
+                           onClick = {
+                              focusManager.clearFocus()
+                              shouldBeFocused = false
+                              onSearchCanceled.invoke()
+                           }
+                        )
+                     }, textStyle = TextStyle(color = MyColor.TextColor())
+                  )
+                     
+                  
+                  
+               }
+               
+            }
          }
          
       }
@@ -611,7 +714,7 @@ sealed interface Destination : Parcelable {
          refreshState: RefreshState,
          globalBottomSheetVM: SheetViewmodel,
          drawerState: ViewDrawerState,
-         onClickAddPlaylist:(Destination.PlayerContainer.PlaylistViewRoute)->Unit,
+         onClickAddPlaylist:(PlayerContainer.PlaylistViewRoute)->Unit,
          onBottomSheetClick:()->Unit
       ){
          var isBS_ExpandedByDefault by remember{ PersistentState(
@@ -713,13 +816,13 @@ sealed interface Destination : Parcelable {
          
          
          MyNavigation(navController = localNavController, navigationViewModel = navigationViewModel){
-            composable<Destination.PlayerContainer.MainPager> {
+            composable<PlayerContainer.MainPager> {
                val initialPage = remember { prefs.getCursorValue(MyPrefs._prefs_PagerPosition, "") }
                
                val contextRef = LocalContext.current
                val prefs = remember { MyPrefs.getPrefs(contextRef, MyPrefs.PrefDirs.VisualData) }
                
-               val pageState = remember { Destination.PlayerContainer.MainPager.MainPagerState().apply {
+               val pageState = remember { PlayerContainer.MainPager.MainPagerState().apply {
                   initialPage.toIntOrNull()?.let {
                      this.initialPage = it
                   }
@@ -747,7 +850,7 @@ sealed interface Destination : Parcelable {
                
                NestedScrollingFront(
                   appbar = {
-                     Destination.PlayerContainer.MainPager.SearchTopBar(drawerState)
+                     PlayerContainer.MainPager.SearchTopBar(drawerState)
                   },
                   tabRow = {
                      TabRow(
@@ -812,7 +915,7 @@ sealed interface Destination : Parcelable {
                                     state = refreshBoxState,
                                     modifier = Modifier
                                        .fillMaxSize()
-                                       .padding(bottom = if(curSong!=null)songBS_Config.bottomHeight else 0.dp),
+                                       .padding(bottom = if (curSong != null) songBS_Config.bottomHeight else 0.dp),
                                     isRefreshing = refreshState.state,
                                     onRefresh = {
                                        refreshState.state = true
@@ -847,7 +950,7 @@ sealed interface Destination : Parcelable {
                                     playlists = allPlaylists,
                                     state = playlistsListState,
                                     onPlaylistClick = {
-                                       navigationViewModel.navigateTo(Destination.PlayerContainer.PlaylistViewRoute(it.title))
+                                       navigationViewModel.navigateTo(PlayerContainer.PlaylistViewRoute(it.title))
                                     },
                                     onPlusClick = {
                                        globalBottomSheetVM.addSheet(plusClickContent)
@@ -865,8 +968,8 @@ sealed interface Destination : Parcelable {
                
             }
             
-            composable<Destination.PlayerContainer.PlaylistViewRoute> {
-               val args = it.toRoute<Destination.PlayerContainer.PlaylistViewRoute>()
+            composable<PlayerContainer.PlaylistViewRoute> {
+               val args = it.toRoute<PlayerContainer.PlaylistViewRoute>()
                
                var persistentIndex by remember{
                   PersistentState(
@@ -916,7 +1019,7 @@ sealed interface Destination : Parcelable {
                }
                
                
-               Destination.PlayerContainer.PlaylistViewRoute.Page(
+               PlayerContainer.PlaylistViewRoute.Page(
                   playlistTitle = args.title,
                   lazyListState = playlistViewingLazyListState,
                   onBack = {
@@ -962,7 +1065,7 @@ sealed interface Destination : Parcelable {
          Home,
          Playlists;
          fun toInt(): Int {
-            return MainPages.toInt(this)
+            return toInt(this)
          }
          companion object {
             fun toInt(page: MainPages): Int {

@@ -177,7 +177,7 @@ private fun TopBar(
                     modifier = Modifier
                         .size(buttonsSize)
                         .clip(CircleShape),
-                    iconSize = Size(0.75f,0.75f)
+                    iconScale = Size(0.75f,0.75f)
                 ){
                     optionsButtonMenu?.open()
                 }

@@ -8,7 +8,6 @@ import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -140,7 +139,7 @@ fun AddSongsToPlaylistPage(
 
                     IconButton(
                         Icons.Default.MoreVert,
-                        iconSize = Size(0.8f,0.8f),
+                        iconScale = Size(0.8f,0.8f),
                         modifier = Modifier
                             .align(Alignment.Center)
                             .size(40.dp)
