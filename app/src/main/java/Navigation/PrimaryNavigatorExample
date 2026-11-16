@@ -1,0 +1,89 @@
+object PrimaryNavigator{
+   private val songVM: SongsViewModel
+      get() {
+         return MyApplication.instance.songViewModel
+      }
+
+   private var _playlistLazyList: LazyListState? = null
+   private var _playlistList:List<Long>? =  null
+   fun updatePlaylistPageController(value: LazyListState,list:List<Long>){
+      _playlistLazyList = value
+      _playlistList = list
+   }
+   fun disposePlaylistPageController(){
+      _playlistLazyList = null
+      _playlistList = null
+   }
+   private var _mainLazyList: LazyListState? = null
+   private var _mainList:List<Long>? =  null
+   fun updateMainPageController(value: LazyListState,list:List<Long>){
+      _mainLazyList = value
+      _mainList = list
+   }
+   fun disposeMainPageController(){
+      _mainLazyList = null
+      _mainList = null
+   }
+   private var _pagerState:PagerState? = null
+   fun updatePagerState(value: PagerState){
+      _pagerState = value
+   }
+   fun disposePagerState(){
+      _pagerState = null
+   }
+
+
+   suspend fun navigateToHome(navigator: NavHostController){
+
+      if(navigator.currentDestination != MainPager){
+
+         navigator.navigateUp()
+      }
+      delay(50)
+      _pagerState?.run {
+         if(MainPages.parse(this.currentPage)!= MainPages.Home){
+            this@run.animateScrollToPage(MainPages.Home.toInt())
+         }
+      }
+
+   }
+   suspend fun navigateToPlaylists(navigator: NavHostController){
+
+      if(navigator.currentDestination == Page_ViewPlaylist){
+         navigator.navigateUp()
+      }
+
+      if(navigator.currentDestination != MainPager){
+         navigator.safeNavigate(MainPager)
+      }
+      _pagerState?.run {
+         if (MainPages.parse(this.currentPage) != MainPages.Playlists) {
+            this@run.animateScrollToPage(MainPages.Playlists.toInt())
+         }
+      }
+   }
+   suspend fun navigateToAPlaylist(title:String,navigator: NavHostController){
+      navigateToPlaylists(navigator)
+
+      navigator.safeNavigate(Page_ViewPlaylist(title))
+   }
+
+   suspend fun navigateToSong(id:Long,playlist:String?,navigator: NavHostController) {
+
+         if (playlist != null) {
+            // Song is in a playlist
+            navigateToAPlaylist(playlist, navigator)
+            //TODO: handle hidden songs too later when i add that. Then i will need to refactor this to use flows
+            _playlistList?.let { _playlistLazyList?.animateScrollToItem(it.indexOf(id)) }
+         } else {
+            // song is not in playlist
+            navigateToHome(navigator)
+            delay(50)
+            _mainList?.let {
+
+               val index = it.indexOf(id)
+               _mainLazyList?.animateScrollToItem(index)
+            }
+
+      }
+   }

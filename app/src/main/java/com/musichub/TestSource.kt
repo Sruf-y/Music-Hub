@@ -1,6 +1,7 @@
 package com.musichub
 
 import ExoPlayer.EqualizerController
+import TestLayouts.DragNFlingTest
 import TestLayouts.NestedScrollTest
 import androidx.compose.runtime.Composable
 import ui.components.ConnectedSliderGroupPreview
@@ -10,7 +11,8 @@ object TestSource {
    enum class Sources{
       ConnnectedSlider,
       NestedScrolling,
-      EqualizerBands
+      EqualizerBands,
+      DragNFling
    }
    
    
@@ -32,6 +34,10 @@ object TestSource {
          
          Sources.EqualizerBands -> {
             EqualizerController.BandsTestPreview()
+         }
+         
+         Sources.DragNFling -> {
+            DragNFlingTest()
          }
       }
    }

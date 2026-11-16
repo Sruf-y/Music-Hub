@@ -36,6 +36,10 @@ android {
             )
             signingConfig = signingConfigs.getByName("debug")
         }
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -85,15 +89,10 @@ dependencies {
 
     //Room
     val room_version = "2.7.2"
-
     implementation("androidx.room:room-runtime:$room_version")
-
     implementation("androidx.room:room-ktx:$room_version")
-
     implementation("androidx.room:room-paging:$room_version")
-
     ksp("androidx.room:room-compiler:$room_version")
-
 
     //Coil
     implementation(libs.coil.compose)

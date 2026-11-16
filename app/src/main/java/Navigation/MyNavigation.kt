@@ -1,5 +1,6 @@
 package Presentation.Navigation
 
+import Navigation.Destinations.NavigationViewModel
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -24,13 +25,18 @@ import androidx.savedstate.SavedState
 import androidx.transition.Transition
 
 @Composable
-fun MyNavigation(startDestination:Any, navController: NavHostController, content: NavGraphBuilder.()-> Unit){
+fun MyNavigation(navController: NavHostController,navigationViewModel: NavigationViewModel, content: NavGraphBuilder.()-> Unit){
     
+    navigationViewModel.PreContent(navController)
+    
+    val initialDestination = remember {
+        navigationViewModel.uiState.value.currentDestination   // read once
+    }
     
     NavHost(
         modifier = Modifier.fillMaxSize(),
         navController = navController,
-        startDestination = startDestination,
+        startDestination = initialDestination,
         enterTransition = {
             
             slideIntoContainer(
@@ -58,4 +64,6 @@ fun MyNavigation(startDestination:Any, navController: NavHostController, content
         content.invoke(this)
         
     }
+    
+    navigationViewModel.AfterContent(navController)
 }

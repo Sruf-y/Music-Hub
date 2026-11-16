@@ -4,11 +4,6 @@ import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
 import MyViewModels.RefreshState
 import MyViewModels.SongsViewModel
-import Navigation.Destinations.EqualizerDest
-import Navigation.Destinations.MainPager
-import Navigation.Destinations.PlayerBottomSheetContainer
-import Navigation.Destinations.PlaylistAddSongsPage
-import Navigation.NavExtensions.safeNavigate
 import Navigation.SafeDrawer
 import Presentation.Navigation.DrawerStandardLayout
 import Presentation.Navigation.MyNavigation
@@ -18,14 +13,12 @@ import TestLayouts.TestActivityCore
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseInOutElastic
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.displayCutoutPadding
@@ -36,7 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -75,19 +67,19 @@ import kotlinx.serialization.InternalSerializationApi
 import MyViewModels.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
 import MyViewModels.SheetViewmodel
-import Navigation.Destinations.SettingsDest
+import Navigation.Destinations.Destination
+import Navigation.Destinations.NavigationViewModel
 import Settings.MySettings
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.collectAsState
@@ -96,7 +88,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -115,9 +106,6 @@ import com.musichub.toDp
 class MainActivityView : CustomComponentActivity() {
    
    
-   
-   
-   
    val songViewModel: SongsViewModel
       get() {
          return MyApplication.instance.songViewModel
@@ -125,12 +113,12 @@ class MainActivityView : CustomComponentActivity() {
    
    val refreshState = RefreshState()
    
-   val hasNotificationPermission by lazy { mutableStateOf(hasPermission(MyApplication.Permissions.POST_NOTIFICATIONS))  }
+   val hasNotificationPermission by lazy { mutableStateOf(hasPermission(MyApplication.Permissions.POST_NOTIFICATIONS)) }
    
    val notificationPermissionLauncher = createPermissionLauncher(
       permission = MyApplication.Permissions.POST_NOTIFICATIONS,
-      onFinish = {result->
-         if(hasNotificationPermission.value != result) {
+      onFinish = { result ->
+         if (hasNotificationPermission.value != result) {
             hasNotificationPermission.value = result
          }
       }
@@ -139,7 +127,7 @@ class MainActivityView : CustomComponentActivity() {
    
    val mediaPermissionLauncher = createPermissionLauncher(
       permission = MyApplication.Permissions.READ_MEDIA_AUDIO,
-      onFinish = {hasPermission->
+      onFinish = { hasPermission ->
          songViewModel.viewModelScope.launch {
             songViewModel.resyncALL_withMediaStore(
                context = this@MainActivityView,
@@ -172,13 +160,13 @@ class MainActivityView : CustomComponentActivity() {
    val intentSanitizer = IntentSanitizer.Builder()
       .allowAnyComponent()
       .allowAction {
-      it == Intent.ACTION_VIEW
-   }.allowType {
-      it == "audio/*"
-   }.build()
+         it == Intent.ACTION_VIEW
+      }.allowType {
+         it == "audio/*"
+      }.build()
    
    
-   private suspend fun handleReceivedAudioIntent(intent:Intent){
+   private suspend fun handleReceivedAudioIntent(intent: Intent) {
       
       val audioUri = intent.data
       
@@ -191,7 +179,7 @@ class MainActivityView : CustomComponentActivity() {
          
          // Create the intent and pass the data to it
          var fullScreenPageIntent = Intent(this, FullScreenPlayerActivity::class.java).apply {
-            setDataAndType(audioUri,mimeType)
+            setDataAndType(audioUri, mimeType)
             setFlags(flags)
          }
          
@@ -205,7 +193,7 @@ class MainActivityView : CustomComponentActivity() {
          )
          // Since this uses data from outside, it is prone to errors and mistakes.
          tryTo {
-            val song = songViewModel.getSongFromUri(audioUri,this)
+            val song = songViewModel.getSongFromUri(audioUri, this)
             ExoPlayerViewModel.setSong(song)
             startActivity(fullScreenPageIntent)
          }
@@ -220,9 +208,9 @@ class MainActivityView : CustomComponentActivity() {
          handleReceivedAudioIntent(intent)
       }
    }
+   
    override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
-      
       
       
       // Setup navbars colors
@@ -253,7 +241,6 @@ class MainActivityView : CustomComponentActivity() {
    }
    
    
-   
    override fun onPause() {
       super.onPause()
       
@@ -265,12 +252,11 @@ class MainActivityView : CustomComponentActivity() {
    
    @OptIn(FlowPreview::class)
    @Composable
-   private fun MainView(){
+   private fun MainView() {
       
-      val globalBottomSheetVM : SheetViewmodel = viewModel()
+      val globalBottomSheetVM: SheetViewmodel = viewModel()
       
       val contextRef = LocalContext.current
-      
       
       
       /**
@@ -282,7 +268,7 @@ class MainActivityView : CustomComponentActivity() {
          
          notificationPermissionLauncher.launch()
          
-         if(hasNotificationPermission.value) {
+         if (hasNotificationPermission.value) {
             
             MusicService.handleOnAppStart(contextRef)
             
@@ -294,7 +280,7 @@ class MainActivityView : CustomComponentActivity() {
          globalBottomSheetVM = globalBottomSheetVM,
          refreshState = refreshState
       )
-      MyModalBottomSheet(modifier = Modifier.fillMaxSize(),state = globalBottomSheetVM)
+      MyModalBottomSheet(modifier = Modifier.fillMaxSize(), state = globalBottomSheetVM)
       
    }
 }
@@ -324,13 +310,24 @@ private fun ParentContainer(
       
       val navController = rememberNavController()
       
+      val navigationViewModel: NavigationViewModel = viewModel(
+         key = "primaryNavigationViewModel",
+         viewModelStoreOwner = LocalActivity.current as ComponentActivity,
+         factory = NavigationViewModel.factory(Destination.PlayerSheetContainerRoute)
+      )
+      
       val playerBS_mainContentNavController = rememberNavController()
+      val playerBS_mainContentnavigationViewModel: NavigationViewModel = viewModel(
+         key = "playerBS_mainContentnavigationViewModel",
+         viewModelStoreOwner = LocalActivity.current as ComponentActivity,
+         factory = NavigationViewModel.factory(Destination.PlayerContainer.MainPager)
+      )
       
       SafeDrawer(
          state = drawerState,
          drawerContent = {
-            Box(Modifier.wrapContentSize()){
-               var intsize by remember { mutableStateOf(IntSize(0,0)) }
+            Box(Modifier.wrapContentSize()) {
+               var intsize by remember { mutableStateOf(IntSize(0, 0)) }
                val density = LocalDensity.current
                var width by remember { mutableIntStateOf(0) }
                
@@ -367,9 +364,11 @@ private fun ParentContainer(
                      Column {
                         Row(
                            verticalAlignment = Alignment.CenterVertically,
-                           modifier = Modifier.wrapContentSize().onSizeChanged{
-                              width = it.width
-                           }
+                           modifier = Modifier
+                              .wrapContentSize()
+                              .onSizeChanged {
+                                 width = it.width
+                              }
                         ) {
                            Icon(
                               painterResource(
@@ -398,9 +397,9 @@ private fun ParentContainer(
                      DrawerButton(
                         modifier = Modifier.width(width.toDp(density)),
                         onClick = {
-                        navController.safeNavigate(SettingsDest)
-                        drawerState.close()
-                     }) {
+                           navigationViewModel.navigateTo(Destination.SettingsRoute)
+                           drawerState.close()
+                        }) {
                         Text("Settings")
                      }
                   }
@@ -416,7 +415,7 @@ private fun ParentContainer(
                         DrawerButton(
                            modifier = Modifier.fillMaxWidth(),
                            onClick = {
-                              navController.safeNavigate(EqualizerDest)
+                              navigationViewModel.navigateTo(Destination.EqualizerRoute)
                               drawerState.close()
                            }) {
                            Text("Open Equalizer")
@@ -471,7 +470,7 @@ private fun ParentContainer(
                      scaleY = scalar
                      transformOrigin = TransformOrigin.Center
                   }
-                  
+            
             ) {
                
                val prefs by lazy {
@@ -487,23 +486,21 @@ private fun ParentContainer(
                 * This container lives together with the bellow [Player Bottom Sheet] in the same parent container.
                 * */
                MyNavigation(
-                  startDestination = {
-                     PlayerBottomSheetContainer
-                  }.invoke(),
-                  navController = navController
+                  navController = navController,
+                  navigationViewModel = navigationViewModel
                ) {
-                  composable<PlayerBottomSheetContainer> {
+                  composable<Destination.PlayerSheetContainerRoute> {
                      
-                     PlayerBottomSheetContainer.RenderBottomSheetContainer(
-                        startDestination = MainPager,
+                     Destination.PlayerSheetContainerRoute.RenderBottomSheetContainer(
                         prefs = prefs,
                         localNavController = playerBS_mainContentNavController,
+                        navigationViewModel = playerBS_mainContentnavigationViewModel,
                         refreshBoxState = refreshBoxState,
                         refreshState = refreshState,
                         globalBottomSheetVM = globalBottomSheetVM,
                         drawerState = drawerState,
                         onClickAddPlaylist = { args ->
-                           navController.safeNavigate(PlaylistAddSongsPage(args.title))
+                           navigationViewModel.navigateTo(Destination.PlaylistAddSongsRoute(args.title))
                         },
                         onBottomSheetClick = {
                            val intent = Intent(contextRef, FullScreenPlayerActivity::class.java)
@@ -511,10 +508,10 @@ private fun ParentContainer(
                         }
                      )
                   }
-                  composable<SettingsDest>{
-                     SettingsDest.Page()
+                  composable<Destination.SettingsRoute> {
+                     Destination.SettingsRoute.Page()
                   }
-                  composable<EqualizerDest>(
+                  composable<Destination.EqualizerRoute>(
                      enterTransition = {
                         val duration = 250
                         slideIntoContainer(
@@ -530,14 +527,14 @@ private fun ParentContainer(
                         )
                      }
                   ) {
-                     if(myExoPlayer.equalizerController!=null)
+                     if (myExoPlayer.equalizerController != null)
                         EqualizerPage(
                            equalizer = myExoPlayer.equalizerController!!
                         )
                   }
                   
                   
-                  composable<PlaylistAddSongsPage>(
+                  composable<Destination.PlaylistAddSongsRoute>(
                      enterTransition = {
                         
                         slideIntoContainer(
@@ -553,7 +550,7 @@ private fun ParentContainer(
                         )
                      }
                   ) { backStack ->
-                     val args = backStack.toRoute<PlaylistAddSongsPage>()
+                     val args = backStack.toRoute<Destination.PlaylistAddSongsRoute>()
                      
                      val playlistTitle = args.title
                      
@@ -564,7 +561,7 @@ private fun ParentContainer(
                         lazyListState = addsongstoplaylistState,
                         playlistTitle = playlistTitle,
                         onBack = {
-                           navController.navigateUp()
+                           navigationViewModel.onNavigateUp()
                         }
                      )
                   }
@@ -586,15 +583,15 @@ private fun ParentContainer(
 @Composable
 private fun DrawerButton(
    modifier: Modifier = Modifier,
-   onClick:()->Unit,
-   content: @Composable ()->Unit
-){
+   onClick: () -> Unit,
+   content: @Composable () -> Unit,
+) {
    Box(
       modifier = modifier
          .heightIn(min = 40.dp)
          .clickable(onClick = onClick),
       contentAlignment = Alignment.Center
-   ){
+   ) {
       content.invoke()
    }
 }
