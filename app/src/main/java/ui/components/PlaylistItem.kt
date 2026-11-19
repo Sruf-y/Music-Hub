@@ -43,7 +43,7 @@ fun PlaylistItem(
     textPadding: PaddingValues = PaddingValues(10.dp,0.dp),
     optionsSize: Dp = 45.dp,
     optionsDropdownMenu: SimpleDropdownMenuState? = null,
-    onClick:((Playlist)->Unit)? = null
+    onClick:((String)->Unit)? = null
 ) {
 
     val iconTint = Theme.IconTint()
@@ -53,7 +53,7 @@ fun PlaylistItem(
         modifier = modifier
         .clickable(
             onClick = {
-                onClick?.invoke(playlist)
+                onClick?.invoke(playlist.title)
             }
         ),
         horizontalArrangement = Arrangement.Center,

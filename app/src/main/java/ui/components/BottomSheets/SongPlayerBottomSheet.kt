@@ -3,6 +3,7 @@ package ui.components.BottomSheets
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
+import Navigation.SongPinpointViewModel
 import SrufComposeComponents.IconButton
 import SrufComposeComponents.Text
 import android.app.Activity
@@ -294,9 +295,7 @@ fun ResponsivePlayerBS(
    currentSong: Song?,
    centerPictureToMiddle:Boolean = false,
    swapControls:Boolean = false,
-   gotoSong: () -> Unit = {
-   
-   },
+   gotoSong: () -> Unit,
    onBackgroundClick:(Activity)->Unit = {
    
    }

@@ -83,7 +83,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
 
-    implementation("com.composables:core:1.33.0")
+    implementation("com.composables:core:1.49.9")
     debugImplementation(libs.ui.tooling)
 
 

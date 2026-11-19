@@ -6,8 +6,8 @@ import ExoPlayer.myExoPlayer
 import MyViewModels.ListFeedingVM
 import MyViewModels.PlaylistWatcher
 import MyViewModels.RefreshState
-import MyViewModels.SheetViewmodel
-import MyViewModels.rememberBottomSheetInstance
+import MyViewModels.BottomSheet.SheetViewModel
+import Navigation.SongPinpointViewModel
 import ui.components.CustomIndicator
 import Presentation.Navigation.MyNavigation
 import Presentation.NestedScrollingFront
@@ -89,6 +89,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.edit
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
@@ -106,6 +107,7 @@ import com.musichub.Classes.SimpleDropdownMenuState
 import com.musichub.Classes.getCursorValue
 import com.musichub.Classes.putCursorValue
 import com.musichub.Classes.rememberSimpleDropdownMenu
+import com.musichub.Log
 import com.musichub.MyApplication
 import com.musichub.R
 import com.musichub.Toast
@@ -113,6 +115,7 @@ import com.musichub.mapByOrderOf
 import com.musichub.ui.theme.MyColor
 import com.musichub.ui.theme.Theme
 import com.musichub.ui.theme.isSystemInDarkTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
@@ -286,11 +289,11 @@ sealed interface Destination : Parcelable {
                modifier:Modifier = Modifier.fillMaxSize(),
                lazyListState: LazyListState,
                playlistTitle: String,
-               onBack:(()-> Unit)? = null,
+               onBack:(()-> Unit),
                bottomPadding: Dp = 0.dp,
                thumbNailSize:Dp = 150.dp,
                onPlusClick:(()-> Unit)? =null,
-               globalBottomSheet: SheetViewmodel,
+               globalBottomSheet: SheetViewModel,
                optionsMenu: SimpleDropdownMenuState? = null
             ) {
                Theme.RenderDefaultBackground()
@@ -384,9 +387,6 @@ sealed interface Destination : Parcelable {
                }
                
                var songToSendToInfo by remember { mutableStateOf<Song?>(null) }
-               val datasheet = rememberBottomSheetInstance {
-                  BottomSheet_SongData(songToSendToInfo)
-               }
                
                
                
@@ -594,7 +594,9 @@ sealed interface Destination : Parcelable {
                                        },
                                        "Info" to {
                                           songToSendToInfo = song
-                                          globalBottomSheet.addSheet(datasheet)
+                                          globalBottomSheet.addSheet {
+                                             BottomSheet_SongData(songToSendToInfo)
+                                          }
                                        }
                                     )
                                  )
@@ -604,6 +606,32 @@ sealed interface Destination : Parcelable {
                         
                      }
                      
+                  }
+                  
+                  // Its own work for PinPointModel for scrolling to the item inside of the playlist viewing page
+                  val pinPointNavRequest by SongPinpointViewModel.eventsFlow.collectAsState()
+                  
+                  LaunchedEffect(pinPointNavRequest) {
+                     val event = pinPointNavRequest
+                     
+                     if (event is SongPinpointViewModel.Events.FindSong) {
+                        
+                        if (event.playlistTitle == null) {
+                           onBack.invoke()
+                        } else if (event.playlistTitle == playlistTitle) {
+                           val index = playlistSongs.map { it.id }.indexOf(event.songId)
+                           if (index != -1) {
+                              Log("1")
+                              lazyListState.requestScrollToItem(index)
+                              SongPinpointViewModel.onFinished()
+                           }else{
+                              SongPinpointViewModel.onFinished()
+                           }
+                        }else{
+                           SongPinpointViewModel.onFinished()
+                        }
+                        
+                     }
                   }
                }
                
@@ -709,10 +737,10 @@ sealed interface Destination : Parcelable {
       fun RenderBottomSheetContainer(
          prefs: SharedPreferences,
          localNavController: NavHostController,
-         navigationViewModel: NavigationViewModel,
+         localNavViewModel: NavigationViewModel,
          refreshBoxState: PullToRefreshState,
          refreshState: RefreshState,
-         globalBottomSheetVM: SheetViewmodel,
+         globalBottomSheetVM: SheetViewModel,
          drawerState: ViewDrawerState,
          onClickAddPlaylist:(PlayerContainer.PlaylistViewRoute)->Unit,
          onBottomSheetClick:()->Unit
@@ -763,8 +791,9 @@ sealed interface Destination : Parcelable {
          val allPlaylists by ListFeedingVM.SortedPlaylists.filteredPlaylists.collectAsState(
             emptyList()
          )
+         val songs by ListFeedingVM.allSongs.collectAsState()
          val curSong by myExoPlayer.currentlyPlayingSong.stateFlow.collectAsState()
-         
+         val curPlaylist by myExoPlayer.curPlaylistVM.playlist.collectAsState()
          
          /**
           * Save scroll position for the [All Songs] page
@@ -815,7 +844,7 @@ sealed interface Destination : Parcelable {
          
          
          
-         MyNavigation(navController = localNavController, navigationViewModel = navigationViewModel){
+         MyNavigation(navController = localNavController, navigationViewModel = localNavViewModel){
             composable<PlayerContainer.MainPager> {
                val initialPage = remember { prefs.getCursorValue(MyPrefs._prefs_PagerPosition, "") }
                
@@ -847,6 +876,39 @@ sealed interface Destination : Parcelable {
                   }
                }
                
+               
+               // It's own work for finding the song. It only has to actionate the pager
+               val pinPointNavRequest by SongPinpointViewModel.eventsFlow.collectAsState()
+               
+               LaunchedEffect(pinPointNavRequest) {
+                  val event = pinPointNavRequest
+                  
+                  if (event is SongPinpointViewModel.Events.FindSong) {
+                     if (curSong == null) {
+                        SongPinpointViewModel.onFinished()
+                     } else {
+                        // Check if i'm in a playlist or not
+                        if (Destination.isAlreadyOn(
+                              localNavController,
+                              Destination.PlayerContainer.MainPager
+                           )
+                        ) {
+                           // Song IS in the first page
+                           if (curPlaylist == null) {
+                              pagerState.requestScrollToPage(MainPages.Home.ordinal)
+                           }
+                           // Song IS in a playlist
+                           else {
+                              pagerState.requestScrollToPage(MainPages.Playlists.ordinal)
+                           }
+                        }
+                        
+                     }
+                  } else {
+                     // NO OP
+                  }
+                  
+               }
                
                NestedScrollingFront(
                   appbar = {
@@ -925,8 +987,6 @@ sealed interface Destination : Parcelable {
                                     
                                     val songs by ListFeedingVM.SortedSongs.sortedAndFilteredSongsFlow.collectAsState()
                                     
-                                    
-                                    
                                     MainSongsColumn(
                                        modifier = Modifier.fillMaxSize(),
                                        settingsBottomSheetVM = globalBottomSheetVM,
@@ -939,21 +999,21 @@ sealed interface Destination : Parcelable {
                               // Playlists page
                               MainPages.Playlists -> {
                                  
-                                 val plusClickContent = rememberBottomSheetInstance {
-                                    PlaylistAddOrEdit_Content(
-                                       allPlaylists,
-                                       bottomSheetVM = globalBottomSheetVM
-                                    )
-                                 }
+                                 
                                  
                                  PlaylistsPage(
                                     playlists = allPlaylists,
                                     state = playlistsListState,
                                     onPlaylistClick = {
-                                       navigationViewModel.navigateTo(PlayerContainer.PlaylistViewRoute(it.title))
+                                       localNavViewModel.navigateTo(PlayerContainer.PlaylistViewRoute(it))
                                     },
                                     onPlusClick = {
-                                       globalBottomSheetVM.addSheet(plusClickContent)
+                                       globalBottomSheetVM.addSheet {
+                                          PlaylistAddOrEdit_Content(
+                                             allPlaylists,
+                                             bottomSheetVM = globalBottomSheetVM
+                                          )
+                                       }
                                     },
                                     globalBottomSheetViewModel = globalBottomSheetVM
                                  )
@@ -1023,14 +1083,14 @@ sealed interface Destination : Parcelable {
                   playlistTitle = args.title,
                   lazyListState = playlistViewingLazyListState,
                   onBack = {
-                     localNavController.navigateUp()
+                     localNavViewModel.onNavigateUp()
                   },
                   bottomPadding = songBS_Config.bottomHeight,
                   onPlusClick = {
                      onClickAddPlaylist.invoke(args)
                   },
                   globalBottomSheet = globalBottomSheetVM,
-                  optionsMenu = null // TODO
+                  optionsMenu = null // TODO: add options to the playlist viewing page
                )
                
                
@@ -1052,7 +1112,7 @@ sealed interface Destination : Parcelable {
                   },
                   gotoSong = {
                      myExoPlayer.currentlyPlayingSong.getValue?.id?.let {id->
-                        // TODO: Implement PrimaryNavigator again (to navigate to a speciffic song)
+                        SongPinpointViewModel.findCurrentlyPlayingSong(songs,id,curPlaylist?.title)
                      }
                   }
                )

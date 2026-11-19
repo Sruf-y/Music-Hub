@@ -1,7 +1,7 @@
 package ui.components.BottomSheets.Content
 
 import AppDatabase.PlaylistRelated.Playlist
-import MyViewModels.SheetViewmodel
+import MyViewModels.BottomSheet.SheetViewModel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +27,7 @@ import ui.components.BottomSheets.Content.BottomSheetContentDefaults.VerticalPad
 import ui.components.CancelConfirm
 
 @Composable
-fun PlaylistDelete_Content(playlist: Playlist?, bottomSheetVM: SheetViewmodel?){
+fun PlaylistDelete_Content(playlist: Playlist?, bottomSheetVM: SheetViewModel?){
    
    val context = LocalContext.current
    
@@ -72,14 +72,14 @@ fun PlaylistDelete_Content(playlist: Playlist?, bottomSheetVM: SheetViewmodel?){
       }
       CancelConfirm(onCancel = {
          scope.launch {
-            bottomSheetVM?.dismissCurrent()
+            bottomSheetVM?.requestDismissCurrent()
          }
       },
          onConfirm = {
             playlist?.delete(context)
             
             scope.launch {
-               bottomSheetVM?.dismissCurrent()
+               bottomSheetVM?.requestDismissCurrent()
             }
          }
       )

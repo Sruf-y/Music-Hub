@@ -4,9 +4,9 @@ import AppDatabase.AndroidDatabase
 import AppDatabase.SongRelated.Song
 import ExoPlayer.ExoPlayerViewModel
 import ExoPlayer.myExoPlayer
+import MyViewModels.BottomSheet.SheetViewModel
 import MyViewModels.ListFeedingVM
-import MyViewModels.SheetViewmodel
-import MyViewModels.rememberBottomSheetInstance
+import Navigation.SongPinpointViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
@@ -26,9 +27,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.musichub.Classes.MyPrefs
 import com.musichub.Classes.putCursorValue
 import com.musichub.Classes.rememberSimpleDropdownMenu
+import com.musichub.Log
 import com.musichub.ui.theme.MyColor
 import com.musichub.ui.theme.Theme
 import kotlinx.coroutines.launch
@@ -59,7 +62,7 @@ fun MainSongsColumn(
          playlistTitle = null
       )
    },
-   settingsBottomSheetVM: SheetViewmodel? = null,
+   settingsBottomSheetVM: SheetViewModel? = null,
    songs:List<Song>
 ) {
    val scope = rememberCoroutineScope()
@@ -73,31 +76,7 @@ fun MainSongsColumn(
    
    val prefs = remember { MyPrefs.getPrefs(contextRef, MyPrefs.PrefDirs.VisualData) }
    
-   val songsSortContent = rememberBottomSheetInstance {
-      SongsSort_Content(
-         currentType = curentSortType,
-         currentDirection = curentSortDirection,
-         sortTypeOptions = ListFeedingVM.SongSortType.entries.map { it.name },
-         sortDirectionOptions = ListFeedingVM.SongSortDirection.entries.map { it.name },
-         onConfirm = { type, direction->
-            ListFeedingVM.SortedSongs.setSortType(type)
-            ListFeedingVM.SortedSongs.setSortDirection(direction)
-            
-            prefs.edit {
-               putCursorValue(MyPrefs._prefs_globalSongsSortType,type)
-               putCursorValue(MyPrefs._prefs_globalSongsSortDirection,direction)
-            }
-            
-            scope.launch {
-               settingsBottomSheetVM?.dismissCurrent()
-            }
-         }, onCancel = {
-            scope.launch {
-               settingsBottomSheetVM?.dismissCurrent()
-            }
-         }
-      )
-   }
+   
    
    val mockupState = rememberLazyListState(initialFirstVisibleItemIndex = state.firstVisibleItemIndex, initialFirstVisibleItemScrollOffset = state.firstVisibleItemScrollOffset)
    
@@ -142,7 +121,31 @@ fun MainSongsColumn(
                SortHeader(
                   songs = songs,
                   onFilterClick = {
-                     settingsBottomSheetVM?.addSheet(songsSortContent)
+                     settingsBottomSheetVM?.addSheet{
+                        SongsSort_Content(
+                           currentType = curentSortType,
+                           currentDirection = curentSortDirection,
+                           sortTypeOptions = ListFeedingVM.SongSortType.entries.map { it.name },
+                           sortDirectionOptions = ListFeedingVM.SongSortDirection.entries.map { it.name },
+                           onConfirm = { type, direction->
+                              ListFeedingVM.SortedSongs.setSortType(type)
+                              ListFeedingVM.SortedSongs.setSortDirection(direction)
+                              
+                              prefs.edit {
+                                 putCursorValue(MyPrefs._prefs_globalSongsSortType,type)
+                                 putCursorValue(MyPrefs._prefs_globalSongsSortDirection,direction)
+                              }
+                              
+                              scope.launch {
+                                 settingsBottomSheetVM.requestDismissCurrent()
+                              }
+                           }, onCancel = {
+                              scope.launch {
+                                 settingsBottomSheetVM.requestDismissCurrent()
+                              }
+                           }
+                        )
+                     }
                   }
                )
             
@@ -189,14 +192,13 @@ fun MainSongsColumn(
                }
                else{
                   // Everything works as intended
-                  val datasheet = rememberBottomSheetInstance {
-                     BottomSheet_SongData(songSentToData!!)
-                  }
                   
                   val menu = rememberSimpleDropdownMenu(listOf(
                      "Info" to{
                         songSentToData = song
-                        settingsBottomSheetVM?.addSheet(datasheet)
+                        settingsBottomSheetVM?.addSheet {
+                           BottomSheet_SongData(songSentToData!!)
+                        }
                      }
                   ))
                   
@@ -218,7 +220,27 @@ fun MainSongsColumn(
             }
          )
       }
+      
+      // Its own work for SongPinPointModel in the main songs collumn
+      val pinPointNavRequest by SongPinpointViewModel.eventsFlow.collectAsState()
+      
+      LaunchedEffect(pinPointNavRequest) {
+         val event = SongPinpointViewModel.eventsFlow.value
+         
+         if (event is SongPinpointViewModel.Events.FindSong) {
+            val index = songs.map { it.id }.indexOf(event.songId)
+            Log("Song looking for id ${event.songId} and found index ${index}")
+            if (index != -1) {
+               state.animateScrollToItem(index)
+               SongPinpointViewModel.onFinished()
+            } else {
+               SongPinpointViewModel.onFinished()
+            }
+         }
+      }
    }
+   
+   
    
    
    

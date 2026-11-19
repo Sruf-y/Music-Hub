@@ -1,7 +1,7 @@
 package ui.components.BottomSheets.Content
 
 import AppDatabase.PlaylistRelated.Playlist
-import MyViewModels.SheetViewmodel
+import MyViewModels.BottomSheet.SheetViewModel
 import SrufComposeComponents.Text
 import android.content.res.Configuration
 import android.widget.Toast
@@ -73,7 +73,7 @@ private fun Preview(){
 @Composable
 fun PlaylistAddOrEdit_Content(
    existingPlaylists: List<Playlist>? = null,
-   bottomSheetVM: SheetViewmodel? = null,
+   bottomSheetVM: SheetViewModel? = null,
    playlist: String? = null
 ) {
    val contextRef = LocalContext.current
@@ -93,7 +93,7 @@ fun PlaylistAddOrEdit_Content(
          CancelConfirm(
             onCancel = {
                scope.launch {
-                  bottomSheetVM?.dismissCurrent()
+                  bottomSheetVM?.requestDismissCurrent()
                }
             },
             onConfirm = {
@@ -117,7 +117,7 @@ fun PlaylistAddOrEdit_Content(
                            it.rename(sanitizedText,contextRef)
                         }
                         scope.launch {
-                           bottomSheetVM?.dismissCurrent()
+                           bottomSheetVM?.requestDismissCurrent()
                         }
                      }
                      

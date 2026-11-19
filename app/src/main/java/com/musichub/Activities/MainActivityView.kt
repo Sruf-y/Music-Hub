@@ -64,9 +64,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
-import MyViewModels.MyModalBottomSheet
 import ui.components.Pages.AddSongsToPlaylistPage
-import MyViewModels.SheetViewmodel
+import MyViewModels.BottomSheet.SheetViewModel
 import Navigation.Destinations.Destination
 import Navigation.Destinations.NavigationViewModel
 import Settings.MySettings
@@ -102,6 +101,7 @@ import ui.components.ViewDrawerValue
 import ui.components.rememberViewDrawerState
 import com.musichub.Toast
 import com.musichub.toDp
+import MyViewModels.BottomSheet.MyModalBottomSheet
 
 class MainActivityView : CustomComponentActivity() {
    
@@ -254,7 +254,7 @@ class MainActivityView : CustomComponentActivity() {
    @Composable
    private fun MainView() {
       
-      val globalBottomSheetVM: SheetViewmodel = viewModel()
+      val globalBottomSheetVM: SheetViewModel = viewModel()
       
       val contextRef = LocalContext.current
       
@@ -288,7 +288,7 @@ class MainActivityView : CustomComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class, InternalSerializationApi::class)
 @Composable
 private fun ParentContainer(
-   globalBottomSheetVM: SheetViewmodel,
+   globalBottomSheetVM: SheetViewModel,
    refreshState: RefreshState,
 ) {
    val contextRef = LocalContext.current
@@ -494,7 +494,7 @@ private fun ParentContainer(
                      Destination.PlayerSheetContainerRoute.RenderBottomSheetContainer(
                         prefs = prefs,
                         localNavController = playerBS_mainContentNavController,
-                        navigationViewModel = playerBS_mainContentnavigationViewModel,
+                        localNavViewModel = playerBS_mainContentnavigationViewModel,
                         refreshBoxState = refreshBoxState,
                         refreshState = refreshState,
                         globalBottomSheetVM = globalBottomSheetVM,
